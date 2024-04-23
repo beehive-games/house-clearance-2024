@@ -2,6 +2,7 @@ using System;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace Player
 {
@@ -13,21 +14,26 @@ namespace Player
 
         [Header("Player Controls")]
         [SerializeField] private float moveSpeed = 20f;
+        [SerializeField] private float acceleration = 8f;
         [SerializeField] private float airMoveForce = 400f;
         [SerializeField] private float jumpForce = 500f;
+        [SerializeField] private float transitionalAirVelocity = 50f;
         [SerializeField] private float slideBoostForce = 750f;
         [SerializeField] private Vector2 slideMinimumVelocity = new Vector2(0.1f, 1f);
-        [SerializeField] private float maxFloorAngle = 45f;
         [SerializeField] private float fallVelocityToSlide = 20f;
         [SerializeField] private float fallVelocityToDie = 30f;
         [SerializeField] private float floorCheckDistance = 0.0125f;
-        [SerializeField] private float slopeCheckDistance = 0.075f;
         [SerializeField] private LayerMask groundCheckLayers;
         private bool _queueJump = false;
         private bool _queueSlide = false;
         private bool _waitForMoveActionDepress = false;
         private readonly string _groundTag = "Ground";
         private readonly string _coverTag = "Cover";
+        private float airSpeedTracker = 0f;
+        private bool previouslyGrounded = false;
+        private float pseudoVelocity = 0f;
+        private bool isGamepad = false;
+        
     
         [Header("Art")]
         [SerializeField] private Transform spriteObject;
@@ -298,6 +304,7 @@ namespace Player
             if (_waitForMoveActionDepress)
             {
                 var xInput = _moveAction.ReadValue<Vector2>().x;
+                
                 var inputMatchesFacingDirection = _spriteRenderer.flipX ? xInput < 0f  : xInput > 0f;
                 if (_moveAction.WasReleasedThisFrame() || !inputMatchesFacingDirection )
                 {
@@ -312,10 +319,109 @@ namespace Player
             ReleasedMoveKey();
         }
 
+        // Kludge to get us a correct value for "does velocity = input direction?"
+        private bool MovementSign(float a, float b)
+        {
+            if (Mathf.Approximately(a, 0f) && Mathf.Approximately(b, 0f))
+                return true;
+            if (Mathf.Approximately(a, 0f))
+            {
+                a += 0.0001f * b;
+            }
+            if (a > 0f && b > 0f)
+                return true;
+            return a < 0f && b < 0f;
+        }
+
+        
+        // Ew, but just want it working
+        private bool AnyGamepadButtonPressed()
+        {
+            var currentGamepad = Gamepad.current;
+            if (!Mathf.Approximately(currentGamepad.aButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.bButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.xButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.yButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.buttonNorth.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.buttonEast.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.buttonSouth.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.buttonWest.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.leftShoulder.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.leftTrigger.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.rightShoulder.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.rightTrigger.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.rightStick.ReadValue().x, 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.rightStick.ReadValue().y, 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.leftStick.ReadValue().x, 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.leftStick.ReadValue().y, 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.rightStickButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.leftStickButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.selectButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.startButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.triangleButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.circleButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.crossButton.ReadValue(), 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.dpad.ReadValue().x, 0f))
+                return true;
+            if (!Mathf.Approximately(currentGamepad.dpad.ReadValue().y, 0f))
+                return true;
+            return false;
+        }
+
+        private void DetectInputType()
+        {
+            var hasGamepad = Gamepad.current != null;
+            if (hasGamepad)
+            {
+                var currentKb = Keyboard.current;
+                var currentGamepad = Gamepad.current;
+                if (currentKb != null && !Mathf.Approximately(currentKb.anyKey.ReadValue(), 0f))
+                {
+                    isGamepad = false;
+                }
+                else if (currentGamepad != null)
+                {
+                    if (!isGamepad && AnyGamepadButtonPressed())
+                    {
+                        isGamepad = true;
+                    }
+                }
+            }
+            else
+            {
+                isGamepad = false;
+            }
+        }
         private void FixedUpdate()
         {
             // 1. get direction input
             var moveVector = _moveAction.ReadValue<Vector2>();
+
+            //1a. we slightly modify input for keyboards later on, so detect input type
+            DetectInputType();
             
             // 2. Check if we're dead - just update sprites if we are. Be sure to kill velocity.
             if (_playerState is PlayerState.DeadFall or PlayerState.DeadShot or PlayerState.Immobile)
@@ -379,6 +485,7 @@ namespace Player
             // Perform move actions
             if (grounded)
             {
+                
                 if (_queueJump)
                 {
                     _queueJump = false;
@@ -400,7 +507,35 @@ namespace Player
                                 
                             }
                         }
-                        _rigidbody2D.velocityX = moveVector.x * moveSpeed;
+
+                        if (isGamepad)
+                        {
+                            pseudoVelocity = moveSpeed * moveVector.x;
+                        }
+                        else
+                        {
+                            if (!Mathf.Approximately(moveVector.x, 0f))
+                            {
+                                if (MovementSign(pseudoVelocity, moveVector.x))
+                                {
+                                    pseudoVelocity += acceleration * Time.fixedDeltaTime * moveVector.x;
+                                }
+                                else
+                                {
+                                    pseudoVelocity = 0f;
+                                }
+
+                            }
+                            else
+                            {
+                                pseudoVelocity = 0f;
+                            }
+
+                            pseudoVelocity = Mathf.Clamp(pseudoVelocity, -moveSpeed, moveSpeed);
+
+                        }
+
+                        _rigidbody2D.velocityX = pseudoVelocity;
 
                     }
                     else // sliding
@@ -430,9 +565,12 @@ namespace Player
             } 
             else // falling
             {
-                _rigidbody2D.AddForce(Vector2.right * (moveVector.x * airMoveForce * Time.fixedDeltaTime ));
+                float moveForce = moveVector.x * airMoveForce * Time.fixedDeltaTime;
+                _rigidbody2D.AddForce(Vector2.right * moveForce);
                 _queueJump = false;
             }
+
+            previouslyGrounded = grounded;
 
             // Update Art
             UpdateSprites(moveVector);
