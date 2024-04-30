@@ -1,6 +1,6 @@
 [gd_scene load_steps=8 format=3 uid="uid://scggt4wfk616"]
 
-[ext_resource type="Script" path="res://scripts/player.gd" id="1_04yet"]
+[ext_resource type="Script" path="res://scripts/PlayerMovement.cs" id="1_eqdg7"]
 [ext_resource type="Texture2D" uid="uid://cctd72fqqyr18" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Dead_Fall.png" id="1_waead"]
 [ext_resource type="Texture2D" uid="uid://d4httartm7xc1" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout.png" id="2_t62b7"]
 [ext_resource type="Texture2D" uid="uid://d0nd3f4n42tqd" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Jump.png" id="3_mok1t"]
@@ -64,7 +64,7 @@ height = 28.0
 [node name="CharacterBody2D" type="CharacterBody2D"]
 collision_layer = 2
 collision_mask = 253
-script = ExtResource("1_04yet")
+script = ExtResource("1_eqdg7")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(0, -16)

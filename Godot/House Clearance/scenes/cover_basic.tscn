@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://cn586knquog8h"]
 
-[ext_resource type="Script" path="res://scripts/cover_basic.gd" id="1_370ld"]
+[ext_resource type="Script" path="res://scripts/Cover.cs" id="1_fa6pa"]
 [ext_resource type="Texture2D" uid="uid://b0jndy5bivtx" path="res://assets/sprites/environment/tilemaps/placeholder/BasicTileset.tga" id="1_i0yh2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_vvv4a"]
@@ -9,7 +9,7 @@ size = Vector2(32, 64)
 [node name="Area2D" type="Area2D"]
 collision_layer = 32
 collision_mask = 6
-script = ExtResource("1_370ld")
+script = ExtResource("1_fa6pa")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_vvv4a")
