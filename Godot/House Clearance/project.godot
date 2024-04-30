@@ -1,0 +1,46 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="House Clearance"
+run/main_scene="res://scenes/gameroot.tscn"
+config/features=PackedStringArray("4.2", "Mobile")
+run/max_fps=60
+config/icon="res://icon.svg"
+
+[display]
+
+window/stretch/scale_mode="integer"
+
+[dotnet]
+
+project/assembly_name="House Clearance"
+
+[editor]
+
+movie_writer/movie_file="D:/Godot/videos/scene1.avi"
+
+[layer_names]
+
+2d_physics/layer_1="walls"
+2d_physics/layer_2="player"
+2d_physics/layer_3="enemies"
+2d_physics/layer_4="doors"
+2d_physics/layer_5="interactions"
+2d_physics/layer_6="cover"
+2d_physics/layer_7="breakables"
+2d_physics/layer_8="pickups"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+renderer/rendering_method="mobile"
+2d/snap/snap_2d_transforms_to_pixel=true

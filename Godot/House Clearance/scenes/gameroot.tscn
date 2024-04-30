@@ -1,0 +1,78 @@
+[gd_scene load_steps=8 format=3 uid="uid://qh041f5soa5i"]
+
+[ext_resource type="PackedScene" uid="uid://scggt4wfk616" path="res://scenes/player.tscn" id="1_74v3a"]
+[ext_resource type="Texture2D" uid="uid://b0jndy5bivtx" path="res://assets/sprites/environment/tilemaps/placeholder/BasicTileset.tga" id="1_wcuoi"]
+[ext_resource type="Texture2D" uid="uid://d4httartm7xc1" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout.png" id="2_666wv"]
+[ext_resource type="PackedScene" uid="uid://cn586knquog8h" path="res://scenes/cover_basic.tscn" id="4_7n40l"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5pkad"]
+texture = ExtResource("1_wcuoi")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+3:1/0 = 0
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
+3:2/0 = 0
+0:3/0 = 0
+1:3/0 = 0
+2:3/0 = 0
+3:3/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_hlirg"]
+tile_size = Vector2i(64, 64)
+sources/2 = SubResource("TileSetAtlasSource_5pkad")
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_ubdon"]
+
+[node name="Game" type="Node2D"]
+
+[node name="TileMap" type="TileMap" parent="."]
+position = Vector2(0, -4)
+tile_set = SubResource("TileSet_hlirg")
+format = 2
+layer_0/tile_data = PackedInt32Array(65532, 65538, 0, 65533, 65538, 0, 65534, 65538, 0, 65535, 65538, 0, 0, 65538, 0, 1, 65538, 0, 2, 65538, 0, -65534, 196610, 2, -2, 196610, 2, -4, 196610, 2, -3, 196610, 2, -1, 196610, 2, -65536, 196610, 2, -65535, 196610, 2, 3, 65538, 0, 4, 65538, 0, 5, 65538, 0, 65531, 65538, 0, 65530, 65538, 0, -65533, 196610, 2, -65532, 196610, 2, -65531, 196610, 2, -5, 196610, 2, -6, 196610, 2)
+
+[node name="TileMap2" type="TileMap" parent="."]
+visible = false
+position = Vector2(0, -8)
+scale = Vector2(0.5, 0.5)
+tile_set = SubResource("TileSet_hlirg")
+rendering_quadrant_size = 8
+format = 2
+layer_0/tile_data = PackedInt32Array(-65533, 131074, 1, -65532, 131074, 1, -4, 131074, 1)
+
+[node name="Area2D" parent="." instance=ExtResource("4_7n40l")]
+position = Vector2(101, -35)
+
+[node name="Area2D3" parent="." instance=ExtResource("4_7n40l")]
+position = Vector2(-94, -35)
+
+[node name="Area2D2" parent="." instance=ExtResource("4_7n40l")]
+position = Vector2(203, -35)
+
+[node name="player" parent="." instance=ExtResource("1_74v3a")]
+unique_name_in_owner = true
+position = Vector2(0, -1)
+
+[node name="Camera2D" type="Camera2D" parent="player"]
+position = Vector2(5, 4)
+zoom = Vector2(2, 2)
+position_smoothing_enabled = true
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+position = Vector2(0, 1)
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+shape = SubResource("WorldBoundaryShape2D_ubdon")
+
+[node name="TDbgSpriteLayout" type="Sprite2D" parent="."]
+position = Vector2(55, -16)
+texture = ExtResource("2_666wv")
