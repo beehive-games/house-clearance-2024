@@ -1,16 +1,20 @@
 using System;
 using Godot;
+using System.Diagnostics;
 
 namespace HouseClearance.scripts;
 
 public partial class PlayerMovement : CharacterBody2D
 {
-	public const float Speed = 100.0f;
-	public const float JumpVelocity = -250.0f;
-	private const float SlideFriction = 1.0f;
+	[Export] private float _speed = 100.0f;
+	[Export] private float _jumpVelocity = -250.0f;
+	[Export] private float _slideFriction = 1.0f;
+	[Export] private float _gravityMultiplier = 1.0f;
+	[Export] private float _fallAutoSlideVelocity = 500.0f;
+	[Export] private float _fallDeathVelocity = 750.0f;
 
 	// Get the gravity from the project settings to be synced with RigidBody nodes.
-	private float _gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle();
+	private float _gravity = -9.81f;
 	private bool _queueSliding = false;
 	private float _previousDirection = 0f;
 	private bool _waitOnInputRelease = false;
@@ -23,7 +27,7 @@ public partial class PlayerMovement : CharacterBody2D
 	
 	private void SlidePlayer(ref Vector2 velocity)
 	{
-		velocity.X = Mathf.MoveToward(Velocity.X, 0f, SlideFriction);
+		velocity.X = Mathf.MoveToward(Velocity.X, 0f, _slideFriction);
 		
 		if (!IsOnFloor()) return;
 		
@@ -33,7 +37,7 @@ public partial class PlayerMovement : CharacterBody2D
 	
 	private void MovePlayer(float direction, ref Vector2 velocity)
 	{
-		velocity.X = direction * Speed;
+		velocity.X = direction * _speed;
 		if(Math.Abs(Mathf.Sign(direction) - _previousDirection) > 0.001f && Mathf.Abs(direction) > 0.0001f)
 		{
 			_spriteNodePath.FlipH = direction < 0f;
@@ -48,7 +52,7 @@ public partial class PlayerMovement : CharacterBody2D
 	
 	private void StopPlayer(ref Vector2 velocity)
 	{
-		velocity.X = Mathf.MoveToward(velocity.X, 0, Speed);
+		velocity.X = Mathf.MoveToward(velocity.X, 0, _speed);
 		if(IsOnFloor())
 		{
 			_spriteNodePath.Animation = "idle";
@@ -65,7 +69,7 @@ public partial class PlayerMovement : CharacterBody2D
 	
 	private void JumpPlayer(ref Vector2 velocity)
 	{
-		velocity.Y = JumpVelocity;
+		velocity.Y = _jumpVelocity;
 		PlayerInAir();
 	}
 	
@@ -84,20 +88,56 @@ public partial class PlayerMovement : CharacterBody2D
 		}
 	}
 
+	private void Kill(bool fall = true)
+	{
+		_moveState = MoveState.Dead;
+		if(fall)
+			_spriteNodePath.Animation = "dead_fall";
+	}
+
+	private bool PlayerIsDead(ref Vector2 velocity)
+	{
+		if (_moveState == MoveState.Dead)
+		{
+			velocity.X = 0f;
+			Velocity = velocity;
+			
+			return true;
+		}
+
+		return false;
+	}
+
 	public override void _Ready()
 	{
 		_spriteNodePath = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
+		_gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle() * _gravityMultiplier;
 	}
 	
 	public override void _PhysicsProcess(double delta)
 	{
+		// Reset the game?
+		if (Input.IsActionJustPressed("ui_cancel"))
+		{
+			GetTree().ReloadCurrentScene();
+			return;
+		}
+		
 		Vector2 velocity = Velocity;
-
+		bool onFloor = IsOnFloor();
 		// Add the gravity.
-		if (!IsOnFloor())
+		if (!onFloor)
 		{
 			velocity.Y += _gravity * (float)delta;
 			PlayerInAir();
+		}
+		
+		// Handle Dead.
+		if (PlayerIsDead(ref velocity))
+		{
+			Velocity = velocity;
+			MoveAndSlide();
+			return;
 		}
 
 		// Handle Jump.
@@ -127,7 +167,7 @@ public partial class PlayerMovement : CharacterBody2D
 		//Handle sliding.
 		if (direction.Y < 0f)
 		{
-			_queueSliding = true;
+			_queueSliding = _moveState != MoveState.Cover;
 		}
 		
 		
@@ -191,6 +231,32 @@ public partial class PlayerMovement : CharacterBody2D
 		// Update player positions, etc.
 		_spriteNodePath.Position = position;
 		Velocity = velocity;
+		
 		MoveAndSlide();
+		if (!onFloor && IsOnFloorOnly())
+		{
+			if (velocity.Y > _fallDeathVelocity)
+			{
+				Kill();
+			}
+			else if (velocity.Y > _fallAutoSlideVelocity)
+			{
+				_moveState = MoveState.Slide;
+				float facingDirection = _spriteNodePath.FlipH ? -1f : 1f;
+				
+				float autoSlideVelocity = velocity.Y / 4f * facingDirection;
+				float autoSlideMagnitude = Mathf.Abs(autoSlideVelocity);
+				if (autoSlideMagnitude > Mathf.Abs(velocity.X))
+				{
+					velocity.X = autoSlideVelocity;
+				}
+				
+				Debug.WriteLine("slide " + autoSlideVelocity +" " + velocity.X);
+				Velocity = velocity;
+				_waitOnInputRelease = true;
+			}
+			Debug.WriteLine("FLOOR " + velocity.Y);
+		}
+	
 	}
 }
