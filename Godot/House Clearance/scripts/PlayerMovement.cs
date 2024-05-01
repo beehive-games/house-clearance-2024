@@ -18,6 +18,7 @@ public partial class PlayerMovement : CharacterBody2D
 	private bool _queueSliding = false;
 	private float _previousDirection = 0f;
 	private bool _waitOnInputRelease = false;
+	private bool _slideFromAFall = false;
 
 	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
 
@@ -65,6 +66,7 @@ public partial class PlayerMovement : CharacterBody2D
 		{
 			_queueSliding = false;
 		}
+		_slideFromAFall = false;
 	}
 	
 	private void JumpPlayer(ref Vector2 velocity)
@@ -141,7 +143,7 @@ public partial class PlayerMovement : CharacterBody2D
 		}
 
 		// Handle Jump.
-		if (Input.IsActionJustPressed("ui_accept") && IsOnFloor())
+		if (Input.IsActionJustPressed("ui_accept") && IsOnFloor() && !_slideFromAFall)
 		{
 			JumpPlayer(ref velocity);
 		}
@@ -149,25 +151,35 @@ public partial class PlayerMovement : CharacterBody2D
 		// As good practice, you should replace UI actions with custom gameplay actions.
 		Vector2 direction = Input.GetVector("ui_left", "ui_right", "ui_down", "ui_up");
 		
-		//Handle in-cover.
-		//We want to remain in cover until you have released and re-pressed a move button.
-		if (_waitOnInputRelease)
+		
+
+		if (_slideFromAFall)
 		{
-			if (Mathf.Abs(direction.X) < 0.0001f)
-			{
-				_waitOnInputRelease = false;
-			}
-			else
-			{
-				direction.X = 0f;
-				StopPlayer(ref velocity);
-			}
+			direction.X = 0f;
+			Debug.WriteLine("sliding from fall... ");
 		}
 		
 		//Handle sliding.
 		if (direction.Y < 0f)
 		{
 			_queueSliding = _moveState != MoveState.Cover;
+		}
+		else
+		{
+			//Handle in-cover.
+			//We want to remain in cover until you have released and re-pressed a move button.
+			if (_waitOnInputRelease)
+			{
+				if (Mathf.Abs(direction.X) < 0.0001f)
+				{
+					_waitOnInputRelease = false;
+				}
+				else
+				{
+					direction.X = 0f;
+					StopPlayer(ref velocity);
+				}
+			}
 		}
 		
 		
@@ -210,6 +222,7 @@ public partial class PlayerMovement : CharacterBody2D
 		if (Mathf.Abs(velocity.X) < 1.1f && _moveState == MoveState.Slide)
 		{
 			_moveState = MoveState.Idle;
+			_slideFromAFall = false;
 			StopPlayer(ref velocity);
 		}
 
@@ -233,13 +246,15 @@ public partial class PlayerMovement : CharacterBody2D
 		Velocity = velocity;
 		
 		MoveAndSlide();
+		
+		// Handle impacts.
 		if (!onFloor && IsOnFloorOnly())
 		{
 			if (velocity.Y > _fallDeathVelocity)
 			{
 				Kill();
 			}
-			else if (velocity.Y > _fallAutoSlideVelocity)
+			else if (Mathf.Abs(velocity.Y) > Mathf.Abs(_fallAutoSlideVelocity))
 			{
 				_moveState = MoveState.Slide;
 				float facingDirection = _spriteNodePath.FlipH ? -1f : 1f;
@@ -251,9 +266,11 @@ public partial class PlayerMovement : CharacterBody2D
 					velocity.X = autoSlideVelocity;
 				}
 				
-				Debug.WriteLine("slide " + autoSlideVelocity +" " + velocity.X);
+				Debug.WriteLine("slide! autoSlideVelocity:" + autoSlideVelocity +" v: " + velocity.X+"," + velocity.Y);
+				Debug.WriteLine("    : Mathf.Abs(velocity.Y)" + Mathf.Abs(velocity.Y) +" Mathf.Abs(_fallAutoSlideVelocity) " + Mathf.Abs(_fallAutoSlideVelocity));
 				Velocity = velocity;
 				_waitOnInputRelease = true;
+				_slideFromAFall = true;
 			}
 			Debug.WriteLine("FLOOR " + velocity.Y);
 		}

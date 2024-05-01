@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://qh041f5soa5i"]
+[gd_scene load_steps=11 format=3 uid="uid://qh041f5soa5i"]
 
 [ext_resource type="PackedScene" uid="uid://scggt4wfk616" path="res://scenes/player.tscn" id="1_74v3a"]
 [ext_resource type="Texture2D" uid="uid://b0jndy5bivtx" path="res://assets/sprites/environment/tilemaps/placeholder/BasicTileset.tga" id="1_wcuoi"]
@@ -34,6 +34,9 @@ sources/2 = SubResource("TileSetAtlasSource_5pkad")
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_r3e7k"]
 size = Vector2(509, 31)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_68ci1"]
+size = Vector2(256, 28)
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5e8ne"]
 size = Vector2(767, 28)
 
@@ -43,7 +46,7 @@ size = Vector2(767, 28)
 position = Vector2(0, -4)
 tile_set = SubResource("TileSet_hlirg")
 format = 2
-layer_0/tile_data = PackedInt32Array(65532, 65538, 0, 65533, 65538, 0, 65534, 65538, 0, 65535, 65538, 0, 0, 65538, 0, 1, 65538, 0, 2, 65538, 0, -65534, 196610, 2, -2, 196610, 2, -4, 196610, 2, -3, 196610, 2, -1, 196610, 2, -65536, 196610, 2, -65535, 196610, 2, 3, 65538, 0, 4, 65538, 0, 5, 65538, 0, 65531, 65538, 0, 65530, 65538, 0, -65533, 196610, 2, -65532, 196610, 2, -65531, 196610, 2, -5, 196610, 2, -6, 196610, 2, 262135, 65538, 0, 262136, 65538, 0, 262137, 65538, 0, 262138, 65538, 0, 262139, 65538, 0, 262140, 65538, 0, 262141, 65538, 0, 262142, 65538, 0, 393214, 65538, 0, 393213, 65538, 0, 393212, 65538, 0, 393211, 65538, 0, 393210, 65538, 0, 393209, 65538, 0, 393208, 65538, 0, 393207, 65538, 0, 393206, 65538, 0, 393205, 65538, 0, 393215, 65538, 0, 327680, 65538, 0, 327681, 65538, 0, 327682, 65538, 0, 327683, 65538, 0, 327684, 65538, 0, 327685, 65538, 0, 327686, 65538, 0, 327687, 65538, 0)
+layer_0/tile_data = PackedInt32Array(65532, 65538, 0, 65533, 65538, 0, 65534, 65538, 0, 65535, 65538, 0, 0, 65538, 0, 1, 65538, 0, 2, 65538, 0, -65534, 196610, 2, -2, 196610, 2, -4, 196610, 2, -3, 196610, 2, -1, 196610, 2, -65536, 196610, 2, -65535, 196610, 2, 3, 65538, 0, 4, 65538, 0, 5, 65538, 0, 65531, 65538, 0, 65530, 65538, 0, -65533, 196610, 2, -65532, 196610, 2, -65531, 196610, 2, -5, 196610, 2, -6, 196610, 2, 262135, 65538, 0, 262136, 65538, 0, 262137, 65538, 0, 262138, 65538, 0, 262139, 65538, 0, 262140, 65538, 0, 262141, 65538, 0, 262142, 65538, 0, 393214, 65538, 0, 393213, 65538, 0, 393212, 65538, 0, 393211, 65538, 0, 393210, 65538, 0, 393209, 65538, 0, 393208, 65538, 0, 393207, 65538, 0, 393206, 65538, 0, 393205, 65538, 0, 393215, 65538, 0, 327680, 65538, 0, 327681, 65538, 0, 327682, 65538, 0, 327683, 65538, 0, 327684, 65538, 0, 327685, 65538, 0, 327686, 65538, 0, 327687, 65538, 0, 393194, 65538, 0, 393195, 65538, 0, 393196, 65538, 0, 393197, 65538, 0, 393198, 65538, 0, 393199, 65538, 0, 393200, 65538, 0, 393201, 65538, 0, 393202, 65538, 0, 393203, 65538, 0, 393204, 65538, 0, 327688, 65538, 0, 327689, 65538, 0, 327690, 65538, 0, 327691, 65538, 0, 327692, 65538, 0, 327693, 65538, 0, 327694, 65538, 0, 327695, 65538, 0, 327696, 65538, 0, 327697, 65538, 0, 65527, 65538, 0, 65526, 65538, 0, 65525, 65538, 0, 65524, 65538, 0)
 
 [node name="TileMap2" type="TileMap" parent="."]
 visible = false
@@ -66,7 +69,6 @@ position = Vector2(203, -35)
 [node name="player" parent="." instance=ExtResource("1_74v3a")]
 unique_name_in_owner = true
 position = Vector2(0, -1)
-_fallAutoSlideVelocity = 300.0
 
 [node name="Camera2D" type="Camera2D" parent="player"]
 position = Vector2(5, 4)
@@ -90,6 +92,13 @@ position = Vector2(0, 177)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D3"]
 position = Vector2(-319.5, 26.5)
 shape = SubResource("RectangleShape2D_r3e7k")
+
+[node name="StaticBody2D4" type="StaticBody2D" parent="."]
+position = Vector2(-635, 6)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D4"]
+position = Vector2(-5, 8)
+shape = SubResource("RectangleShape2D_68ci1")
 
 [node name="StaticBody2D2" type="StaticBody2D" parent="."]
 position = Vector2(0, 10)
