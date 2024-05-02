@@ -13,18 +13,15 @@ public partial class PlayerMovement : CharacterBody2D
 	[Export] private float _fallAutoSlideVelocity = 500.0f;
 	[Export] private float _fallDeathVelocity = 750.0f;
 
-	// Get the gravity from the project settings to be synced with RigidBody nodes.
+	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
+	private MoveState _moveState = MoveState.Idle;
 	private float _gravity = -9.81f;
-	private bool _queueSliding = false;
-	private float _previousDirection = 0f;
-	private bool _waitOnInputRelease = false;
-	private bool _slideFromAFall = false;
+	private bool _queueSliding;
+	private float _previousDirection;
+	private bool _waitOnInputRelease;
+	private bool _slideFromAFall;
 	private Skeleton2D _weaponRig;
 	private Gun _gun;
-	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
-
-	private MoveState _moveState = MoveState.Idle;
-
 	private AnimatedSprite2D _spriteNodePath;
 	
 	private void SlidePlayer(ref Vector2 velocity)
@@ -94,7 +91,6 @@ public partial class PlayerMovement : CharacterBody2D
 			_moveState = MoveState.Cover;
 			_waitOnInputRelease = true;
 			_queueSliding = false;
-			Debug.WriteLine("COVER");
 		}
 	}
 
@@ -102,13 +98,12 @@ public partial class PlayerMovement : CharacterBody2D
 	// and not be hard-coded
 	private void StopFiring()
 	{
-		_gun ??= GetNodeOrNull<Gun>("pistol");
 		_gun?.DisableFiring();
 	}
 
 	private void StartFiring()
 	{
-		_gun ??= GetNodeOrNull<Gun>("pistol");
+		_gun?.EnableFiring();
 		_gun?.EnableFiring();
 	}
 	
@@ -137,6 +132,7 @@ public partial class PlayerMovement : CharacterBody2D
 		_spriteNodePath = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
 		_gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle() * _gravityMultiplier;
 		_weaponRig = GetNodeOrNull<Skeleton2D>("WeaponRig");
+		_gun = (Gun)GetNodeOrNull<Sprite2D>("WeaponRig/root/left_hand/pistol");
 	}
 	
 	public override void _PhysicsProcess(double delta)
@@ -148,7 +144,9 @@ public partial class PlayerMovement : CharacterBody2D
 			return;
 		}
 
-		if (_moveState == MoveState.Cover || _moveState == MoveState.Dead)
+		// OK, this isn't movement, BUT we need to tie firing abilities
+		// into movement state
+		if (_moveState is MoveState.Cover or MoveState.Dead)
 		{
 			StopFiring();
 		}
@@ -159,7 +157,8 @@ public partial class PlayerMovement : CharacterBody2D
 		
 		Vector2 velocity = Velocity;
 		bool onFloor = IsOnFloor();
-		// Add the gravity.
+		
+		// Add gravity.
 		if (!onFloor)
 		{
 			velocity.Y += _gravity * (float)delta;
@@ -308,8 +307,6 @@ public partial class PlayerMovement : CharacterBody2D
 				_waitOnInputRelease = true;
 				_slideFromAFall = true;
 			}
-			Debug.WriteLine("FLOOR " + velocity.Y);
 		}
-	
 	}
 }

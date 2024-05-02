@@ -26,14 +26,11 @@ public partial class Gun : Sprite2D
 	public void DisableFiring()
 	{
 		_preventShot = true;
-		Debug.WriteLine("STOP SHOOTING");
 	}
 	
 	public void EnableFiring()
 	{
 		_preventShot = false;
-		Debug.WriteLine("DO SHOOTING");
-
 	}
 
 	public void ToggleFiring()
@@ -75,25 +72,18 @@ public partial class Gun : Sprite2D
 			{
 				if (!_preventShot)
 				{
-				
 					if (_projectile != null)
 					{
-						//RigidBody2D bullet = (RigidBody2D)_projectile.Instantiate();
 						RigidBody2D bullet = (RigidBody2D)ResourceLoader.Load<PackedScene>(_projectile.ResourcePath).Instantiate();
 						root.AddChild(bullet);
 						bullet.Position = _muzzlePosition.GlobalPosition;
-						//bullet.Rotation = _muzzlePosition.GlobalRotation;
-						// get forward vector of gun
-						//bullet.Rotation = Rotation;
-						var globalForward = Vector2.Right.Rotated(GlobalRotation);
+
 						var angle = randomAngle.RandfRange(0, _spreadAngle) - (0.5 * _spreadAngle);
 						var spreadForward = Vector2.Right.Rotated(GlobalRotation + Mathf.DegToRad((float)angle));
 						float xVelocity = bullet.LinearVelocity.X;
 						Vector2 newDirection = spreadForward * xVelocity;
-						bullet.LinearVelocity = newDirection;//new Vector2(xVelocity, bullet.LinearVelocity.Y);
-						Debug.WriteLine("Spread: " +angle +", vec " +spreadForward +"("+Mathf.Round(globalForward.X) +"," +Mathf.Round(globalForward.Y) +") " + newDirection);
-
-						//Debug.WriteLine("FIRE!! " + bullet.GlobalPosition +", " +bullet.LinearVelocity);
+						
+						bullet.LinearVelocity = newDirection;
 					}
 
 					if (_fireVfxAsset != null)

@@ -29,11 +29,6 @@ public partial class Projectile : RigidBody2D
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		//Debug.WriteLine(GlobalPosition +", "+LinearVelocity);
-		/*var velocity = LinearVelocity;
-		velocity.Y += _gravity * (float)delta;
-		
-		MoveAndCollide(velocity);*/
 		var distance = Distance(GlobalPosition, _startPos);
 		if (distance > _maxDistance || _countdown <= 0f || Mathf.Abs(LinearVelocity.X) < _minVelocity)
 		{
