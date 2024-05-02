@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3 uid="uid://veqvmujluscl"]
+
+[ext_resource type="Script" path="res://scripts/Gun.cs" id="1_kdpie"]
+[ext_resource type="Texture2D" uid="uid://5m3egqu4e6fp" path="res://icon.svg" id="1_yygwo"]
+[ext_resource type="PackedScene" uid="uid://citpolgjbsv18" path="res://scenes/bullet.tscn" id="3_mudef"]
+
+[node name="pistol" type="Sprite2D" node_paths=PackedStringArray("_muzzlePosition", "_ejectionPosition")]
+position = Vector2(1, 0)
+scale = Vector2(0.03, 0.01)
+texture = ExtResource("1_yygwo")
+script = ExtResource("1_kdpie")
+_projectile = ExtResource("3_mudef")
+_muzzlePosition = NodePath("muzzle_vfx")
+_ejectionPosition = NodePath("ejection_vfx")
+_shotsPerMinute = 1000.0
+_spreadAngle = 5.0
+
+[node name="ejection_vfx" type="Node2D" parent="."]
+position = Vector2(-64, -27)
+
+[node name="muzzle_vfx" type="Node2D" parent="."]
+position = Vector2(64, 1)

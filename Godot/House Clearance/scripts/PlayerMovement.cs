@@ -19,7 +19,8 @@ public partial class PlayerMovement : CharacterBody2D
 	private float _previousDirection = 0f;
 	private bool _waitOnInputRelease = false;
 	private bool _slideFromAFall = false;
-
+	private Skeleton2D _weaponRig;
+	private Gun _gun;
 	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
 
 	private MoveState _moveState = MoveState.Idle;
@@ -42,6 +43,11 @@ public partial class PlayerMovement : CharacterBody2D
 		if(Math.Abs(Mathf.Sign(direction) - _previousDirection) > 0.001f && Mathf.Abs(direction) > 0.0001f)
 		{
 			_spriteNodePath.FlipH = direction < 0f;
+		}
+
+		if (_weaponRig != null)
+		{
+			_weaponRig.Scale = new Vector2(Scale.X * (_spriteNodePath.FlipH ? -1 : 1), Scale.Y);
 		}
 		
 		if(IsOnFloor())
@@ -87,9 +93,25 @@ public partial class PlayerMovement : CharacterBody2D
 		{
 			_moveState = MoveState.Cover;
 			_waitOnInputRelease = true;
+			_queueSliding = false;
+			Debug.WriteLine("COVER");
 		}
 	}
 
+	// TODO: When we can change weapons, the gun script will need to use this
+	// and not be hard-coded
+	private void StopFiring()
+	{
+		_gun ??= GetNodeOrNull<Gun>("pistol");
+		_gun?.DisableFiring();
+	}
+
+	private void StartFiring()
+	{
+		_gun ??= GetNodeOrNull<Gun>("pistol");
+		_gun?.EnableFiring();
+	}
+	
 	public void Kill(bool fall = true)
 	{
 		_moveState = MoveState.Dead;
@@ -114,6 +136,7 @@ public partial class PlayerMovement : CharacterBody2D
 	{
 		_spriteNodePath = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
 		_gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle() * _gravityMultiplier;
+		_weaponRig = GetNodeOrNull<Skeleton2D>("WeaponRig");
 	}
 	
 	public override void _PhysicsProcess(double delta)
@@ -123,6 +146,15 @@ public partial class PlayerMovement : CharacterBody2D
 		{
 			GetTree().ReloadCurrentScene();
 			return;
+		}
+
+		if (_moveState == MoveState.Cover || _moveState == MoveState.Dead)
+		{
+			StopFiring();
+		}
+		else
+		{
+			StartFiring();
 		}
 		
 		Vector2 velocity = Velocity;
@@ -151,12 +183,9 @@ public partial class PlayerMovement : CharacterBody2D
 		// As good practice, you should replace UI actions with custom gameplay actions.
 		Vector2 direction = Input.GetVector("ui_left", "ui_right", "ui_down", "ui_up");
 		
-		
-
 		if (_slideFromAFall)
 		{
 			direction.X = 0f;
-			Debug.WriteLine("sliding from fall... ");
 		}
 		
 		//Handle sliding.
@@ -182,7 +211,6 @@ public partial class PlayerMovement : CharacterBody2D
 			}
 		}
 		
-		
 		// Sliding removes player input _unless_ its in the opposite direction of travel.
 		if (_queueSliding || _moveState == MoveState.Slide)
 		{
@@ -207,13 +235,21 @@ public partial class PlayerMovement : CharacterBody2D
 		{
 			if(_moveState != MoveState.Slide)
 			{
-				if (Mathf.Abs(direction.X) > 0.001f)
+				if (_moveState == MoveState.Cover && _waitOnInputRelease)
 				{
-					MovePlayer(direction.X, ref velocity);
+					StopPlayer(ref velocity);
 				}
 				else
 				{
-					StopPlayer(ref velocity);
+					if (Mathf.Abs(direction.X) > 0.001f)
+					{
+						MovePlayer(direction.X, ref velocity);
+					}
+					else
+					{
+						StopPlayer(ref velocity);
+
+					}
 				}
 			}
 		}

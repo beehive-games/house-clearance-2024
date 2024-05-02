@@ -94,3 +94,19 @@ script = ExtResource("6_8prp1")
 [node name="HitBox" type="CollisionShape2D" parent="Area2D"]
 shape = SubResource("RectangleShape2D_sovmg")
 debug_color = Color(0.907471, 0.0001236, 0.739933, 0.42)
+
+[node name="WeaponRig" type="Skeleton2D" parent="."]
+
+[node name="root" type="Bone2D" parent="WeaponRig"]
+rotation = -1.5708
+rest = Transform2D(-4.37114e-08, -1, 1, -4.37114e-08, 0, 0)
+
+[node name="left_hand" type="Bone2D" parent="WeaponRig/root"]
+position = Vector2(11, 5)
+rotation = 1.5708
+rest = Transform2D(-4.37114e-08, 1, -1, -4.37114e-08, 11, 5)
+
+[node name="right_hand" type="Bone2D" parent="WeaponRig/root"]
+position = Vector2(11, -6)
+rotation = -3.14159
+rest = Transform2D(-1, -1.50996e-07, 1.50996e-07, -1, 11, -6)

@@ -1,17 +1,33 @@
-[gd_scene load_steps=3 format=3 uid="uid://citpolgjbsv18"]
+[gd_scene load_steps=5 format=3 uid="uid://citpolgjbsv18"]
 
 [ext_resource type="Texture2D" uid="uid://5m3egqu4e6fp" path="res://icon.svg" id="1_25k7w"]
+[ext_resource type="Script" path="res://scripts/Projectile.cs" id="1_v380p"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_nmymi"]
-size = Vector2(8, 4)
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_o0yht"]
+friction = 0.72
+bounce = 1.0
 
-[node name="bullet" type="Area2D"]
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_iqpfx"]
+radius = 1.0
+height = 4.0
+
+[node name="bullet" type="RigidBody2D"]
 collision_layer = 256
-collision_mask = 1024
+collision_mask = 1103
+mass = 0.01
+physics_material_override = SubResource("PhysicsMaterial_o0yht")
+gravity_scale = 0.05
+continuous_cd = 1
+linear_velocity = Vector2(750, 0)
+script = ExtResource("1_v380p")
+_maxLifetime = 3.0
+_maxDistance = 1000.0
+_minVelocity = 500.0
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.064, 0.032)
+scale = Vector2(0.032, 0.016)
 texture = ExtResource("1_25k7w")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("RectangleShape2D_nmymi")
+rotation = 1.5708
+shape = SubResource("CapsuleShape2D_iqpfx")
