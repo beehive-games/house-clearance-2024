@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=3 uid="uid://scggt4wfk616"]
+[gd_scene load_steps=10 format=3 uid="uid://scggt4wfk616"]
 
 [ext_resource type="Script" path="res://scripts/PlayerMovement.cs" id="1_eqdg7"]
 [ext_resource type="Texture2D" uid="uid://cctd72fqqyr18" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Dead_Fall.png" id="1_waead"]
 [ext_resource type="Texture2D" uid="uid://d4httartm7xc1" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout.png" id="2_t62b7"]
 [ext_resource type="Texture2D" uid="uid://d0nd3f4n42tqd" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Jump.png" id="3_mok1t"]
 [ext_resource type="Texture2D" uid="uid://cf41a43mx5q62" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Slide.png" id="4_jtgsd"]
+[ext_resource type="Script" path="res://scripts/HitBox.cs" id="6_8prp1"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_2q1sp"]
 animations = [{
@@ -61,6 +62,9 @@ animations = [{
 radius = 7.0
 height = 28.0
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sovmg"]
+size = Vector2(8, 26)
+
 [node name="CharacterBody2D" type="CharacterBody2D"]
 collision_layer = 2
 collision_mask = 253
@@ -73,10 +77,20 @@ _fallAutoSlideVelocity = 600.0
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(0, -16)
 sprite_frames = SubResource("SpriteFrames_2q1sp")
-animation = &"dead_fall"
+animation = &"idle"
 autoplay = "idle"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="MovementCollider" type="CollisionShape2D" parent="."]
 position = Vector2(0, -14)
 shape = SubResource("CapsuleShape2D_1kfex")
 one_way_collision_margin = 0.5
+
+[node name="Area2D" type="Area2D" parent="."]
+position = Vector2(0, -13)
+collision_layer = 1024
+collision_mask = 768
+script = ExtResource("6_8prp1")
+
+[node name="HitBox" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("RectangleShape2D_sovmg")
+debug_color = Color(0.907471, 0.0001236, 0.739933, 0.42)

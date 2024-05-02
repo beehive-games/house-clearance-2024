@@ -38,6 +38,9 @@ movie_writer/movie_file="D:/Godot/videos/scene1.avi"
 2d_physics/layer_6="cover"
 2d_physics/layer_7="breakables"
 2d_physics/layer_8="pickups"
+2d_physics/layer_9="bullets"
+2d_physics/layer_10="AOE"
+2d_physics/layer_11="hitboxes"
 
 [rendering]
 

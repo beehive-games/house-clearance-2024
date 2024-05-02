@@ -90,7 +90,7 @@ public partial class PlayerMovement : CharacterBody2D
 		}
 	}
 
-	private void Kill(bool fall = true)
+	public void Kill(bool fall = true)
 	{
 		_moveState = MoveState.Dead;
 		if(fall)
