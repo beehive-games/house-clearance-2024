@@ -9,23 +9,22 @@ bounce = 1.0
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_iqpfx"]
 radius = 1.0
-height = 4.0
+height = 2.0
 
 [node name="bullet" type="RigidBody2D"]
 collision_layer = 256
-collision_mask = 1103
+collision_mask = 1101
 mass = 0.01
 physics_material_override = SubResource("PhysicsMaterial_o0yht")
 gravity_scale = 0.05
 continuous_cd = 1
-linear_velocity = Vector2(750, 0)
+linear_velocity = Vector2(600, 0)
 script = ExtResource("1_v380p")
 _maxLifetime = 3.0
 _maxDistance = 1000.0
-_minVelocity = 500.0
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.032, 0.016)
+scale = Vector2(0.016, 0.008)
 texture = ExtResource("1_25k7w")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

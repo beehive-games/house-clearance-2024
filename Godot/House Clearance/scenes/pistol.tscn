@@ -19,4 +19,4 @@ _spreadAngle = 5.0
 position = Vector2(-64, -27)
 
 [node name="muzzle_vfx" type="Node2D" parent="."]
-position = Vector2(64, 1)
+position = Vector2(66.6667, 0)

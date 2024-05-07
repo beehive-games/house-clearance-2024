@@ -75,8 +75,8 @@ unique_name_in_owner = true
 position = Vector2(0, -1)
 _speed = 200.0
 _jumpVelocity = -250.0
-_slideFriction = 20.0
-_slideBoost = 400.0
+_slideFriction = 15.0
+_slideBoost = 300.0
 _fallAutoSlideVelocity = 500.0
 
 [node name="pistol" parent="player/WeaponRig/root/left_hand" index="0" instance=ExtResource("4_tmtdc")]

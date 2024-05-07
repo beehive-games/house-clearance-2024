@@ -26,8 +26,8 @@ public partial class PlayerMovement : CharacterBody2D
 	private bool _slideFromAFall;
 	private Skeleton2D _weaponRig;
 	private Gun _gun;
-	private AnimatedSprite2D _spriteNodePath;
-	
+	public AnimatedSprite2D spriteNodePath;
+	private float _widthHalf;
 	private void SlidePlayer(ref Vector2 velocity, bool boost)
 	{
 		
@@ -38,7 +38,7 @@ public partial class PlayerMovement : CharacterBody2D
 		
 		if (Mathf.IsEqualApprox(velocity.X, 0f) && boost)
 		{
-			velocity.X = _spriteNodePath.FlipH ? -_speed : _speed;
+			velocity.X = spriteNodePath.FlipH ? -_speed : _speed;
 		}
 		
 		float dir = velocity.X < 0f ? -1f : 1f;
@@ -50,7 +50,7 @@ public partial class PlayerMovement : CharacterBody2D
 		if (!IsOnFloor()) return;
 		
 		_moveState = MoveState.Slide;
-		_spriteNodePath.Animation = "slide";
+		spriteNodePath.Animation = "slide";
 	}
 	
 	private void MovePlayer(float direction, ref Vector2 velocity)
@@ -58,17 +58,17 @@ public partial class PlayerMovement : CharacterBody2D
 		velocity.X = direction * _speed;
 		if(Math.Abs(Mathf.Sign(direction) - _previousDirection) > 0.001f && Mathf.Abs(direction) > 0.0001f)
 		{
-			_spriteNodePath.FlipH = direction < 0f;
+			spriteNodePath.FlipH = direction < 0f;
 		}
 
 		if (_weaponRig != null)
 		{
-			_weaponRig.Scale = new Vector2(Scale.X * (_spriteNodePath.FlipH ? -1 : 1), Scale.Y);
+			_weaponRig.Scale = new Vector2(Scale.X * (spriteNodePath.FlipH ? -1 : 1), Scale.Y);
 		}
 		
 		if(IsOnFloor())
 		{
-			_spriteNodePath.Animation = "run";
+			spriteNodePath.Animation = "run";
 		}
 		_moveState = MoveState.Move;
 	}
@@ -78,7 +78,7 @@ public partial class PlayerMovement : CharacterBody2D
 		velocity.X = Mathf.MoveToward(velocity.X, 0, _speed);
 		if(IsOnFloor())
 		{
-			_spriteNodePath.Animation = "idle";
+			spriteNodePath.Animation = "idle";
 		}
 		if (_moveState != MoveState.Cover)
 		{
@@ -100,16 +100,25 @@ public partial class PlayerMovement : CharacterBody2D
 	private void PlayerInAir()
 	{
 		_moveState = MoveState.Fall;
-		_spriteNodePath.Animation = "jump";
+		spriteNodePath.Animation = "jump";
 	}
 
-	public void HitCover()
+	public void HitCover(float xPos = 0f)
 	{
 		if(_moveState == MoveState.Slide)
 		{
 			_moveState = MoveState.Cover;
 			_waitOnInputRelease = true;
 			_queueSliding = false;
+			var velocity = Velocity;
+			velocity.X = 0;
+			Velocity = velocity;
+			StopPlayer(ref velocity);
+
+			var position = GlobalPosition;
+			position.X = xPos + (spriteNodePath.FlipH ? _widthHalf : -_widthHalf);
+			GlobalPosition = position;
+			MoveAndSlide();
 		}
 	}
 
@@ -130,7 +139,7 @@ public partial class PlayerMovement : CharacterBody2D
 	{
 		_moveState = MoveState.Dead;
 		if(fall)
-			_spriteNodePath.Animation = "dead_fall";
+			spriteNodePath.Animation = "dead_fall";
 	}
 
 	private bool PlayerIsDead(ref Vector2 velocity)
@@ -148,10 +157,12 @@ public partial class PlayerMovement : CharacterBody2D
 
 	public override void _Ready()
 	{
-		_spriteNodePath = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
+		spriteNodePath = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
 		_gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle() * _gravityMultiplier;
 		_weaponRig = GetNodeOrNull<Skeleton2D>("WeaponRig");
 		_gun = (Gun)GetNodeOrNull<Sprite2D>("WeaponRig/root/left_hand/pistol");
+		var shape = GetNodeOrNull<CollisionShape2D>("MovementCollider");
+		if(shape != null) _widthHalf = 0.5f * shape.Shape.GetRect().Size.X;
 	}
 	
 	public override void _PhysicsProcess(double delta)
@@ -201,8 +212,9 @@ public partial class PlayerMovement : CharacterBody2D
 		}
 		
 		// As good practice, you should replace UI actions with custom gameplay actions.
-		Vector2 direction = Input.GetVector("ui_left", "ui_right", "ui_down", "ui_up");
-		
+		float dX = Input.GetAxis("ui_left", "ui_right");
+		float dY = Input.GetAxis("ui_down", "ui_up");
+		Vector2 direction = new Vector2(dX, dY);
 		if (_slideFromAFall)
 		{
 			direction.X = 0f;
@@ -304,20 +316,20 @@ public partial class PlayerMovement : CharacterBody2D
 		_previousDirection = Mathf.Round(direction.X);
 		
 		// Handle in-cover sprite visual changes.
-		Vector2 position = _spriteNodePath.Position;
+		Vector2 position = spriteNodePath.Position;
 		if (_moveState == MoveState.Cover)
 		{
-			_spriteNodePath.Modulate = new Color(0.5f, 0.5f, 0.5f);
+			spriteNodePath.Modulate = new Color(0.5f, 0.5f, 0.5f);
 			position.Y = -20f;
 		}
 		else
 		{
-			_spriteNodePath.Modulate = new Color(1f, 1f, 1f);
+			spriteNodePath.Modulate = new Color(1f, 1f, 1f);
 			position.Y = -16f;
 		}
 
 		// Update player positions, etc.
-		_spriteNodePath.Position = position;
+		spriteNodePath.Position = position;
 		Velocity = velocity;
 		
 		MoveAndSlide();
@@ -332,7 +344,7 @@ public partial class PlayerMovement : CharacterBody2D
 			else if (Mathf.Abs(velocity.Y) > Mathf.Abs(_fallAutoSlideVelocity))
 			{
 				_moveState = MoveState.Slide;
-				float facingDirection = _spriteNodePath.FlipH ? -1f : 1f;
+				float facingDirection = spriteNodePath.FlipH ? -1f : 1f;
 				
 				float autoSlideVelocity = velocity.Y / 4f * facingDirection;
 				float autoSlideMagnitude = Mathf.Abs(autoSlideVelocity);
