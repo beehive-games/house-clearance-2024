@@ -9,6 +9,7 @@ public partial class PlayerMovement : CharacterBody2D
 	[Export] private float _speed = 100.0f;
 	[Export] private float _jumpVelocity = -250.0f;
 	[Export] private float _slideFriction = 1.0f;
+	[Export] private float _slideBoost = 100.0f;
 	[Export] private float _gravityMultiplier = 1.0f;
 	[Export] private float _fallAutoSlideVelocity = 500.0f;
 	[Export] private float _fallDeathVelocity = 750.0f;
@@ -19,14 +20,24 @@ public partial class PlayerMovement : CharacterBody2D
 	private bool _queueSliding;
 	private float _previousDirection;
 	private bool _waitOnInputRelease;
+	private bool _waitOnSlideRelease;
 	private bool _slideFromAFall;
 	private Skeleton2D _weaponRig;
 	private Gun _gun;
 	private AnimatedSprite2D _spriteNodePath;
 	
-	private void SlidePlayer(ref Vector2 velocity)
+	private void SlidePlayer(ref Vector2 velocity, bool boost)
 	{
-		velocity.X = Mathf.MoveToward(Velocity.X, 0f, _slideFriction);
+		if (Mathf.IsEqualApprox(velocity.X, 0f) && boost)
+		{
+			velocity.X = _spriteNodePath.FlipH ? -_speed : _speed;
+		}
+		
+		float dir = velocity.X < 0f ? -1f : 1f;
+		
+		velocity.X = velocity.X + (boost ? dir * _slideBoost : 0f) - (_slideFriction * dir);
+		
+		velocity.X = (dir < 0f && velocity.X > 0f) ? 0f : (dir > 0f && velocity.X < 0f) ? 0f : velocity.X;
 		
 		if (!IsOnFloor()) return;
 		
@@ -188,14 +199,29 @@ public partial class PlayerMovement : CharacterBody2D
 		}
 		
 		//Handle sliding.
+		bool slideBoost = false;
 		if (direction.Y < 0f)
 		{
-			_queueSliding = _moveState != MoveState.Cover;
+			if (!_waitOnSlideRelease && _waitOnInputRelease)
+			{
+				_waitOnInputRelease = false;
+			}
+			_queueSliding = !_waitOnInputRelease && !_waitOnSlideRelease;
+			
+			slideBoost = (_moveState == MoveState.Move || _moveState == MoveState.Idle) && !_waitOnSlideRelease;
+			if (slideBoost)
+			{
+				_waitOnSlideRelease = true;
+			}
 		}
 		else
 		{
 			//Handle in-cover.
 			//We want to remain in cover until you have released and re-pressed a move button.
+			if (_waitOnSlideRelease)
+			{
+				_waitOnSlideRelease = false;
+			}
 			if (_waitOnInputRelease)
 			{
 				if (Mathf.Abs(direction.X) < 0.0001f)
@@ -222,12 +248,12 @@ public partial class PlayerMovement : CharacterBody2D
 				}
 				else
 				{
-					SlidePlayer(ref velocity);
+					SlidePlayer(ref velocity, slideBoost);
 				}
 			}
 			else
 			{
-				SlidePlayer(ref velocity);
+				SlidePlayer(ref velocity, slideBoost);
 			}
 		}
 		else
@@ -298,7 +324,7 @@ public partial class PlayerMovement : CharacterBody2D
 				float autoSlideMagnitude = Mathf.Abs(autoSlideVelocity);
 				if (autoSlideMagnitude > Mathf.Abs(velocity.X))
 				{
-					velocity.X = autoSlideVelocity;
+					velocity.X = autoSlideVelocity + (facingDirection * _slideBoost);
 				}
 				
 				Debug.WriteLine("slide! autoSlideVelocity:" + autoSlideVelocity +" v: " + velocity.X+"," + velocity.Y);

@@ -71,7 +71,7 @@ collision_mask = 253
 script = ExtResource("1_eqdg7")
 _speed = 150.0
 _jumpVelocity = -300.0
-_slideFriction = 0.8
+_slideFriction = 1000.0
 _fallAutoSlideVelocity = 600.0
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]

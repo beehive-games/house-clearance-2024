@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://qh041f5soa5i"]
+[gd_scene load_steps=13 format=3 uid="uid://qh041f5soa5i"]
 
 [ext_resource type="PackedScene" uid="uid://scggt4wfk616" path="res://scenes/player.tscn" id="1_74v3a"]
 [ext_resource type="Texture2D" uid="uid://b0jndy5bivtx" path="res://assets/sprites/environment/tilemaps/placeholder/BasicTileset.tga" id="1_wcuoi"]
@@ -38,6 +38,9 @@ size = Vector2(509, 31)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_68ci1"]
 size = Vector2(256, 28)
 
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_qafg8"]
+friction = 10000.0
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5e8ne"]
 size = Vector2(767, 28)
 
@@ -72,7 +75,8 @@ unique_name_in_owner = true
 position = Vector2(0, -1)
 _speed = 100.0
 _jumpVelocity = -250.0
-_slideFriction = 1.0
+_slideFriction = 12.0
+_slideBoost = 250.0
 _fallAutoSlideVelocity = 500.0
 
 [node name="pistol" parent="player/WeaponRig/root/left_hand" index="0" instance=ExtResource("4_tmtdc")]
@@ -110,6 +114,7 @@ shape = SubResource("RectangleShape2D_68ci1")
 
 [node name="StaticBody2D2" type="StaticBody2D" parent="."]
 position = Vector2(0, 10)
+physics_material_override = SubResource("PhysicsMaterial_qafg8")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D2"]
 position = Vector2(-0.5, 4)
