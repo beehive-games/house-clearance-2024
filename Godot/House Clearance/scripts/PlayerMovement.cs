@@ -10,6 +10,7 @@ public partial class PlayerMovement : CharacterBody2D
 	[Export] private float _jumpVelocity = -250.0f;
 	[Export] private float _slideFriction = 1.0f;
 	[Export] private float _slideBoost = 100.0f;
+	[Export] private float _slideCooldown = 1.0f;
 	[Export] private float _gravityMultiplier = 1.0f;
 	[Export] private float _fallAutoSlideVelocity = 500.0f;
 	[Export] private float _fallDeathVelocity = 750.0f;
@@ -18,6 +19,7 @@ public partial class PlayerMovement : CharacterBody2D
 	private MoveState _moveState = MoveState.Idle;
 	private float _gravity = -9.81f;
 	private bool _queueSliding;
+	private float _slideCooldownTimer = 0f;
 	private float _previousDirection;
 	private bool _waitOnInputRelease;
 	private bool _waitOnSlideRelease;
@@ -28,6 +30,12 @@ public partial class PlayerMovement : CharacterBody2D
 	
 	private void SlidePlayer(ref Vector2 velocity, bool boost)
 	{
+		
+		if (boost)
+		{
+			_slideCooldownTimer = 0f;
+		}
+		
 		if (Mathf.IsEqualApprox(velocity.X, 0f) && boost)
 		{
 			velocity.X = _spriteNodePath.FlipH ? -_speed : _speed;
@@ -155,9 +163,11 @@ public partial class PlayerMovement : CharacterBody2D
 			return;
 		}
 
+		_slideCooldownTimer += (float)delta;
+
 		// OK, this isn't movement, BUT we need to tie firing abilities
 		// into movement state
-		if (_moveState is MoveState.Cover or MoveState.Dead)
+		if (_moveState is MoveState.Cover or MoveState.Dead or MoveState.Slide)
 		{
 			StopFiring();
 		}
@@ -220,7 +230,11 @@ public partial class PlayerMovement : CharacterBody2D
 			//We want to remain in cover until you have released and re-pressed a move button.
 			if (_waitOnSlideRelease)
 			{
-				_waitOnSlideRelease = false;
+				if (_slideCooldownTimer >= _slideCooldown)
+				{
+					_waitOnSlideRelease = false;
+					_slideCooldownTimer = 0f;
+				}
 			}
 			if (_waitOnInputRelease)
 			{
@@ -324,11 +338,10 @@ public partial class PlayerMovement : CharacterBody2D
 				float autoSlideMagnitude = Mathf.Abs(autoSlideVelocity);
 				if (autoSlideMagnitude > Mathf.Abs(velocity.X))
 				{
-					velocity.X = autoSlideVelocity + (facingDirection * _slideBoost);
+					velocity.X = autoSlideVelocity;
 				}
-				
-				Debug.WriteLine("slide! autoSlideVelocity:" + autoSlideVelocity +" v: " + velocity.X+"," + velocity.Y);
-				Debug.WriteLine("    : Mathf.Abs(velocity.Y)" + Mathf.Abs(velocity.Y) +" Mathf.Abs(_fallAutoSlideVelocity) " + Mathf.Abs(_fallAutoSlideVelocity));
+
+				velocity.X += facingDirection * _slideBoost;
 				Velocity = velocity;
 				_waitOnInputRelease = true;
 				_slideFromAFall = true;
