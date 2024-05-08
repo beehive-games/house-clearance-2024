@@ -1,8 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://scggt4wfk616"]
+[gd_scene load_steps=6 format=3 uid="uid://eo8wu2rosx6"]
 
-[ext_resource type="Script" path="res://scripts/PlayerMovement.cs" id="1_eqdg7"]
-[ext_resource type="SpriteFrames" uid="uid://b3jj67kwcnvyf" path="res://assets/sprites/characters/debug/animations.tres" id="2_em4s7"]
-[ext_resource type="Script" path="res://scripts/HitBox.cs" id="6_8prp1"]
+[ext_resource type="Script" path="res://scripts/NpcMovement.cs" id="1_n62in"]
+[ext_resource type="SpriteFrames" uid="uid://b3jj67kwcnvyf" path="res://assets/sprites/characters/debug/animations.tres" id="2_xikp1"]
+[ext_resource type="Script" path="res://scripts/HitBox.cs" id="3_vo3hh"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1kfex"]
 radius = 7.0
@@ -14,15 +14,12 @@ size = Vector2(8, 26)
 [node name="CharacterBody2D" type="CharacterBody2D"]
 collision_layer = 2
 collision_mask = 253
-script = ExtResource("1_eqdg7")
-_speed = 150.0
-_jumpVelocity = -300.0
-_slideFriction = 1000.0
-_fallAutoSlideVelocity = 600.0
+script = ExtResource("1_n62in")
+_speed = 1.0
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(0, -16)
-sprite_frames = ExtResource("2_em4s7")
+sprite_frames = ExtResource("2_xikp1")
 animation = &"idle"
 autoplay = "idle"
 
@@ -35,7 +32,7 @@ one_way_collision_margin = 0.5
 position = Vector2(0, -13)
 collision_layer = 1024
 collision_mask = 768
-script = ExtResource("6_8prp1")
+script = ExtResource("3_vo3hh")
 
 [node name="HitBox" type="CollisionShape2D" parent="Area2D"]
 shape = SubResource("RectangleShape2D_sovmg")
@@ -56,3 +53,6 @@ rest = Transform2D(-4.37114e-08, 1, -1, -4.37114e-08, 11, 5)
 position = Vector2(11, -6)
 rotation = -3.14159
 rest = Transform2D(-1, -1.50996e-07, 1.50996e-07, -1, 11, -6)
+
+[connection signal="body_entered" from="Area2D" to="Area2D" method="_on_body_entered"]
+[connection signal="body_exited" from="Area2D" to="Area2D" method="_on_body_exited"]

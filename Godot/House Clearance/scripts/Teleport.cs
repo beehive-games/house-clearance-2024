@@ -9,9 +9,7 @@ public partial class Teleport : Area2D
 	[Export] public float TeleportTime = 1f;
 	private void _on_body_entered(Node2D body)
 	{
-
 		if (body is not PlayerMovement playerMovement) return;
-	
 		playerMovement.HitTeleport(this);
 	}
 

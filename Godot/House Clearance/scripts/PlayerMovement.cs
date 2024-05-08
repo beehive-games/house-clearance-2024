@@ -14,6 +14,8 @@ public partial class PlayerMovement : CharacterBody2D
 	[Export] private float _gravityMultiplier = 1.0f;
 	[Export] private float _fallAutoSlideVelocity = 500.0f;
 	[Export] private float _fallDeathVelocity = 750.0f;
+	[Export] private float _spriteDarkenCover = 0.5f;
+	[Export] private float _spriteDarkenTeleport = 0.75f;
 
 	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
 	private MoveState _moveState = MoveState.Idle;
@@ -155,6 +157,14 @@ public partial class PlayerMovement : CharacterBody2D
 		_gun?.EnableFiring();
 	}
 	
+	public void Hit(Projectile projectile, Vector2 direction)
+	{
+		Vector2 velocity = Velocity;
+		velocity += projectile.HitForce * direction;
+		Velocity = velocity;
+		
+	}
+	
 	public void Kill(bool fall = true)
 	{
 		_moveState = MoveState.Dead;
@@ -177,14 +187,18 @@ public partial class PlayerMovement : CharacterBody2D
 	
 	public void HitTeleport(Teleport teleport)
 	{
-		Debug.WriteLine("Hit a teleport area at "+teleport.GlobalPosition);
+		SpriteNodePath.Modulate = new Color(_spriteDarkenTeleport,_spriteDarkenTeleport,_spriteDarkenTeleport);
 		_activeTeleport = teleport;
 	}
 
 	public void ExitTeleport()
 	{
-		Debug.WriteLine("Left a teleport area");
-		_activeTeleport = null;
+		if (!_isTeleporting)
+		{
+			_activeTeleport = null;
+			SpriteNodePath.Modulate = new Color(1f, 1f, 1f);
+
+		}
 	}
 
 	public override void _Ready()
@@ -221,14 +235,14 @@ public partial class PlayerMovement : CharacterBody2D
 			if (_teleportTimer >= _teleportWaitTime)
 			{
 				_isTeleporting = false;
-				SpriteNodePath.Modulate = new Color(1,1,1);
+				SpriteNodePath.Modulate = new Color(_spriteDarkenTeleport,_spriteDarkenTeleport,_spriteDarkenTeleport);
 				_movementCollider?.SetDeferred("disabled", false);
 				StartFiring();
 			}
 
 			var transitionAmount = (1f / _teleportWaitTime) * _teleportTimer;
 			var lerpVal = Mathf.Sin(Mathf.DegToRad(transitionAmount) * 180 );
-			var col = new Color(1, 1, 1);
+			var col = new Color(_spriteDarkenTeleport, _spriteDarkenTeleport, _spriteDarkenTeleport);
 			SpriteNodePath.Modulate = new Color(col * ( 1- lerpVal));
 
 			return;
@@ -406,12 +420,13 @@ public partial class PlayerMovement : CharacterBody2D
 		Vector2 position = SpriteNodePath.Position;
 		if (_moveState == MoveState.Cover)
 		{
-			SpriteNodePath.Modulate = new Color(0.5f, 0.5f, 0.5f);
+			SpriteNodePath.Modulate = new Color(_spriteDarkenCover, _spriteDarkenCover, _spriteDarkenCover);
 			position.Y = -20f;
 		}
 		else
 		{
-			SpriteNodePath.Modulate = new Color(1f, 1f, 1f);
+			float col = _activeTeleport == null ? 1 : _spriteDarkenTeleport;
+			SpriteNodePath.Modulate = new Color(col, col, col);
 			position.Y = -16f;
 		}
 

@@ -22,6 +22,7 @@ linear_velocity = Vector2(600, 0)
 script = ExtResource("1_v380p")
 _maxLifetime = 3.0
 _maxDistance = 1000.0
+HitForce = 300.0
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(0.016, 0.008)
@@ -30,3 +31,5 @@ texture = ExtResource("1_25k7w")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 rotation = 1.5708
 shape = SubResource("CapsuleShape2D_iqpfx")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

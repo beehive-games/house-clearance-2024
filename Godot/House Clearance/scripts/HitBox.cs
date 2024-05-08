@@ -11,9 +11,39 @@ public partial class HitBox : Area2D
 	{
 	}
 
+	public void TakeDamage(float damage)
+	{
+		_health -= damage;
+		if (_health <= 0f)
+		{
+			Debug.WriteLine("Damage taken - person is dead!");
+		}
+	}
+
 	private void _on_body_entered(Node2D body)
 	{
 		Debug.WriteLine("Body entered a hitbox!");
+		Projectile projectile = (Projectile)body;
+		if (projectile != null)
+		{
+			TakeDamage(projectile.Damage);
+			Vector2 direction = (GlobalPosition - body.GlobalPosition).Normalized();
+			
+			NpcMovement npcMovement = GetNodeOrNull<NpcMovement>("../../CharacterBody2D");
+			PlayerMovement playerMovement = GetNodeOrNull<PlayerMovement>("../../CharacterBody2D");
+			
+			if (npcMovement != null)
+			{
+				npcMovement.Hit(projectile, -direction );
+			}
+			else
+			{
+				playerMovement?.Hit(projectile, -direction );
+			}
+		}
+
+		
+
 		// 1: Get body type - i.e. AOE or bullet
 		// 2: If Bullet:
 		//	2a: Get bullet damage amount

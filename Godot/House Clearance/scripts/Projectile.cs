@@ -9,6 +9,8 @@ public partial class Projectile : RigidBody2D
 	[Export] private float _maxLifetime = 1f;
 	[Export] private float _maxDistance = 50f;
 	[Export] private float _minVelocity = 20f;
+	[Export] public float HitForce = 20f;
+	[Export] public float Damage = 20f;
 
 	private Vector2 _startPos;
 	private float _countdown;
@@ -25,6 +27,11 @@ public partial class Projectile : RigidBody2D
 		return Mathf.Abs(Mathf.Sqrt(x + y));
 	}
 
+	public void Kill()
+	{
+		QueueFree();
+	}
+
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
@@ -32,7 +39,7 @@ public partial class Projectile : RigidBody2D
 		var distance = Distance(GlobalPosition, _startPos);
 		if (distance > _maxDistance || _countdown <= 0f || Mathf.Abs(LinearVelocity.X) < _minVelocity)
 		{
-			QueueFree();
+			Kill();
 		}
 		else
 		{
