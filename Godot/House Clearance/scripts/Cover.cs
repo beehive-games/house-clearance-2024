@@ -12,7 +12,7 @@ public partial class Cover : Area2D
 		
 		var shape = GetNode<CollisionShape2D>("CollisionShape2D");
 		var widthHalf = 0.5f * shape.Shape.GetRect().Size.X;
-		var direction = playerMovement.spriteNodePath.FlipH;
+		var direction = playerMovement.SpriteNodePath.FlipH;
 		var finalOffset = (GlobalPosition.X) + (direction ? widthHalf : -widthHalf);
 		
 		playerMovement.HitCover(finalOffset);

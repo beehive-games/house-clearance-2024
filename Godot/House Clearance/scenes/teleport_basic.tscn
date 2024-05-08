@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://b4wy0xxf3dhdn"]
+
+[ext_resource type="Script" path="res://scripts/Teleport.cs" id="1_18jin"]
+[ext_resource type="Texture2D" uid="uid://b0jndy5bivtx" path="res://assets/sprites/environment/tilemaps/placeholder/BasicTileset.tga" id="2_nn2oi"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vvv4a"]
+size = Vector2(32, 64)
+
+[node name="Area2D" type="Area2D"]
+collision_layer = 32
+collision_mask = 6
+script = ExtResource("1_18jin")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -32)
+shape = SubResource("RectangleShape2D_vvv4a")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -20)
+texture = ExtResource("2_nn2oi")
+region_enabled = true
+region_rect = Rect2(0.341843, 140.927, 31.4186, 40.2978)
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

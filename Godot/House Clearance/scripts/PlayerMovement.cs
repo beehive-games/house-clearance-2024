@@ -23,11 +23,18 @@ public partial class PlayerMovement : CharacterBody2D
 	private float _previousDirection;
 	private bool _waitOnInputRelease;
 	private bool _waitOnSlideRelease;
+	private bool _waitOnTeleportRelease;
 	private bool _slideFromAFall;
 	private Skeleton2D _weaponRig;
 	private Gun _gun;
-	public AnimatedSprite2D spriteNodePath;
+	public AnimatedSprite2D SpriteNodePath;
 	private float _widthHalf;
+	private Teleport _activeTeleport;
+	private float _teleportTimer;
+	private float _teleportWaitTime;
+	private bool _isTeleporting;
+	private CollisionShape2D _movementCollider;
+	
 	private void SlidePlayer(ref Vector2 velocity, bool boost)
 	{
 		
@@ -38,7 +45,7 @@ public partial class PlayerMovement : CharacterBody2D
 		
 		if (Mathf.IsEqualApprox(velocity.X, 0f) && boost)
 		{
-			velocity.X = spriteNodePath.FlipH ? -_speed : _speed;
+			velocity.X = SpriteNodePath.FlipH ? -_speed : _speed;
 		}
 		
 		float dir = velocity.X < 0f ? -1f : 1f;
@@ -50,7 +57,7 @@ public partial class PlayerMovement : CharacterBody2D
 		if (!IsOnFloor()) return;
 		
 		_moveState = MoveState.Slide;
-		spriteNodePath.Animation = "slide";
+		SpriteNodePath.Animation = "slide";
 	}
 	
 	private void MovePlayer(float direction, ref Vector2 velocity)
@@ -58,19 +65,29 @@ public partial class PlayerMovement : CharacterBody2D
 		velocity.X = direction * _speed;
 		if(Math.Abs(Mathf.Sign(direction) - _previousDirection) > 0.001f && Mathf.Abs(direction) > 0.0001f)
 		{
-			spriteNodePath.FlipH = direction < 0f;
+			SpriteNodePath.FlipH = direction < 0f;
 		}
 
 		if (_weaponRig != null)
 		{
-			_weaponRig.Scale = new Vector2(Scale.X * (spriteNodePath.FlipH ? -1 : 1), Scale.Y);
+			_weaponRig.Scale = new Vector2(Scale.X * (SpriteNodePath.FlipH ? -1 : 1), Scale.Y);
 		}
 		
 		if(IsOnFloor())
 		{
-			spriteNodePath.Animation = "run";
+			SpriteNodePath.Animation = "run";
 		}
 		_moveState = MoveState.Move;
+	}
+
+	public bool InvulnerableProjectile()
+	{
+		return _isTeleporting || _moveState == MoveState.Cover;
+	}
+	
+	public bool InvulnerableAoe()
+	{
+		return false;
 	}
 	
 	private void StopPlayer(ref Vector2 velocity)
@@ -78,7 +95,7 @@ public partial class PlayerMovement : CharacterBody2D
 		velocity.X = Mathf.MoveToward(velocity.X, 0, _speed);
 		if(IsOnFloor())
 		{
-			spriteNodePath.Animation = "idle";
+			SpriteNodePath.Animation = "idle";
 		}
 		if (_moveState != MoveState.Cover)
 		{
@@ -94,13 +111,16 @@ public partial class PlayerMovement : CharacterBody2D
 	private void JumpPlayer(ref Vector2 velocity)
 	{
 		velocity.Y = _jumpVelocity;
+		_slideCooldownTimer = 0f;
+		_waitOnInputRelease = false;
+		_waitOnSlideRelease = false;
 		PlayerInAir();
 	}
 	
 	private void PlayerInAir()
 	{
 		_moveState = MoveState.Fall;
-		spriteNodePath.Animation = "jump";
+		SpriteNodePath.Animation = "jump";
 	}
 
 	public void HitCover(float xPos = 0f)
@@ -116,7 +136,7 @@ public partial class PlayerMovement : CharacterBody2D
 			StopPlayer(ref velocity);
 
 			var position = GlobalPosition;
-			position.X = xPos + (spriteNodePath.FlipH ? _widthHalf : -_widthHalf);
+			position.X = xPos + (SpriteNodePath.FlipH ? _widthHalf : -_widthHalf);
 			GlobalPosition = position;
 			MoveAndSlide();
 		}
@@ -139,7 +159,7 @@ public partial class PlayerMovement : CharacterBody2D
 	{
 		_moveState = MoveState.Dead;
 		if(fall)
-			spriteNodePath.Animation = "dead_fall";
+			SpriteNodePath.Animation = "dead_fall";
 	}
 
 	private bool PlayerIsDead(ref Vector2 velocity)
@@ -154,15 +174,28 @@ public partial class PlayerMovement : CharacterBody2D
 
 		return false;
 	}
+	
+	public void HitTeleport(Teleport teleport)
+	{
+		Debug.WriteLine("Hit a teleport area at "+teleport.GlobalPosition);
+		_activeTeleport = teleport;
+	}
+
+	public void ExitTeleport()
+	{
+		Debug.WriteLine("Left a teleport area");
+		_activeTeleport = null;
+	}
 
 	public override void _Ready()
 	{
-		spriteNodePath = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
+		SpriteNodePath = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
 		_gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle() * _gravityMultiplier;
 		_weaponRig = GetNodeOrNull<Skeleton2D>("WeaponRig");
 		_gun = (Gun)GetNodeOrNull<Sprite2D>("WeaponRig/root/left_hand/pistol");
 		var shape = GetNodeOrNull<CollisionShape2D>("MovementCollider");
 		if(shape != null) _widthHalf = 0.5f * shape.Shape.GetRect().Size.X;
+		_movementCollider = GetNodeOrNull<CollisionShape2D>("MovementCollider");
 	}
 	
 	public override void _PhysicsProcess(double delta)
@@ -173,6 +206,34 @@ public partial class PlayerMovement : CharacterBody2D
 			GetTree().ReloadCurrentScene();
 			return;
 		}
+
+		// Teleporting overrides all other input
+		if (_isTeleporting)
+		{
+			_teleportTimer += (float)delta;
+			
+			if (_teleportTimer >= 0.5 * _teleportWaitTime)
+			{
+				_movementCollider?.SetDeferred("disabled", true);
+				GlobalPosition = _activeTeleport.TeleportTo.GlobalPosition;
+			}
+			
+			if (_teleportTimer >= _teleportWaitTime)
+			{
+				_isTeleporting = false;
+				SpriteNodePath.Modulate = new Color(1,1,1);
+				_movementCollider?.SetDeferred("disabled", false);
+				StartFiring();
+			}
+
+			var transitionAmount = (1f / _teleportWaitTime) * _teleportTimer;
+			var lerpVal = Mathf.Sin(Mathf.DegToRad(transitionAmount) * 180 );
+			var col = new Color(1, 1, 1);
+			SpriteNodePath.Modulate = new Color(col * ( 1- lerpVal));
+
+			return;
+		}
+		
 
 		_slideCooldownTimer += (float)delta;
 
@@ -196,6 +257,30 @@ public partial class PlayerMovement : CharacterBody2D
 			velocity.Y += _gravity * (float)delta;
 			PlayerInAir();
 		}
+		else // can only teleport on the floor
+		{
+			bool teleportPressed = Input.IsActionPressed("teleport");
+
+			if (teleportPressed && _activeTeleport != null && !_isTeleporting && !_waitOnTeleportRelease)
+			{
+				if (_activeTeleport.TeleportTo != null)
+				{
+					_isTeleporting = true;
+					_teleportWaitTime = _activeTeleport.TeleportTime;
+					_teleportTimer = 0f;
+					_moveState = MoveState.Idle;
+					StopFiring();
+					StopPlayer(ref velocity);
+					_waitOnTeleportRelease = true;
+					return;
+				}
+			}
+
+			if (!teleportPressed && !_isTeleporting )
+			{
+				_waitOnTeleportRelease = false;
+			}
+		}
 		
 		// Handle Dead.
 		if (PlayerIsDead(ref velocity))
@@ -206,14 +291,16 @@ public partial class PlayerMovement : CharacterBody2D
 		}
 
 		// Handle Jump.
-		if (Input.IsActionJustPressed("ui_accept") && IsOnFloor() && !_slideFromAFall)
+		if (Input.IsActionJustPressed("jump") && IsOnFloor() && !_slideFromAFall)
 		{
 			JumpPlayer(ref velocity);
 		}
 		
 		// As good practice, you should replace UI actions with custom gameplay actions.
-		float dX = Input.GetAxis("ui_left", "ui_right");
-		float dY = Input.GetAxis("ui_down", "ui_up");
+		float dX = Input.GetAxis("move_left", "move_right");
+		float dY = Input.IsActionPressed("slide") ? 1 : 0; //Input.GetAxis("ui_down", "ui_up");
+		bool slidePressed = Input.IsActionPressed("slide");
+
 		Vector2 direction = new Vector2(dX, dY);
 		if (_slideFromAFall)
 		{
@@ -222,7 +309,7 @@ public partial class PlayerMovement : CharacterBody2D
 		
 		//Handle sliding.
 		bool slideBoost = false;
-		if (direction.Y < 0f)
+		if (slidePressed)
 		{
 			if (!_waitOnSlideRelease && _waitOnInputRelease)
 			{
@@ -316,20 +403,20 @@ public partial class PlayerMovement : CharacterBody2D
 		_previousDirection = Mathf.Round(direction.X);
 		
 		// Handle in-cover sprite visual changes.
-		Vector2 position = spriteNodePath.Position;
+		Vector2 position = SpriteNodePath.Position;
 		if (_moveState == MoveState.Cover)
 		{
-			spriteNodePath.Modulate = new Color(0.5f, 0.5f, 0.5f);
+			SpriteNodePath.Modulate = new Color(0.5f, 0.5f, 0.5f);
 			position.Y = -20f;
 		}
 		else
 		{
-			spriteNodePath.Modulate = new Color(1f, 1f, 1f);
+			SpriteNodePath.Modulate = new Color(1f, 1f, 1f);
 			position.Y = -16f;
 		}
 
 		// Update player positions, etc.
-		spriteNodePath.Position = position;
+		SpriteNodePath.Position = position;
 		Velocity = velocity;
 		
 		MoveAndSlide();
@@ -344,7 +431,7 @@ public partial class PlayerMovement : CharacterBody2D
 			else if (Mathf.Abs(velocity.Y) > Mathf.Abs(_fallAutoSlideVelocity))
 			{
 				_moveState = MoveState.Slide;
-				float facingDirection = spriteNodePath.FlipH ? -1f : 1f;
+				float facingDirection = SpriteNodePath.FlipH ? -1f : 1f;
 				
 				float autoSlideVelocity = velocity.Y / 4f * facingDirection;
 				float autoSlideMagnitude = Mathf.Abs(autoSlideVelocity);

@@ -68,7 +68,7 @@ public partial class Gun : Sprite2D
 		float d = (float)delta;
 		if (_count > _timeBetweenShots)
 		{
-			if (Input.IsActionPressed("ui_up"))
+			if (Input.IsActionPressed("fire1"))
 			{
 				if (!_preventShot)
 				{
