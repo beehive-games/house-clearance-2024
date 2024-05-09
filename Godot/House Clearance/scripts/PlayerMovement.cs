@@ -17,9 +17,12 @@ public partial class PlayerMovement : CharacterBody2D
 	[Export] private float _spriteDarkenCover = 0.5f;
 	[Export] private float _spriteDarkenTeleport = 0.75f;
 	[Export] private float _health = 100f;
+	
 
 	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
 	private MoveState _moveState = MoveState.Idle;
+	public enum DeadState { Fall, Shot, HeadShot };
+	private DeadState _deadState = DeadState.Fall;
 	private float _gravity = -9.81f;
 	private bool _queueSliding;
 	private float _slideCooldownTimer = 0f;
@@ -158,31 +161,40 @@ public partial class PlayerMovement : CharacterBody2D
 		_gun?.EnableFiring();
 	}
 	
-	public void Hit(Projectile projectile, Vector2 direction, float damage)
+	public void Hit(Projectile projectile, Vector2 direction, float damage, DeadState damagedBy)
 	{
+		if (_moveState == MoveState.Dead) return;
+
 		Vector2 velocity = Velocity;
 		velocity += projectile.HitForce * direction;
 		Velocity = velocity;
 		
 
-		TakeDamage(damage);
+		TakeDamage(damage, damagedBy);
 		projectile.Kill();
 	}
 		
-	private void TakeDamage(float damage)
+	private void TakeDamage(float damage, DeadState damagedBy)
 	{
 		_health -= damage;
 		if (_health <= 0f)
 		{
 			Debug.WriteLine("Damage taken - person is dead!");
-			Kill(false);
+			Kill(damagedBy);
 		}
 	}
-	public void Kill(bool fall = true)
+	public void Kill(DeadState killedBy)
 	{
 		_moveState = MoveState.Dead;
-		if(fall)
-			SpriteNodePath.Animation = "dead_fall";
+		switch (killedBy)
+		{
+			case DeadState.Fall :
+				SpriteNodePath.Animation = "dead_fall"; break;
+			case DeadState.Shot :
+				SpriteNodePath.Animation = "dead_shot"; break;
+			case DeadState.HeadShot :
+				SpriteNodePath.Animation = "dead_headshot";break;
+		}
 	}
 
 	private bool PlayerIsDead(ref Vector2 velocity)
@@ -454,7 +466,7 @@ public partial class PlayerMovement : CharacterBody2D
 		{
 			if (velocity.Y > _fallDeathVelocity)
 			{
-				Kill();
+				Kill(DeadState.Fall);
 			}
 			else if (Mathf.Abs(velocity.Y) > Mathf.Abs(_fallAutoSlideVelocity))
 			{

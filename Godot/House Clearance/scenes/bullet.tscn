@@ -30,7 +30,7 @@ script = ExtResource("1_v380p")
 _maxLifetime = 3.0
 _maxDistance = 1000.0
 _minVelocity = 100.0
-HitForce = 200.0
+HitForce = 75.0
 HitVfx = ExtResource("3_tv2ye")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]

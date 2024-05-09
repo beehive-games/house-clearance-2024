@@ -6,6 +6,7 @@ namespace HouseClearance.scripts;
 public partial class HitBox : Area2D
 {
 	[Export] private float _damageMultiplier = 1f;
+	[Export] private bool _isHead = false;
 
 	private NpcMovement _npcMovement;
 	private PlayerMovement _playerMovement;
@@ -13,8 +14,14 @@ public partial class HitBox : Area2D
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		_npcMovement = GetNodeOrNull<NpcMovement>("../../CharacterBody2D");
-		_playerMovement = GetNodeOrNull<PlayerMovement>("../../CharacterBody2D");
+		var parent = GetParent<CharacterBody2D>();
+
+		_npcMovement = parent as NpcMovement;// GetNodeOrNull<NpcMovement>("../../CharacterBody2D");
+		_playerMovement = parent as PlayerMovement;//GetNodeOrNull<PlayerMovement>("../../CharacterBody2D");
+		if (_npcMovement == null && _playerMovement == null)
+		{
+			Debug.WriteLine("no movement not found on "+parent.Name);
+		}
 	}
 
 	private void _on_body_entered(Node2D body)
@@ -37,11 +44,11 @@ public partial class HitBox : Area2D
 
 			if (_npcMovement != null)
 			{
-				_npcMovement.Hit(projectile, -direction, projectile.Damage * _damageMultiplier);
+				_npcMovement.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? NpcMovement.DeadState.HeadShot : NpcMovement.DeadState.Shot);
 			}
 			else
 			{
-				_playerMovement?.Hit(projectile, -direction, projectile.Damage * _damageMultiplier);
+				_playerMovement?.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? PlayerMovement.DeadState.HeadShot : PlayerMovement.DeadState.Shot);
 			}
 		}
 	}

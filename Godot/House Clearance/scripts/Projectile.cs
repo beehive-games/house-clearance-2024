@@ -30,6 +30,8 @@ public partial class Projectile : RigidBody2D
 			_trailRenderer.StartPosition = firePos;
 			_trailRenderer.MaxVelocity = LinearVelocity.X;
 		}
+
+		_startPos = GlobalPosition;
 	}
 
 	private float Distance(Vector2 a, Vector2 b)
@@ -48,7 +50,8 @@ public partial class Projectile : RigidBody2D
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		var distance = Distance(GlobalPosition, _startPos);
+		
+		var distance = GlobalPosition.DistanceTo(_startPos);
 		if (distance > _maxDistance || _countdown <= 0f || Mathf.Abs(LinearVelocity.X) < _minVelocity)
 		{
 			Kill();

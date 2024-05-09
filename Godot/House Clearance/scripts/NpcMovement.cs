@@ -12,44 +12,61 @@ public partial class NpcMovement : CharacterBody2D
 	[Export] private float _patrolRadius = 200.0f;	// How far will NPC patrol from spawn location
 	[Export] private bool _canTeleport;					// Will the NPC go through teleport locations when pursuing
 	[Export] private float _health = 100f;
+	public AnimatedSprite2D SpriteNodePath;
+
 	
 	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
-
 	private MoveState _moveState = MoveState.Idle;
+	public enum DeadState { Fall, Shot, HeadShot };
+	private DeadState _deadState = DeadState.Fall;
 	
 
 	// Get the gravity from the project settings to be synced with RigidBody nodes.
 	private float _gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle();
 	
-	public void Hit(Projectile projectile, Vector2 direction, float damage)
+	public void Hit(Projectile projectile, Vector2 direction, float damage, DeadState damagedBy)
 	{
+		if (_moveState == MoveState.Dead) return;
 		Vector2 velocity = Velocity;
 		velocity += projectile.HitForce * direction;
 		Velocity = velocity;
 		MoveAndSlide();
 		Debug.WriteLine("Hit! "+Velocity +", "+damage);
-		TakeDamage(damage);
+		TakeDamage(damage, damagedBy);
 		projectile.Kill();
-		Kill();
+		
 	}
 
-	private void Kill()
+	private void Kill(DeadState killedBy)
 	{
 		_moveState = MoveState.Dead;
+		if (SpriteNodePath != null)
+		{
+			switch (killedBy)
+			{
+				case DeadState.Fall :
+					SpriteNodePath.Animation = "dead_fall"; break;
+				case DeadState.Shot :
+					SpriteNodePath.Animation = "dead_shot"; break;
+				case DeadState.HeadShot :
+					SpriteNodePath.Animation = "dead_headshot";break;
+			}
+		}
 	}
 	
-	private void TakeDamage(float damage)
+	private void TakeDamage(float damage, DeadState damagedBy)
 	{
 		_health -= damage;
 		if (_health <= 0f)
 		{
 			Debug.WriteLine("Damage taken - person is dead!");
+			Kill(damagedBy);
 		}
 	}
 
 	public override void _Ready()
 	{
-		
+		SpriteNodePath = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
 	}
 	
 	public override void _PhysicsProcess(double delta)
