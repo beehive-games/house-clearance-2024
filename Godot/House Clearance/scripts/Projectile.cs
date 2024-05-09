@@ -11,8 +11,9 @@ public partial class Projectile : RigidBody2D
 	[Export] private float _minVelocity = 20f;
 	[Export] public float HitForce = 20f;
 	[Export] public float Damage = 20f;
+	[Export] public PackedScene HitVfx;
 
-	public Vector2 StartPos;
+	private Vector2 _startPos;
 	private TrailRenderer _trailRenderer;
 	private float _countdown;
 	public override void _Ready()
@@ -47,7 +48,7 @@ public partial class Projectile : RigidBody2D
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		var distance = Distance(GlobalPosition, StartPos);
+		var distance = Distance(GlobalPosition, _startPos);
 		if (distance > _maxDistance || _countdown <= 0f || Mathf.Abs(LinearVelocity.X) < _minVelocity)
 		{
 			Kill();

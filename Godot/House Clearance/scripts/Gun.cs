@@ -15,7 +15,8 @@ public partial class Gun : Sprite2D
 	[Export] private Node2D _ejectionPosition;
 	[Export] private float _shotsPerMinute = 500f;
 	[Export] private float _spreadAngle = 20f;
-
+	[Export] private float _magazineCapacity = 20f;
+	
 	private CpuParticles2D _fireVfxAsset;
 	private CpuParticles2D _shellVfxAsset;
 	private bool _preventShot;

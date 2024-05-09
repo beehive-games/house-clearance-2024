@@ -12,11 +12,13 @@ script = ExtResource("1_kdpie")
 _projectile = ExtResource("3_mudef")
 _muzzlePosition = NodePath("muzzle_vfx")
 _ejectionPosition = NodePath("ejection_vfx")
-_shotsPerMinute = 1000.0
-_spreadAngle = 5.0
+_shotsPerMinute = 300.0
+_spreadAngle = 2.0
 
 [node name="ejection_vfx" type="Node2D" parent="."]
 position = Vector2(-64, -27)
 
 [node name="muzzle_vfx" type="Node2D" parent="."]
 position = Vector2(66.6667, 0)
+
+[node name="ReloadTimer" type="Timer" parent="."]

@@ -1,8 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://citpolgjbsv18"]
+[gd_scene load_steps=8 format=3 uid="uid://citpolgjbsv18"]
 
 [ext_resource type="Texture2D" uid="uid://5m3egqu4e6fp" path="res://icon.svg" id="1_25k7w"]
 [ext_resource type="Script" path="res://scripts/Projectile.cs" id="1_v380p"]
 [ext_resource type="Script" path="res://scripts/TrailRenderer.cs" id="3_ntg62"]
+[ext_resource type="PackedScene" uid="uid://6ssvdwj6c2en" path="res://assets/vfx/combat/hits/blood_splat01.tscn" id="3_tv2ye"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_o0yht"]
 friction = 0.72
@@ -29,7 +30,8 @@ script = ExtResource("1_v380p")
 _maxLifetime = 3.0
 _maxDistance = 1000.0
 _minVelocity = 100.0
-HitForce = 50.0
+HitForce = 200.0
+HitVfx = ExtResource("3_tv2ye")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(0.016, 0.008)

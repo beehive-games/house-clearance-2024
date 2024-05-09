@@ -16,6 +16,7 @@ public partial class PlayerMovement : CharacterBody2D
 	[Export] private float _fallDeathVelocity = 750.0f;
 	[Export] private float _spriteDarkenCover = 0.5f;
 	[Export] private float _spriteDarkenTeleport = 0.75f;
+	[Export] private float _health = 100f;
 
 	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
 	private MoveState _moveState = MoveState.Idle;
@@ -157,14 +158,26 @@ public partial class PlayerMovement : CharacterBody2D
 		_gun?.EnableFiring();
 	}
 	
-	public void Hit(Projectile projectile, Vector2 direction)
+	public void Hit(Projectile projectile, Vector2 direction, float damage)
 	{
 		Vector2 velocity = Velocity;
 		velocity += projectile.HitForce * direction;
 		Velocity = velocity;
 		
+
+		TakeDamage(damage);
+		projectile.Kill();
 	}
-	
+		
+	private void TakeDamage(float damage)
+	{
+		_health -= damage;
+		if (_health <= 0f)
+		{
+			Debug.WriteLine("Damage taken - person is dead!");
+			Kill(false);
+		}
+	}
 	public void Kill(bool fall = true)
 	{
 		_moveState = MoveState.Dead;

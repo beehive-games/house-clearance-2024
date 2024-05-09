@@ -92,6 +92,10 @@ teleport={
 2d_physics/layer_10="AOE"
 2d_physics/layer_11="hitboxes"
 
+[physics]
+
+common/physics_ticks_per_second=120
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0

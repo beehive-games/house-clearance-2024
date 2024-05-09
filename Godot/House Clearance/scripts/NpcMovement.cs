@@ -11,18 +11,40 @@ public partial class NpcMovement : CharacterBody2D
 	[Export] private float _pursueDistance = 200.0f;	// When spotted, how far will NPC pursue player before returning to starting point
 	[Export] private float _patrolRadius = 200.0f;	// How far will NPC patrol from spawn location
 	[Export] private bool _canTeleport;					// Will the NPC go through teleport locations when pursuing
+	[Export] private float _health = 100f;
+	
+	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
+
+	private MoveState _moveState = MoveState.Idle;
 	
 
 	// Get the gravity from the project settings to be synced with RigidBody nodes.
 	private float _gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle();
 	
-	public void Hit(Projectile projectile, Vector2 direction)
+	public void Hit(Projectile projectile, Vector2 direction, float damage)
 	{
 		Vector2 velocity = Velocity;
 		velocity += projectile.HitForce * direction;
 		Velocity = velocity;
-		Debug.WriteLine("Hit! "+Velocity);
+		MoveAndSlide();
+		Debug.WriteLine("Hit! "+Velocity +", "+damage);
+		TakeDamage(damage);
 		projectile.Kill();
+		Kill();
+	}
+
+	private void Kill()
+	{
+		_moveState = MoveState.Dead;
+	}
+	
+	private void TakeDamage(float damage)
+	{
+		_health -= damage;
+		if (_health <= 0f)
+		{
+			Debug.WriteLine("Damage taken - person is dead!");
+		}
 	}
 
 	public override void _Ready()
@@ -33,11 +55,18 @@ public partial class NpcMovement : CharacterBody2D
 	public override void _PhysicsProcess(double delta)
 	{
 		Vector2 velocity = Velocity;
-
+		
 		// Add the gravity.
 		if (!IsOnFloor())
 			velocity.Y += _gravity * (float)delta;
 
+		if (_moveState == MoveState.Dead)
+		{
+			velocity.X = 0;
+			Velocity = velocity;
+			MoveAndSlide();
+			return;
+		}
 		/*
 		// Get the input direction and handle the movement/deceleration.
 		// As good practice, you should replace UI actions with custom gameplay actions.
