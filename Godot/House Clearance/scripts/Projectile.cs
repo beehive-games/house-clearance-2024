@@ -12,12 +12,23 @@ public partial class Projectile : RigidBody2D
 	[Export] public float HitForce = 20f;
 	[Export] public float Damage = 20f;
 
-	private Vector2 _startPos;
+	public Vector2 StartPos;
+	private TrailRenderer _trailRenderer;
 	private float _countdown;
 	public override void _Ready()
 	{
-		_startPos = GlobalPosition;
 		_countdown = _maxLifetime;
+		
+	}
+
+	public void SetUpLineRenderer(Vector2 firePos)
+	{
+		_trailRenderer = GetNodeOrNull<TrailRenderer>("TrailRenderer");
+		if (_trailRenderer != null)
+		{
+			_trailRenderer.StartPosition = firePos;
+			_trailRenderer.MaxVelocity = LinearVelocity.X;
+		}
 	}
 
 	private float Distance(Vector2 a, Vector2 b)
@@ -36,7 +47,7 @@ public partial class Projectile : RigidBody2D
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		var distance = Distance(GlobalPosition, _startPos);
+		var distance = Distance(GlobalPosition, StartPos);
 		if (distance > _maxDistance || _countdown <= 0f || Mathf.Abs(LinearVelocity.X) < _minVelocity)
 		{
 			Kill();
@@ -44,6 +55,11 @@ public partial class Projectile : RigidBody2D
 		else
 		{
 			_countdown -= (float)delta;
+		}
+
+		if (_trailRenderer != null)
+		{
+			_trailRenderer.Velocity = LinearVelocity.X;
 		}
 	}
 }

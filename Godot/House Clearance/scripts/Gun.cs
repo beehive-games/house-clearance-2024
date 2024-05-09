@@ -74,10 +74,13 @@ public partial class Gun : Sprite2D
 				{
 					if (_projectile != null)
 					{
-						RigidBody2D bullet = (RigidBody2D)ResourceLoader.Load<PackedScene>(_projectile.ResourcePath).Instantiate();
+						Projectile bullet = (Projectile)ResourceLoader.Load<PackedScene>(_projectile.ResourcePath).Instantiate();
 						root.AddChild(bullet);
+						
+						//bullet.GlobalPosition = _muzzlePosition.GlobalPosition;
 						bullet.Position = _muzzlePosition.GlobalPosition;
-
+						bullet.SetUpLineRenderer( _muzzlePosition.GlobalPosition);
+						
 						var angle = randomAngle.RandfRange(0, _spreadAngle) - (0.5 * _spreadAngle);
 						var spreadForward = Vector2.Right.Rotated(GlobalRotation + Mathf.DegToRad((float)angle));
 						float xVelocity = bullet.LinearVelocity.X;

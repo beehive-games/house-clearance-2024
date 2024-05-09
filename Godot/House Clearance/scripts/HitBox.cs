@@ -6,6 +6,7 @@ namespace HouseClearance.scripts;
 public partial class HitBox : Area2D
 {
 	[Export] private float _health = 100f;
+	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
@@ -27,11 +28,13 @@ public partial class HitBox : Area2D
 		if (projectile != null)
 		{
 			TakeDamage(projectile.Damage);
-			Vector2 direction = (GlobalPosition - body.GlobalPosition).Normalized();
-			
 			NpcMovement npcMovement = GetNodeOrNull<NpcMovement>("../../CharacterBody2D");
 			PlayerMovement playerMovement = GetNodeOrNull<PlayerMovement>("../../CharacterBody2D");
 			
+			
+			Vector2 direction = (GlobalPosition - body.GlobalPosition).Normalized();
+			direction.Y = 0;
+
 			if (npcMovement != null)
 			{
 				npcMovement.Hit(projectile, -direction );

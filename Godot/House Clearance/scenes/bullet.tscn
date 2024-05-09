@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://citpolgjbsv18"]
+[gd_scene load_steps=7 format=3 uid="uid://citpolgjbsv18"]
 
 [ext_resource type="Texture2D" uid="uid://5m3egqu4e6fp" path="res://icon.svg" id="1_25k7w"]
 [ext_resource type="Script" path="res://scripts/Projectile.cs" id="1_v380p"]
+[ext_resource type="Script" path="res://scripts/TrailRenderer.cs" id="3_ntg62"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_o0yht"]
 friction = 0.72
@@ -11,6 +12,10 @@ bounce = 1.0
 radius = 1.0
 height = 2.0
 
+[sub_resource type="Curve" id="Curve_aoteh"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.990521, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
 [node name="bullet" type="RigidBody2D"]
 collision_layer = 256
 collision_mask = 1101
@@ -18,11 +23,13 @@ mass = 0.01
 physics_material_override = SubResource("PhysicsMaterial_o0yht")
 gravity_scale = 0.05
 continuous_cd = 1
-linear_velocity = Vector2(600, 0)
+linear_velocity = Vector2(1000, 0)
+linear_damp = 2.0
 script = ExtResource("1_v380p")
 _maxLifetime = 3.0
 _maxDistance = 1000.0
-HitForce = 300.0
+_minVelocity = 100.0
+HitForce = 50.0
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(0.016, 0.008)
@@ -31,5 +38,12 @@ texture = ExtResource("1_25k7w")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 rotation = 1.5708
 shape = SubResource("CapsuleShape2D_iqpfx")
+
+[node name="TrailRenderer" type="Line2D" parent="."]
+width = 1.0
+width_curve = SubResource("Curve_aoteh")
+default_color = Color(1, 0.247059, 0.0666667, 0.415686)
+script = ExtResource("3_ntg62")
+_maxLength = 50.0
 
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]
