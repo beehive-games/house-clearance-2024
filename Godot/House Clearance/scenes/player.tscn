@@ -23,7 +23,7 @@ _fallAutoSlideVelocity = 600.0
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(0, -16)
 sprite_frames = ExtResource("2_em4s7")
-animation = &"dead_headshot"
+animation = &"run"
 autoplay = "idle"
 
 [node name="MovementCollider" type="CollisionShape2D" parent="."]

@@ -131,16 +131,7 @@ physics_material_override = SubResource("PhysicsMaterial_qafg8")
 position = Vector2(-0.5, 4)
 shape = SubResource("RectangleShape2D_5e8ne")
 
-[node name="CharacterBody2D" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(140, -3)
-
-[node name="CharacterBody2D2" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-51, -3)
-
-[node name="CharacterBody2D3" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-136, -3)
-
 [node name="CharacterBody2D4" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(244, -3)
+position = Vector2(-27, -3)
 
 [editable path="player"]
