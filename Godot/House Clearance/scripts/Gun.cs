@@ -16,13 +16,15 @@ public partial class Gun : Sprite2D
 	[Export] private float _shotsPerMinute = 500f;
 	[Export] private float _spreadAngle = 20f;
 	[Export] private float _magazineCapacity = 20f;
+	[Export] private float _criticalHitChance = 0.1f;
 	
 	private CpuParticles2D _fireVfxAsset;
 	private CpuParticles2D _shellVfxAsset;
 	private bool _preventShot;
 	private float _count = 0f;
-	private float _timer = 0f;
 	private float _timeBetweenShots;
+	private float _currentAmmo;
+	private Timer _reloadTimer;
 
 	public void DisableFiring()
 	{
@@ -38,11 +40,23 @@ public partial class Gun : Sprite2D
 	{
 		_preventShot = !_preventShot;
 	}
+
+
+	public void Reloaded()
+	{
+		_currentAmmo = _magazineCapacity;
+		Debug.WriteLine("Reloaded!");
+		_reloadTimer.Stop();
+	}
 	
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		_timeBetweenShots = 1f / (_shotsPerMinute / 60f);
+		_currentAmmo = _magazineCapacity;
+		_reloadTimer = GetNodeOrNull<Timer>("ReloadTimer");
+		_reloadTimer.Timeout += Reloaded;
+		
 		if (_fireVfx != null)
 		{
 			_fireVfxAsset = (CpuParticles2D)_fireVfx.Instantiate();
@@ -71,10 +85,20 @@ public partial class Gun : Sprite2D
 		{
 			if (Input.IsActionPressed("fire1"))
 			{
-				if (!_preventShot)
+				if (!_preventShot && _currentAmmo > 0f && _reloadTimer.IsStopped())
 				{
+					
 					if (_projectile != null)
 					{
+						var angle = randomAngle.RandfRange(0, _spreadAngle) - (0.5 * _spreadAngle);
+						
+						float critical = new RandomNumberGenerator().RandfRange(0f,1f);
+						if (critical < _criticalHitChance)
+						{
+							Debug.WriteLine("Critical shot! Needs implementation!");
+							// TODO: cast forward in horizontal straight line - find enemy - find head hit box - calculate angle to that - use for angle
+						}
+						
 						Projectile bullet = (Projectile)ResourceLoader.Load<PackedScene>(_projectile.ResourcePath).Instantiate();
 						root.AddChild(bullet);
 						
@@ -82,12 +106,14 @@ public partial class Gun : Sprite2D
 						bullet.Position = _muzzlePosition.GlobalPosition;
 						bullet.SetUpLineRenderer( _muzzlePosition.GlobalPosition);
 						
-						var angle = randomAngle.RandfRange(0, _spreadAngle) - (0.5 * _spreadAngle);
+						
 						var spreadForward = Vector2.Right.Rotated(GlobalRotation + Mathf.DegToRad((float)angle));
 						float xVelocity = bullet.LinearVelocity.X;
 						Vector2 newDirection = spreadForward * xVelocity;
 						
 						bullet.LinearVelocity = newDirection;
+						_currentAmmo--;
+						
 					}
 
 					if (_fireVfxAsset != null)
@@ -101,9 +127,15 @@ public partial class Gun : Sprite2D
 						_shellVfxAsset.Emitting = true;
 						_shellVfxAsset.Restart();
 					}
-
+					
 					_count = 0f;
 				}
+			}
+
+			if (Input.IsActionPressed("reload") && _reloadTimer.IsStopped())
+			{
+				_reloadTimer.Start();
+				Debug.WriteLine("Reloading! ...  ");
 			}
 		}
 		else
