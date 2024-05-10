@@ -1,9 +1,10 @@
-[gd_resource type="SpriteFrames" load_steps=8 format=3 uid="uid://b3jj67kwcnvyf"]
+[gd_resource type="SpriteFrames" load_steps=9 format=3 uid="uid://b3jj67kwcnvyf"]
 
 [ext_resource type="Texture2D" uid="uid://cctd72fqqyr18" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Dead_Fall.png" id="1_u7s7f"]
 [ext_resource type="Texture2D" uid="uid://bpcarmrsgy24c" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Dead_HeadShot.png" id="2_cd3us"]
 [ext_resource type="Texture2D" uid="uid://dk5j8bfdpvktc" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Headless.png" id="2_qlpxd"]
 [ext_resource type="Texture2D" uid="uid://d4httartm7xc1" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout.png" id="2_r2t6v"]
+[ext_resource type="Texture2D" uid="uid://ccad517corxgq" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Dead_KneelHeadShot.png" id="3_7abh3"]
 [ext_resource type="Texture2D" uid="uid://d30mgpmgcr7bb" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Dead_Shot.png" id="3_8h6h3"]
 [ext_resource type="Texture2D" uid="uid://d0nd3f4n42tqd" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Jump.png" id="3_mwgnh"]
 [ext_resource type="Texture2D" uid="uid://cf41a43mx5q62" path="res://assets/sprites/characters/debug/T_Dbg_SpriteLayout_Slide.png" id="4_qolbk"]
@@ -21,6 +22,9 @@ animations = [{
 "frames": [{
 "duration": 2.0,
 "texture": ExtResource("2_qlpxd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_7abh3")
 }, {
 "duration": 1.0,
 "texture": ExtResource("2_cd3us")

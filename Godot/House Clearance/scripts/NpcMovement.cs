@@ -16,7 +16,7 @@ public partial class NpcMovement : CharacterBody2D
 
 	
 	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
-	private MoveState _moveState = MoveState.Idle;
+	public MoveState _moveState = MoveState.Idle;
 	public enum DeadState { Fall, Shot, HeadShot };
 	private DeadState _deadState = DeadState.Fall;
 	

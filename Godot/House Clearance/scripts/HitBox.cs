@@ -31,6 +31,14 @@ public partial class HitBox : Area2D
 		Projectile projectile = (Projectile)body;
 		if (projectile != null)
 		{
+			if (_npcMovement is { _moveState: NpcMovement.MoveState.Dead })
+			{
+				return;
+			}
+			if (_playerMovement is { _moveState: PlayerMovement.MoveState.Dead })
+			{
+				return;
+			}
 			if (projectile.HitVfx != null)
 			{
 				GpuParticles2D vfx =
