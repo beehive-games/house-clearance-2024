@@ -52,12 +52,10 @@ public partial class HitBox : Area2D
 			{
 				_playerMovement?.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? PlayerMovement.DeadState.HeadShot : PlayerMovement.DeadState.Shot, ref lostHead);
 			}
-			Debug.WriteLine("lostHead! "+ lostHead);
 
 			if (lostHead && _isHead)
 			{
 				_bloodSpurt.Emitting = true;
-				Debug.WriteLine("SPURT!");
 			}
 		}
 	}

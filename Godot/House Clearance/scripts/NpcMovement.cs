@@ -34,7 +34,6 @@ public partial class NpcMovement : CharacterBody2D
 		TakeDamage(damage, damagedBy);
 		projectile.Kill();
 		lostHead = _deadState == DeadState.HeadShot;
-		Debug.WriteLine("Hit! "+Velocity +", "+damage +" head? "+lostHead +" " +_deadState);
 	}
 
 	private void Kill(DeadState killedBy)

@@ -392,10 +392,17 @@ public partial class PlayerMovement : CharacterBody2D
 		{
 			if (Mathf.Abs(direction.X) != 0f)
 			{
-				bool dir = direction.X >= 0f;
-				bool vel = velocity.X >= 0f;
 
-				if (dir != vel)
+				bool match = false;
+				if ((direction.X > 0f && velocity.X > 0f) || (direction.X < 0f && velocity.X < 0f))
+				{
+					match = true;
+				}
+				else if (direction.X == 0f || velocity.X == 0f)
+				{
+					match = true;
+				}
+				if (!match)
 				{
 					_queueSliding = false;
 					MovePlayer(direction.X, ref velocity);
@@ -408,6 +415,7 @@ public partial class PlayerMovement : CharacterBody2D
 			else
 			{
 				SlidePlayer(ref velocity, slideBoost);
+
 			}
 		}
 		else
