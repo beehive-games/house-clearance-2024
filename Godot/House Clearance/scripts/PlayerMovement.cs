@@ -393,7 +393,10 @@ public partial class PlayerMovement : CharacterBody2D
 		{
 			if (Mathf.Abs(direction.X) != 0f)
 			{
-				if (Mathf.Sign(direction.X) != Mathf.Sign(velocity.X))
+				bool dir = direction.X >= 0f;
+				bool vel = velocity.X >= 0f;
+
+				if (dir != vel)
 				{
 					_queueSliding = false;
 					MovePlayer(direction.X, ref velocity);
@@ -425,7 +428,6 @@ public partial class PlayerMovement : CharacterBody2D
 					else
 					{
 						StopPlayer(ref velocity);
-
 					}
 				}
 			}
@@ -468,7 +470,7 @@ public partial class PlayerMovement : CharacterBody2D
 			{
 				Kill(DeadState.Fall);
 			}
-			else if (Mathf.Abs(velocity.Y) > Mathf.Abs(_fallAutoSlideVelocity))
+			else if (Mathf.Abs(velocity.Y) > Mathf.Abs(_fallAutoSlideVelocity) && _moveState != MoveState.Slide)
 			{
 				_moveState = MoveState.Slide;
 				float facingDirection = SpriteNodePath.FlipH ? -1f : 1f;
@@ -484,6 +486,7 @@ public partial class PlayerMovement : CharacterBody2D
 				Velocity = velocity;
 				_waitOnInputRelease = true;
 				_slideFromAFall = true;
+				MoveAndSlide();
 			}
 		}
 	}
