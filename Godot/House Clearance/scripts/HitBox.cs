@@ -7,6 +7,7 @@ public partial class HitBox : Area2D
 {
 	[Export] private float _damageMultiplier = 1f;
 	[Export] private bool _isHead = false;
+	[Export] private GpuParticles2D _bloodSpurt;
 
 	private NpcMovement _npcMovement;
 	private PlayerMovement _playerMovement;
@@ -22,6 +23,7 @@ public partial class HitBox : Area2D
 		{
 			Debug.WriteLine("no movement not found on "+parent.Name);
 		}
+
 	}
 
 	private void _on_body_entered(Node2D body)
@@ -41,14 +43,21 @@ public partial class HitBox : Area2D
 
 			Vector2 direction = (GlobalPosition - body.GlobalPosition).Normalized();
 			direction.Y = 0;
-
+			bool lostHead = false;
 			if (_npcMovement != null)
 			{
-				_npcMovement.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? NpcMovement.DeadState.HeadShot : NpcMovement.DeadState.Shot);
+				_npcMovement.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? NpcMovement.DeadState.HeadShot : NpcMovement.DeadState.Shot, ref lostHead);
 			}
 			else
 			{
-				_playerMovement?.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? PlayerMovement.DeadState.HeadShot : PlayerMovement.DeadState.Shot);
+				_playerMovement?.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? PlayerMovement.DeadState.HeadShot : PlayerMovement.DeadState.Shot, ref lostHead);
+			}
+			Debug.WriteLine("lostHead! "+ lostHead);
+
+			if (lostHead && _isHead)
+			{
+				_bloodSpurt.Emitting = true;
+				Debug.WriteLine("SPURT!");
 			}
 		}
 	}

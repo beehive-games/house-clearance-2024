@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://dmjq2pulkjthw"]
+
+[ext_resource type="Material" uid="uid://nkv1wqvedfu0" path="res://assets/vfx/combat/hits/blood_spurt.tres" id="1_5ab41"]
+[ext_resource type="Script" path="res://scripts/VFXManager.cs" id="1_mfrk2"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_aucon"]
+
+[node name="GPUParticles2D" type="GPUParticles2D"]
+material = SubResource("ShaderMaterial_aucon")
+emitting = false
+amount = 50
+process_material = ExtResource("1_5ab41")
+one_shot = true
+trail_enabled = true
+trail_lifetime = 0.16
+trail_sections = 2
+trail_section_subdivisions = 2
+script = ExtResource("1_mfrk2")
+_waitUntilFirstEmission = true

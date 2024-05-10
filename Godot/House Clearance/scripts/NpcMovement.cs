@@ -24,22 +24,23 @@ public partial class NpcMovement : CharacterBody2D
 	// Get the gravity from the project settings to be synced with RigidBody nodes.
 	private float _gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle();
 	
-	public void Hit(Projectile projectile, Vector2 direction, float damage, DeadState damagedBy)
+	public void Hit(Projectile projectile, Vector2 direction, float damage, DeadState damagedBy, ref bool lostHead)
 	{
 		if (_moveState == MoveState.Dead) return;
 		Vector2 velocity = Velocity;
 		velocity += projectile.HitForce * direction;
 		Velocity = velocity;
 		MoveAndSlide();
-		Debug.WriteLine("Hit! "+Velocity +", "+damage);
 		TakeDamage(damage, damagedBy);
 		projectile.Kill();
-		
+		lostHead = _deadState == DeadState.HeadShot;
+		Debug.WriteLine("Hit! "+Velocity +", "+damage +" head? "+lostHead +" " +_deadState);
 	}
 
 	private void Kill(DeadState killedBy)
 	{
 		_moveState = MoveState.Dead;
+		_deadState = killedBy;
 		if (SpriteNodePath != null)
 		{
 			switch (killedBy)

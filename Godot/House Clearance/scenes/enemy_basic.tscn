@@ -1,8 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://eo8wu2rosx6"]
+[gd_scene load_steps=8 format=3 uid="uid://eo8wu2rosx6"]
 
 [ext_resource type="Script" path="res://scripts/NpcMovement.cs" id="1_n62in"]
 [ext_resource type="SpriteFrames" uid="uid://b3jj67kwcnvyf" path="res://assets/sprites/characters/debug/animations.tres" id="2_xikp1"]
 [ext_resource type="Script" path="res://scripts/HitBox.cs" id="3_vo3hh"]
+[ext_resource type="PackedScene" uid="uid://dmjq2pulkjthw" path="res://assets/vfx/combat/hits/blood_spurt01.tscn" id="4_al3hy"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1kfex"]
 radius = 7.0
@@ -23,7 +24,7 @@ _speed = 1.0
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(0, -16)
 sprite_frames = ExtResource("2_xikp1")
-animation = &"idle"
+animation = &"dead_headshot"
 autoplay = "idle"
 
 [node name="MovementCollider" type="CollisionShape2D" parent="."]
@@ -42,13 +43,17 @@ position = Vector2(0.5, 4)
 shape = SubResource("RectangleShape2D_sovmg")
 debug_color = Color(0.907471, 0.0001236, 0.739933, 0.42)
 
-[node name="HeadHB" type="Area2D" parent="."]
+[node name="HeadHB" type="Area2D" parent="." node_paths=PackedStringArray("_bloodSpurt")]
 position = Vector2(0, -23)
 collision_layer = 1024
 collision_mask = 768
 script = ExtResource("3_vo3hh")
 _damageMultiplier = 1000.0
 _isHead = true
+_bloodSpurt = NodePath("GPUParticles2D")
+
+[node name="GPUParticles2D" parent="HeadHB" instance=ExtResource("4_al3hy")]
+position = Vector2(0, 5)
 
 [node name="HitBox" type="CollisionShape2D" parent="HeadHB"]
 position = Vector2(1.5, 1)

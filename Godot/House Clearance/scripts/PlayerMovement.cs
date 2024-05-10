@@ -161,17 +161,16 @@ public partial class PlayerMovement : CharacterBody2D
 		_gun?.EnableFiring();
 	}
 	
-	public void Hit(Projectile projectile, Vector2 direction, float damage, DeadState damagedBy)
+	public void Hit(Projectile projectile, Vector2 direction, float damage, DeadState damagedBy, ref bool lostHead)
 	{
 		if (_moveState == MoveState.Dead) return;
 
 		Vector2 velocity = Velocity;
 		velocity += projectile.HitForce * direction;
 		Velocity = velocity;
-		
-
 		TakeDamage(damage, damagedBy);
 		projectile.Kill();
+		lostHead = _deadState == DeadState.HeadShot;
 	}
 		
 	private void TakeDamage(float damage, DeadState damagedBy)

@@ -1,0 +1,36 @@
+[gd_resource type="ParticleProcessMaterial" load_steps=5 format=3 uid="uid://nkv1wqvedfu0"]
+
+[sub_resource type="Curve" id="Curve_20b2n"]
+_data = [Vector2(0.0052356, 1), 0.0, 0.0, 0, 0, Vector2(0.981675, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_0l1oo"]
+curve = SubResource("Curve_20b2n")
+
+[sub_resource type="Curve" id="Curve_v5bxy"]
+min_value = -200.0
+max_value = 200.0
+_data = [Vector2(0.0104712, 126.613), 0.0, 0.0, 0, 0, Vector2(0.429319, 0.806458), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_bi8lf"]
+curve = SubResource("Curve_v5bxy")
+
+[resource]
+lifetime_randomness = 0.41
+particle_flag_disable_z = true
+angle_min = -42.1
+angle_max = 91.3
+direction = Vector3(0, -1, 0)
+spread = 10.698
+initial_velocity_min = 39.35
+initial_velocity_max = 83.09
+gravity = Vector3(0, 196, 0)
+linear_accel_curve = SubResource("CurveTexture_bi8lf")
+scale_min = 0.1
+scale_max = 1.5
+color = Color(0.81, 0, 0.0134998, 1)
+emission_curve = SubResource("CurveTexture_0l1oo")
+collision_mode = 1
+collision_friction = 0.0
+collision_bounce = 0.0
