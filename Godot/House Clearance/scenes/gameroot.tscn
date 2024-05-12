@@ -134,4 +134,13 @@ shape = SubResource("RectangleShape2D_5e8ne")
 [node name="CharacterBody2D4" parent="." instance=ExtResource("7_i6w0p")]
 position = Vector2(-27, -3)
 
+[node name="CharacterBody2D5" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(185, -3)
+
+[node name="CharacterBody2D6" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-148, -3)
+
+[node name="CharacterBody2D7" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(251, -3)
+
 [editable path="player"]

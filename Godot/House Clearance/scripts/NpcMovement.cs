@@ -23,6 +23,7 @@ public partial class NpcMovement : CharacterBody2D
 	private Vector2 _startPosition;
 	private Vector2 _targetPosition;
 	private Timer _patrolWaitTimer;
+	private Vector2 _previousFloorPosition;
 	
 
 	// Get the gravity from the project settings to be synced with RigidBody nodes.
@@ -137,7 +138,13 @@ public partial class NpcMovement : CharacterBody2D
 		
 		// Add the gravity.
 		if (!IsOnFloor())
+		{
 			velocity.Y += _gravity * (float)delta;
+		}
+		else
+		{
+			_previousFloorPosition = GlobalPosition;
+		}
 
 		if (_moveState == MoveState.Dead)
 		{
@@ -157,10 +164,27 @@ public partial class NpcMovement : CharacterBody2D
 		}
 		else
 		{
-			velocity.X = _speed * dir;
+			if (IsOnWall())
+			{
+				ReachedDestination();
+				velocity.X = Mathf.MoveToward(Velocity.X, 0, _speed);
+			}
+			else
+			{
+				velocity.X = _speed * dir;
+			}
 		}
 		
 		Velocity = velocity;
 		MoveAndSlide();
+
+		if (!IsOnFloorOnly() || !IsOnFloor())
+		{
+			GlobalPosition = _previousFloorPosition;
+			velocity.X = 0;
+			Velocity = velocity;
+			ReachedDestination();
+		}
+		
 	}
 }
