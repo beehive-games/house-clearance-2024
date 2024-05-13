@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Godot;
+using Godot.Collections;
 
 namespace HouseClearance.scripts;
 
@@ -13,7 +14,9 @@ public partial class NpcMovement : CharacterBody2D
 	[Export] private float _patrolWaitTime = 2.0f;	// How long can the NPC wait before finding a new target position?
 	[Export] private bool _canTeleport;					// Will the NPC go through teleport locations when pursuing
 	[Export] private float _health = 100f;
-	public AnimatedSprite2D SpriteNodePath;
+	[Export] private float _fallDeathVelocity = 10f;
+	private AnimatedSprite2D _spriteNodePath;
+	[Export(PropertyHint.Layers2DPhysics)] private uint _floorCollisionCheckLayer;
 
 	
 	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
@@ -24,6 +27,7 @@ public partial class NpcMovement : CharacterBody2D
 	private Vector2 _targetPosition;
 	private Timer _patrolWaitTimer;
 	private Vector2 _previousFloorPosition;
+	private Line2D _debugLine;
 	
 
 	// Get the gravity from the project settings to be synced with RigidBody nodes.
@@ -45,16 +49,16 @@ public partial class NpcMovement : CharacterBody2D
 	{
 		_moveState = MoveState.Dead;
 		_deadState = killedBy;
-		if (SpriteNodePath != null)
+		if (_spriteNodePath != null)
 		{
 			switch (killedBy)
 			{
 				case DeadState.Fall :
-					SpriteNodePath.Animation = "dead_fall"; break;
+					_spriteNodePath.Animation = "dead_fall"; break;
 				case DeadState.Shot :
-					SpriteNodePath.Animation = "dead_shot"; break;
+					_spriteNodePath.Animation = "dead_shot"; break;
 				case DeadState.HeadShot :
-					SpriteNodePath.Animation = "dead_headshot";break;
+					_spriteNodePath.Animation = "dead_headshot";break;
 			}
 		}
 	}
@@ -102,48 +106,71 @@ public partial class NpcMovement : CharacterBody2D
 		float randomPosOffset = new RandomNumberGenerator().RandfRange(-_patrolRadius,_patrolRadius);
 		Vector2 newPos = _startPosition;
 		newPos.X += randomPosOffset;
-		
+
 		var spaceState = GetWorld2D().DirectSpaceState;
-		var offsetGlobal = GlobalPosition;
-		offsetGlobal.Y += 10;
-		newPos.Y = GlobalPosition.Y - 3;
+		var startPosition = newPos;
+		startPosition.Y -= 10;
+
+		var distance = 13f;
+		var direction = Vector2.Down * distance;
+		
+		var root = GetTree().Root.GetNode("Game");
+		_debugLine ??= root.GetNodeOrNull<Line2D>("DebugLine");
+		
 		// Check for walls and door...
-		var rayQuery = PhysicsRayQueryParameters2D.Create(offsetGlobal, newPos);
+		var rayQuery = PhysicsRayQueryParameters2D.Create(startPosition, startPosition + direction);
+		rayQuery.CollisionMask = _floorCollisionCheckLayer;
+		Array<Rid> excludeList = new Array<Rid> { GetRid() };
+		rayQuery.Exclude = excludeList;
 		var rayResult = spaceState.IntersectRay(rayQuery);
-		// Check for ground underneath
-		var pointQuery = new PhysicsPointQueryParameters2D();
-		pointQuery.Position = newPos;
-		
-		pointQuery.CollideWithAreas = true;
-		var pointResult = spaceState.IntersectPoint(pointQuery);
-		
-		Debug.WriteLine(rayResult);
-		Debug.WriteLine(pointResult);
+
+		if (rayResult.Count > 0)
+		{
+			var rayRes = rayResult["collider"];
+			if (rayRes.Obj is StaticBody2D sbody)
+			{
+				Debug.WriteLine(sbody.Name);
+				if (_debugLine != null)
+				{
+					Vector2[] points = _debugLine.Points;
+					points[0] = startPosition;
+					points[1] = (Vector2)rayResult["position"];
+					_debugLine.Points = points;
+					Gradient colors = _debugLine.Gradient;
+					colors.SetColor(1, Colors.Aqua);
+					_debugLine.Gradient = colors;
+				}
+			}
+		}
+		else
+		{
+			// not a valid surface we can expect to walk on, return current position
+			// this results in calling this method again next frame
+			return GlobalPosition;
+		}
+
 		
 		return newPos;
 	}
 	
 	public override void _Ready()
 	{
-		SpriteNodePath = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
+		_spriteNodePath = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
 		_startPosition = GlobalPosition;
 		FinishedWaiting();
+		Debug.WriteLine("RID: " +GetRid());
 	}
 	
 	public override void _PhysicsProcess(double delta)
 	{
 		Vector2 velocity = Velocity;
 
-		
+		bool onFloor = IsOnFloor();
 		
 		// Add the gravity.
-		if (!IsOnFloor())
+		if (!onFloor)
 		{
 			velocity.Y += _gravity * (float)delta;
-		}
-		else
-		{
-			_previousFloorPosition = GlobalPosition;
 		}
 
 		if (_moveState == MoveState.Dead)
@@ -156,7 +183,8 @@ public partial class NpcMovement : CharacterBody2D
 		
 		var dir = Mathf.Sign((_targetPosition-GlobalPosition).X);
 		var positionDelta = Mathf.Abs(GlobalPosition.X - _targetPosition.X);
-		bool atDestination = positionDelta < 2;
+		var atDestination = positionDelta < 2;
+		
 		if (atDestination && _patrolWaitTimer == null )
 		{
 			ReachedDestination();
@@ -175,16 +203,17 @@ public partial class NpcMovement : CharacterBody2D
 			}
 		}
 		
+		float vY = Velocity.Y;
 		Velocity = velocity;
 		MoveAndSlide();
 
-		if (!IsOnFloorOnly() || !IsOnFloor())
+		if (!onFloor && IsOnFloorOnly())
 		{
-			GlobalPosition = _previousFloorPosition;
-			velocity.X = 0;
-			Velocity = velocity;
-			ReachedDestination();
+			if (Mathf.Abs(vY) > _fallDeathVelocity)
+			{
+				Kill(DeadState.Fall);
+			}
+			Debug.WriteLine("Landed with vY of " +vY);
 		}
-		
 	}
 }
