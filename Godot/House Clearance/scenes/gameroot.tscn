@@ -152,6 +152,60 @@ position = Vector2(255, -3)
 [node name="Baddie 6_6" parent="." instance=ExtResource("7_i6w0p")]
 position = Vector2(343, -3)
 
+[node name="Baddie 6_7" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-341, -3)
+
+[node name="Baddie 6_8" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-259, -3)
+
+[node name="Baddie 6_9" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-123, -3)
+
+[node name="Baddie 6_10" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(69, -3)
+
+[node name="Baddie 6_11" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(255, -3)
+
+[node name="Baddie 6_12" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(343, -3)
+
+[node name="Baddie 6_13" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-341, -3)
+
+[node name="Baddie 6_14" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-259, -3)
+
+[node name="Baddie 6_15" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-123, -3)
+
+[node name="Baddie 6_16" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(69, -3)
+
+[node name="Baddie 6_17" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(255, -3)
+
+[node name="Baddie 6_18" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(343, -3)
+
+[node name="Baddie 6_19" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-341, -3)
+
+[node name="Baddie 6_20" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-259, -3)
+
+[node name="Baddie 6_21" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-123, -3)
+
+[node name="Baddie 6_22" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(69, -3)
+
+[node name="Baddie 6_23" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(255, -3)
+
+[node name="Baddie 6_24" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(343, -3)
+
 [node name="DebugLine" type="Line2D" parent="."]
 points = PackedVector2Array(0, 0, 0, 0)
 width = 2.0

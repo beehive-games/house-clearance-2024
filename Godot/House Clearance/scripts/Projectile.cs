@@ -12,6 +12,7 @@ public partial class Projectile : RigidBody2D
 	[Export] public float HitForce = 20f;
 	[Export] public float Damage = 20f;
 	[Export] public PackedScene HitVfx;
+	[Export(PropertyHint.Range, "0,1,")] public float BodyPassThroughSlowdown = 0.5f;
 
 	private Vector2 _startPos;
 	private TrailRenderer _trailRenderer;

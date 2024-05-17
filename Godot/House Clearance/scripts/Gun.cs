@@ -16,7 +16,7 @@ public partial class Gun : Sprite2D
 	[Export] private float _shotsPerMinute = 500f;
 	[Export] private float _spreadAngle = 20f;
 	[Export] private float _magazineCapacity = 20f;
-	[Export] private float _criticalHitChance = 0.1f;
+	[Export(PropertyHint.Range, "0,1,")] private float _criticalHitChance = 0.1f;
 	[Export(PropertyHint.Layers2DPhysics)] private uint _enemyPhysicsMask;
 	
 	private CpuParticles2D _fireVfxAsset;

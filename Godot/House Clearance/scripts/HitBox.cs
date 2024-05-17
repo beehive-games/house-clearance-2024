@@ -39,11 +39,24 @@ public partial class HitBox : Area2D
 			{
 				return;
 			}
+
+			
 			if (projectile.HitVfx != null)
 			{
 				GpuParticles2D vfx =
 					(GpuParticles2D)ResourceLoader.Load<PackedScene>(projectile.HitVfx.ResourcePath).Instantiate();
-				GetTree().Root.AddChild(vfx);
+				if (_npcMovement != null)
+				{
+					_npcMovement.AddChild(vfx);
+				}
+				else if (_playerMovement != null)
+				{
+					_playerMovement.AddChild(vfx);
+				}
+				else
+				{
+					GetTree().Root.AddChild(vfx);
+				}
 				vfx.GlobalPosition = GlobalPosition;
 				vfx.Emitting = true;
 
@@ -65,6 +78,8 @@ public partial class HitBox : Area2D
 			{
 				_bloodSpurt.Emitting = true;
 			}
+
+			projectile.LinearVelocity *= 1f - projectile.BodyPassThroughSlowdown;
 		}
 	}
 }

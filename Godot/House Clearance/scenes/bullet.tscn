@@ -22,16 +22,17 @@ collision_layer = 256
 collision_mask = 1101
 mass = 0.01
 physics_material_override = SubResource("PhysicsMaterial_o0yht")
-gravity_scale = 0.05
+gravity_scale = 0.0
 continuous_cd = 1
-linear_velocity = Vector2(1000, 0)
+linear_velocity = Vector2(1250, 0)
 linear_damp = 2.0
 script = ExtResource("1_v380p")
 _maxLifetime = 3.0
 _maxDistance = 1000.0
 _minVelocity = 100.0
-HitForce = 5000.0
+HitForce = 1000.0
 HitVfx = ExtResource("3_tv2ye")
+BodyPassThroughSlowdown = 1.0
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(0.016, 0.008)
