@@ -134,29 +134,23 @@ physics_material_override = SubResource("PhysicsMaterial_qafg8")
 position = Vector2(-0.5, 4)
 shape = SubResource("RectangleShape2D_5e8ne")
 
-[node name="CharacterBody2D7" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(356, -3)
-_fallDeathVelocity = 200.0
+[node name="Baddie 6_" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-341, -3)
 
-[node name="CharacterBody2D8" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(224, -3)
-_fallDeathVelocity = 200.0
+[node name="Baddie 6_2" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-259, -3)
 
-[node name="CharacterBody2D9" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(145, -3)
-_fallDeathVelocity = 200.0
+[node name="Baddie 6_3" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(-123, -3)
 
-[node name="CharacterBody2D10" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-49, -8)
-_fallDeathVelocity = 200.0
+[node name="Baddie 6_4" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(69, -3)
 
-[node name="CharacterBody2D11" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-176, -7)
-_fallDeathVelocity = 200.0
+[node name="Baddie 6_5" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(255, -3)
 
-[node name="CharacterBody2D12" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-341, -6)
-_fallDeathVelocity = 200.0
+[node name="Baddie 6_6" parent="." instance=ExtResource("7_i6w0p")]
+position = Vector2(343, -3)
 
 [node name="DebugLine" type="Line2D" parent="."]
 points = PackedVector2Array(0, 0, 0, 0)

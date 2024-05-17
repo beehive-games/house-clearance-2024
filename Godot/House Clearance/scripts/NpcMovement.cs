@@ -35,12 +35,12 @@ public partial class NpcMovement : CharacterBody2D
 	
 	public void Hit(Projectile projectile, Vector2 direction, float damage, DeadState damagedBy, ref bool lostHead)
 	{
+		TakeDamage(damage, damagedBy);
 		if (_moveState == MoveState.Dead) return;
 		Vector2 velocity = Velocity;
 		velocity += projectile.HitForce * direction;
 		Velocity = velocity;
 		MoveAndSlide();
-		TakeDamage(damage, damagedBy);
 		projectile.Kill();
 		lostHead = _deadState == DeadState.HeadShot;
 	}
@@ -61,10 +61,20 @@ public partial class NpcMovement : CharacterBody2D
 					_spriteNodePath.Animation = "dead_headshot";break;
 			}
 		}
+		
+		var collShape = GetNodeOrNull<CollisionShape2D>("MovementCollider");
+		var bodyShape = GetNodeOrNull<Area2D>("BodyHB");
+		var headShape = GetNodeOrNull<Area2D>("HeadHB");
+		CollisionLayer = 0;
+		//collShape?.QueueFree();
+		bodyShape?.QueueFree();
+		headShape?.QueueFree();
 	}
 	
 	private void TakeDamage(float damage, DeadState damagedBy)
 	{
+		if (_moveState == MoveState.Dead) return;
+		
 		_health -= damage;
 		if (_health <= 0f)
 		{
@@ -101,8 +111,6 @@ public partial class NpcMovement : CharacterBody2D
 
 	private Vector2 GetNewTargetPosition()
 	{
-		
-		
 		float randomPosOffset = new RandomNumberGenerator().RandfRange(-_patrolRadius,_patrolRadius);
 		Vector2 newPos = _startPosition;
 		newPos.X += randomPosOffset;
@@ -123,13 +131,24 @@ public partial class NpcMovement : CharacterBody2D
 		Array<Rid> excludeList = new Array<Rid> { GetRid() };
 		rayQuery.Exclude = excludeList;
 		var rayResult = spaceState.IntersectRay(rayQuery);
+		
+		if (_debugLine != null)
+		{
+			Vector2[] points = _debugLine.Points;
+			points[0] = startPosition;
+			points[1] = startPosition + direction;
+			_debugLine.Points = points;
+			Gradient colors = _debugLine.Gradient;
+			colors.SetColor(1, Colors.Red);
+			_debugLine.Gradient = colors;
+		}
 
 		if (rayResult.Count > 0)
 		{
 			var rayRes = rayResult["collider"];
 			if (rayRes.Obj is StaticBody2D sbody)
 			{
-				Debug.WriteLine(sbody.Name);
+				//Debug.WriteLine(sbody.Name);
 				if (_debugLine != null)
 				{
 					Vector2[] points = _debugLine.Points;
@@ -140,12 +159,21 @@ public partial class NpcMovement : CharacterBody2D
 					colors.SetColor(1, Colors.Aqua);
 					_debugLine.Gradient = colors;
 				}
+				//Debug.WriteLine("Found a new pos from " +Name);
+
+			}
+			else
+			{
+				//Debug.WriteLine("Found a new collider, but not valid from " +Name +", queried = "+rayRes.Obj);
+
 			}
 		}
 		else
 		{
 			// not a valid surface we can expect to walk on, return current position
 			// this results in calling this method again next frame
+			//Debug.WriteLine("Not found a new pos from " +Name);
+
 			return GlobalPosition;
 		}
 

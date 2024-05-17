@@ -60,7 +60,7 @@ _bloodSpurt = NodePath("GPUParticles2D")
 position = Vector2(0, 5)
 
 [node name="HitBox" type="CollisionShape2D" parent="HeadHB"]
-position = Vector2(1.5, 1)
+position = Vector2(1, 1)
 shape = SubResource("RectangleShape2D_6yh1n")
 debug_color = Color(0.907471, 0.0001236, 0.739933, 0.42)
 

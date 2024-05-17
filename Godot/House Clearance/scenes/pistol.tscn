@@ -13,7 +13,10 @@ _projectile = ExtResource("3_mudef")
 _muzzlePosition = NodePath("muzzle_vfx")
 _ejectionPosition = NodePath("ejection_vfx")
 _shotsPerMinute = 300.0
-_spreadAngle = 5.0
+_spreadAngle = 0.0
+_magazineCapacity = 200.0
+_criticalHitChance = 0.2
+_enemyPhysicsMask = 2
 
 [node name="ejection_vfx" type="Node2D" parent="."]
 position = Vector2(-64, -27)

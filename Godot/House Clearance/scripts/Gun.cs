@@ -17,6 +17,7 @@ public partial class Gun : Sprite2D
 	[Export] private float _spreadAngle = 20f;
 	[Export] private float _magazineCapacity = 20f;
 	[Export] private float _criticalHitChance = 0.1f;
+	[Export(PropertyHint.Layers2DPhysics)] private uint _enemyPhysicsMask;
 	
 	private CpuParticles2D _fireVfxAsset;
 	private CpuParticles2D _shellVfxAsset;
@@ -91,14 +92,54 @@ public partial class Gun : Sprite2D
 					if (_projectile != null)
 					{
 						var angle = randomAngle.RandfRange(0, _spreadAngle) - (0.5 * _spreadAngle);
-						
+						var targetDir = Mathf.DegToRad((float)angle);
 						float critical = new RandomNumberGenerator().RandfRange(0f,1f);
 						if (critical < _criticalHitChance)
 						{
-							Debug.WriteLine("Critical shot! Needs implementation!");
+							Debug.WriteLine("Critical shot!");
+							var spaceState = GetWorld2D().DirectSpaceState;
 							// TODO: cast forward in horizontal straight line - find enemy - find head hit box - calculate angle to that - use for angle
+							var forwardDir = Vector2.Right.Rotated(GlobalRotation) * 1000f;
+							var rayQuery = PhysicsRayQueryParameters2D.Create(_muzzlePosition.GlobalPosition,
+								_muzzlePosition.GlobalPosition + forwardDir);
+							rayQuery.CollisionMask = _enemyPhysicsMask;
+							var rayResult = spaceState.IntersectRay(rayQuery);
+
+
+							if (rayResult.Count > 0)
+							{
+								var rayRes = rayResult["collider"];
+								Debug.WriteLine("rayResult set! ");
+
+								if (rayRes.Obj is CharacterBody2D character)
+								{
+									Debug.WriteLine("Hit a character at " + character.Name);
+									// now get head hitbox!
+									var a = character.GetNodeOrNull<Area2D>("HeadHB");
+									var gPos = forwardDir;
+									if (a != null)
+									{
+										gPos = a.GlobalPosition;
+									}
+
+									var directionToTarget = (gPos - GlobalPosition).Normalized();
+									var radians = Mathf.Atan2(directionToTarget.Y, directionToTarget.X);
+									var characterForward = Vector2.Right.Rotated(GlobalRotation);
+									var characterFacingRadians = Mathf.Atan2(characterForward.Y, characterForward.X);
+									var relativeRadians = radians - characterFacingRadians;
+
+									if (relativeRadians < -Mathf.Pi)
+										relativeRadians += 2 * Mathf.Pi;
+									else if (relativeRadians >= -Mathf.Pi)
+										relativeRadians -= 2 * Mathf.Pi;
+
+									targetDir = relativeRadians;
+								}
+								
+								
+							}
 						}
-						
+
 						Projectile bullet = (Projectile)ResourceLoader.Load<PackedScene>(_projectile.ResourcePath).Instantiate();
 						root.AddChild(bullet);
 						
@@ -107,7 +148,8 @@ public partial class Gun : Sprite2D
 						bullet.SetUpLineRenderer( _muzzlePosition.GlobalPosition);
 						
 						
-						var spreadForward = Vector2.Right.Rotated(GlobalRotation + Mathf.DegToRad((float)angle));
+						var spreadForward = Vector2.Right.Rotated(GlobalRotation + targetDir);
+						
 						float xVelocity = bullet.LinearVelocity.X;
 						Vector2 newDirection = spreadForward * xVelocity;
 						
