@@ -28,67 +28,72 @@ public partial class HitBox : Area2D
 
 	private void _on_body_entered(Node2D body)
 	{
-		if (body is Projectile projectile)
+		switch (body)
 		{
+			case Projectile projectile:
 			{
-				if (_npcMovement is { _moveState: NpcMovement.MoveState.Dead })
 				{
-					return;
-				}
-				if (_playerMovement is { _moveState: PlayerMovement.MoveState.Dead })
-				{
-					return;
-				}
+					if (_npcMovement is { _moveState: NpcMovement.MoveState.Dead })
+					{
+						return;
+					}
+					if (_playerMovement is { _moveState: PlayerMovement.MoveState.Dead })
+					{
+						return;
+					}
     
             	
-				if (projectile.HitVfx != null)
-				{
-					GpuParticles2D vfx =
-						(GpuParticles2D)ResourceLoader.Load<PackedScene>(projectile.HitVfx.ResourcePath).Instantiate();
+					if (projectile.HitVfx != null)
+					{
+						GpuParticles2D vfx =
+							(GpuParticles2D)ResourceLoader.Load<PackedScene>(projectile.HitVfx.ResourcePath).Instantiate();
+						if (_npcMovement != null)
+						{
+							_npcMovement.AddChild(vfx);
+						}
+						else if (_playerMovement != null)
+						{
+							_playerMovement.AddChild(vfx);
+						}
+						else
+						{
+							GetTree().Root.AddChild(vfx);
+						}
+						vfx.GlobalPosition = GlobalPosition;
+						vfx.Emitting = true;
+    
+					}
+    
+					Vector2 direction = (GlobalPosition - projectile.GlobalPosition).Normalized();
+					direction.Y = 0;
+					bool lostHead = false;
 					if (_npcMovement != null)
 					{
-						_npcMovement.AddChild(vfx);
-					}
-					else if (_playerMovement != null)
-					{
-						_playerMovement.AddChild(vfx);
+						_npcMovement.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? NpcMovement.DeadState.HeadShot : NpcMovement.DeadState.Shot, ref lostHead);
 					}
 					else
 					{
-						GetTree().Root.AddChild(vfx);
+						_playerMovement?.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? PlayerMovement.DeadState.HeadShot : PlayerMovement.DeadState.Shot, ref lostHead);
 					}
-					vfx.GlobalPosition = GlobalPosition;
-					vfx.Emitting = true;
     
-				}
+					if (lostHead && _isHead)
+					{
+						_bloodSpurt.Emitting = true;
+					}
     
-				Vector2 direction = (GlobalPosition - projectile.GlobalPosition).Normalized();
-				direction.Y = 0;
-				bool lostHead = false;
-				if (_npcMovement != null)
-				{
-					_npcMovement.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? NpcMovement.DeadState.HeadShot : NpcMovement.DeadState.Shot, ref lostHead);
+					projectile.LinearVelocity *= 1f - projectile.BodyPassThroughSlowdown;
 				}
-				else
-				{
-					_playerMovement?.Hit(projectile, -direction, projectile.Damage * _damageMultiplier, _isHead ? PlayerMovement.DeadState.HeadShot : PlayerMovement.DeadState.Shot, ref lostHead);
-				}
-    
-				if (lostHead && _isHead)
-				{
-					_bloodSpurt.Emitting = true;
-				}
-    
-				projectile.LinearVelocity *= 1f - projectile.BodyPassThroughSlowdown;
+				break;
 			}
-		}
-		else if(body is PlayerMovement playerMovement)
-		{
-			//PlayerMovement playerMovement = body.GetParentOrNull<PlayerMovement>();
-			if (playerMovement._moveState == PlayerMovement.MoveState.Slide && _npcMovement != null)
+			case PlayerMovement playerMovement:
 			{
-				if (_npcMovement._moveState != NpcMovement.MoveState.Dead)
-					_npcMovement.BeginStunnedTimer();
+				if (playerMovement._moveState == PlayerMovement.MoveState.Slide && _npcMovement != null)
+				{
+					if (_npcMovement._moveState != NpcMovement.MoveState.Dead && _npcMovement._moveState != NpcMovement.MoveState.StunnedFloor)
+						_npcMovement.BeginStunnedTimer();
+				}
+
+				break;
 			}
 		}
 	}
