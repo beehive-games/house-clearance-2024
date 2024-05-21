@@ -15,17 +15,19 @@ public partial class NpcMovement : CharacterBody2D
 	[Export] private bool _canTeleport;					// Will the NPC go through teleport locations when pursuing
 	[Export] private float _health = 100f;
 	[Export] private float _fallDeathVelocity = 10f;
+	[Export] private float _stunnedTime = 4f;
 	private AnimatedSprite2D _spriteNodePath;
 	[Export(PropertyHint.Layers2DPhysics)] private uint _floorCollisionCheckLayer;
 
 	
-	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
+	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, StunnedFloor, Stop = -1 };
 	public MoveState _moveState = MoveState.Idle;
 	public enum DeadState { Fall, Shot, HeadShot };
 	private DeadState _deadState = DeadState.Fall;
 	private Vector2 _startPosition;
 	private Vector2 _targetPosition;
 	private Timer _patrolWaitTimer;
+	private Timer _stunnedWaitTimer;
 	private Vector2 _previousFloorPosition;
 	private Line2D _debugLine;
 	
@@ -81,6 +83,37 @@ public partial class NpcMovement : CharacterBody2D
 			Debug.WriteLine("Damage taken - person is dead!");
 			Kill(damagedBy);
 		}
+	}
+
+	private void CancelStunnedTimer()
+	{
+		_stunnedWaitTimer?.Stop();
+		_stunnedWaitTimer?.QueueFree();
+		_stunnedWaitTimer = null;
+	}
+
+	private void FinishedStunnedTimer()
+	{
+		CancelStunnedTimer();
+		if (_moveState == MoveState.StunnedFloor)
+		{
+			_moveState = MoveState.Idle;
+			_spriteNodePath.Animation = "idle";
+		}
+	}
+	
+	public void BeginStunnedTimer()
+	{
+		_stunnedWaitTimer = new Timer();
+		_stunnedWaitTimer = new Timer();
+		_stunnedWaitTimer.WaitTime = _stunnedTime;
+		_stunnedWaitTimer.OneShot = true;
+		_stunnedWaitTimer.Autostart = true;
+		_stunnedWaitTimer.Timeout += FinishedStunnedTimer;	
+		var root = GetTree().Root;
+		root.AddChild(_stunnedWaitTimer);
+		_moveState = MoveState.StunnedFloor;
+		_spriteNodePath.Animation = "stunned_floor";
 	}
 
 	private void CancelWaitTimer()
@@ -201,7 +234,7 @@ public partial class NpcMovement : CharacterBody2D
 			velocity.Y += _gravity * (float)delta;
 		}
 
-		if (_moveState == MoveState.Dead)
+		if (_moveState == MoveState.Dead || _moveState == MoveState.StunnedFloor)
 		{
 			velocity.X = 0;
 			Velocity = velocity;

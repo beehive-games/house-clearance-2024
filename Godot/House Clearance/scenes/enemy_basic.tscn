@@ -39,7 +39,7 @@ one_way_collision_margin = 0.5
 [node name="BodyHB" type="Area2D" parent="."]
 position = Vector2(0, -13)
 collision_layer = 1024
-collision_mask = 768
+collision_mask = 770
 script = ExtResource("3_vo3hh")
 
 [node name="HitBox" type="CollisionShape2D" parent="BodyHB"]
@@ -50,7 +50,7 @@ debug_color = Color(0.907471, 0.0001236, 0.739933, 0.42)
 [node name="HeadHB" type="Area2D" parent="." node_paths=PackedStringArray("_bloodSpurt")]
 position = Vector2(0, -23)
 collision_layer = 1024
-collision_mask = 768
+collision_mask = 770
 script = ExtResource("3_vo3hh")
 _damageMultiplier = 1000.0
 _isHead = true
