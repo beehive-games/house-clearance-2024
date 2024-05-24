@@ -22,14 +22,13 @@ script = ExtResource("1_n62in")
 _speed = 100.0
 _fallDeathVelocity = 200.0
 _floorCollisionCheckLayer = 1
+_playerVisibilityCheckLayer = 11
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(0, -16)
 sprite_frames = ExtResource("2_xikp1")
-animation = &"dead_headshot"
+animation = &"idle"
 autoplay = "idle"
-frame = 2
-frame_progress = 1.0
 
 [node name="MovementCollider" type="CollisionShape2D" parent="."]
 position = Vector2(0, -14)

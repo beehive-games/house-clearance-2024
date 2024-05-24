@@ -17,6 +17,8 @@ public partial class PlayerMovement : CharacterBody2D
 	[Export] private float _spriteDarkenCover = 0.5f;
 	[Export] private float _spriteDarkenTeleport = 0.75f;
 	[Export] private float _health = 100f;
+
+	public static PlayerMovement Player;
 	
 
 	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, Stop = -1 };
@@ -234,6 +236,7 @@ public partial class PlayerMovement : CharacterBody2D
 		var shape = GetNodeOrNull<CollisionShape2D>("MovementCollider");
 		if(shape != null) _widthHalf = 0.5f * shape.Shape.GetRect().Size.X;
 		_movementCollider = GetNodeOrNull<CollisionShape2D>("MovementCollider");
+		Player = this as PlayerMovement;
 	}
 	
 	public override void _PhysicsProcess(double delta)

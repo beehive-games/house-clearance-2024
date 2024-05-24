@@ -18,6 +18,7 @@ public partial class NpcMovement : CharacterBody2D
 	[Export] private float _stunnedTime = 4f;
 	private AnimatedSprite2D _spriteNodePath;
 	[Export(PropertyHint.Layers2DPhysics)] private uint _floorCollisionCheckLayer;
+	[Export(PropertyHint.Layers2DPhysics)] private uint _playerVisibilityCheckLayer;
 
 	
 	public enum MoveState { Idle, Move, Fall, Slide, Cover, Dead, StunnedFloor, Stop = -1 };
@@ -29,7 +30,8 @@ public partial class NpcMovement : CharacterBody2D
 	private Timer _patrolWaitTimer;
 	private Timer _stunnedWaitTimer;
 	private Vector2 _previousFloorPosition;
-	private Line2D _debugLine;
+	[Export] private Line2D _debugLine;
+	private bool _pursuing;
 	
 
 	// Get the gravity from the project settings to be synced with RigidBody nodes.
@@ -47,6 +49,131 @@ public partial class NpcMovement : CharacterBody2D
 		lostHead = _deadState == DeadState.HeadShot;
 	}
 
+	private void PlayerCheck()
+	{
+		if (CheckPlayerState() && CheckDistanceToPlayer() && CheckVisibilityToPlayer())
+		{
+			Debug.WriteLine(Name + ": Player found!");
+			_pursuing = true;
+		}
+	}
+
+	private bool CheckPlayerState()
+	{
+		PlayerMovement player = PlayerMovement.Player;
+		if(player == null) return false;
+		var moveState = player._moveState;
+
+		bool validTargetToPursue = moveState switch
+		{
+			PlayerMovement.MoveState.Move => true,
+			PlayerMovement.MoveState.Idle => true,
+			PlayerMovement.MoveState.Cover => _pursuing ? true : false,
+			PlayerMovement.MoveState.Dead => false,
+			PlayerMovement.MoveState.Slide => true,
+			PlayerMovement.MoveState.Fall => true,
+			PlayerMovement.MoveState.Stop => false,
+			_ => false
+		};
+		Debug.WriteLine(Name + ": CheckPlayerState >> "+validTargetToPursue);
+
+		return validTargetToPursue;
+	}
+	
+	private bool CheckDistanceToPlayer()
+	{
+		if (PlayerMovement.Player == null) return false;
+		bool distanceCheck = PlayerMovement.Player.GlobalPosition.DistanceTo(GlobalPosition) < _aggroDistance;
+		Debug.WriteLine(Name + ": CheckDistanceToPlayer >> "+distanceCheck);
+		return distanceCheck;
+	}
+
+	private bool CheckVisibilityToPlayer()
+	{
+		Vector2 rayStartPosition = GlobalPosition;
+		rayStartPosition.Y -= 10;
+		
+		Vector2 direction = new Vector2(_spriteNodePath.FlipH ? -1f : 1f, 0f);
+		float distance = _aggroDistance;
+		
+		Vector2 rayDirection = direction * distance;
+		var spaceState = GetWorld2D().DirectSpaceState;
+		var rayQuery = PhysicsRayQueryParameters2D.Create(rayStartPosition, rayStartPosition + rayDirection);
+		rayQuery.CollideWithAreas = true;
+		rayQuery.CollisionMask = _playerVisibilityCheckLayer;
+		Array<Rid> excludeList = new Array<Rid> { GetRid() };
+		rayQuery.Exclude = excludeList;
+		var rayResult = spaceState.IntersectRay(rayQuery);
+		
+		var root = GetTree().Root;
+		_debugLine ??= root.GetNodeOrNull<Line2D>("DebugLine");
+		if (_debugLine != null)
+		{
+			Vector2[] points = _debugLine.Points;
+			points[0] = rayStartPosition;
+			points[1] = rayStartPosition + rayDirection;
+			_debugLine.Points = points;
+			Gradient colors = _debugLine.Gradient;
+			colors.SetColor(1, Colors.Red);
+			colors.SetColor(0, Colors.Red);
+			_debugLine.Gradient = colors;
+		}
+		
+		if (rayResult.Count > 0f)
+		{
+			var rayRes = rayResult["collider"];
+			var rayPos = (Vector2)rayResult["position"];
+			
+			if (_debugLine != null)
+			{
+				Vector2[] points = _debugLine.Points;
+				points[0] = rayStartPosition;
+				points[1] = rayPos;
+				_debugLine.Points = points;
+				Gradient colors = _debugLine.Gradient;
+				colors.SetColor(1, Colors.Pink);
+				colors.SetColor(0, Colors.Pink);
+				_debugLine.Gradient = colors;
+				Debug.WriteLine("found " + _debugLine.Points[0] +","+_debugLine.Points[1]);
+			}
+			
+			if (rayRes.Obj is PlayerMovement player)
+			{
+				Debug.WriteLine(Name + ": CheckVisibilityToPlayer >> "+true);
+
+				if (_debugLine != null)
+				{
+					Gradient colors = _debugLine.Gradient;
+					colors.SetColor(1, Colors.Green);
+					colors.SetColor(0, Colors.Green);
+					_debugLine.Gradient = colors;
+				}
+
+				return true;
+			}
+			else
+			{
+				if (rayRes.Obj is Node2D n2d)
+				{
+					Debug.WriteLine(n2d.Name + ": rayRes");
+
+				}
+
+				if (_debugLine != null)
+				{
+					Gradient colors = _debugLine.Gradient;
+					colors.SetColor(1, Colors.Blue);
+					colors.SetColor(0, Colors.Blue);
+					_debugLine.Gradient = colors;
+				}
+			}
+		}
+
+		Debug.WriteLine(Name + ": CheckVisibilityToPlayer >> "+false + ", count = "+rayResult.Count);
+
+		return false;
+	}
+	
 	private void Kill(DeadState killedBy)
 	{
 		_moveState = MoveState.Dead;
@@ -63,8 +190,6 @@ public partial class NpcMovement : CharacterBody2D
 					_spriteNodePath.Animation = "dead_headshot";break;
 			}
 		}
-		
-		var collShape = GetNodeOrNull<CollisionShape2D>("MovementCollider");
 		var bodyShape = GetNodeOrNull<Area2D>("BodyHB");
 		var headShape = GetNodeOrNull<Area2D>("HeadHB");
 		CollisionLayer = 0;
@@ -104,6 +229,7 @@ public partial class NpcMovement : CharacterBody2D
 	
 	public void BeginStunnedTimer()
 	{
+		_stunnedWaitTimer = new Timer();
 		_stunnedWaitTimer = new Timer();
 		_stunnedWaitTimer = new Timer();
 		_stunnedWaitTimer.WaitTime = _stunnedTime;
@@ -156,7 +282,6 @@ public partial class NpcMovement : CharacterBody2D
 		var direction = Vector2.Down * distance;
 		
 		var root = GetTree().Root.GetNode("Game");
-		_debugLine ??= root.GetNodeOrNull<Line2D>("DebugLine");
 		
 		// Check for walls and door...
 		var rayQuery = PhysicsRayQueryParameters2D.Create(startPosition, startPosition + direction);
@@ -165,24 +290,14 @@ public partial class NpcMovement : CharacterBody2D
 		rayQuery.Exclude = excludeList;
 		var rayResult = spaceState.IntersectRay(rayQuery);
 		
-		if (_debugLine != null)
-		{
-			Vector2[] points = _debugLine.Points;
-			points[0] = startPosition;
-			points[1] = startPosition + direction;
-			_debugLine.Points = points;
-			Gradient colors = _debugLine.Gradient;
-			colors.SetColor(1, Colors.Red);
-			_debugLine.Gradient = colors;
-		}
-
+		
 		if (rayResult.Count > 0)
 		{
 			var rayRes = rayResult["collider"];
 			if (rayRes.Obj is StaticBody2D sbody)
 			{
 				//Debug.WriteLine(sbody.Name);
-				if (_debugLine != null)
+				/*if (_debugLine != null)
 				{
 					Vector2[] points = _debugLine.Points;
 					points[0] = startPosition;
@@ -191,22 +306,13 @@ public partial class NpcMovement : CharacterBody2D
 					Gradient colors = _debugLine.Gradient;
 					colors.SetColor(1, Colors.Aqua);
 					_debugLine.Gradient = colors;
-				}
-				//Debug.WriteLine("Found a new pos from " +Name);
-
-			}
-			else
-			{
-				//Debug.WriteLine("Found a new collider, but not valid from " +Name +", queried = "+rayRes.Obj);
-
+				}*/
 			}
 		}
 		else
 		{
 			// not a valid surface we can expect to walk on, return current position
 			// this results in calling this method again next frame
-			//Debug.WriteLine("Not found a new pos from " +Name);
-
 			return GlobalPosition;
 		}
 
@@ -241,8 +347,11 @@ public partial class NpcMovement : CharacterBody2D
 			MoveAndSlide();
 			return;
 		}
+
+		PlayerCheck();
 		
 		var dir = Mathf.Sign((_targetPosition-GlobalPosition).X);
+		_spriteNodePath.FlipH = dir < 0 ? true : dir > 0 ? false : _spriteNodePath.FlipH;
 		var positionDelta = Mathf.Abs(GlobalPosition.X - _targetPosition.X);
 		var atDestination = positionDelta < 2;
 		

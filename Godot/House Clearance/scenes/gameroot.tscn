@@ -134,103 +134,12 @@ physics_material_override = SubResource("PhysicsMaterial_qafg8")
 position = Vector2(-0.5, 4)
 shape = SubResource("RectangleShape2D_5e8ne")
 
-[node name="Baddie 6_" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-341, -3)
-
-[node name="Baddie 6_2" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-295, -3)
-
-[node name="Baddie 6_3" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-206, -3)
-
-[node name="Baddie 6_4" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-160, -3)
-
-[node name="Baddie 6_5" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-119, -3)
-
-[node name="Baddie 6_6" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-73, -3)
-
-[node name="Baddie 6_7" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(16, -3)
-
-[node name="Baddie 6_8" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(62, -3)
-
-[node name="Baddie 6_9" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-48, -3)
-
-[node name="Baddie 6_10" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-2, -3)
-
-[node name="Baddie 6_11" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(87, -3)
-
-[node name="Baddie 6_12" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(133, -3)
-
-[node name="Baddie 6_13" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(174, -3)
-
-[node name="Baddie 6_14" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(220, -3)
-
-[node name="Baddie 6_15" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(309, -3)
-
-[node name="Baddie 6_16" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(355, -3)
-
-[node name="Baddie 6_17" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-366, -3)
-
-[node name="Baddie 6_18" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-320, -3)
-
-[node name="Baddie 6_19" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-231, -3)
-
-[node name="Baddie 6_20" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-185, -3)
-
-[node name="Baddie 6_21" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-144, -3)
-
-[node name="Baddie 6_22" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-98, -3)
-
-[node name="Baddie 6_23" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-9, -3)
-
-[node name="Baddie 6_24" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(37, -3)
-
-[node name="Baddie 6_25" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-73, -3)
-
-[node name="Baddie 6_26" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(-27, -3)
-
-[node name="Baddie 6_27" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(62, -3)
-
-[node name="Baddie 6_28" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(108, -3)
-
-[node name="Baddie 6_29" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(149, -3)
-
-[node name="Baddie 6_30" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(195, -3)
-
-[node name="Baddie 6_31" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(284, -3)
-
-[node name="Baddie 6_32" parent="." instance=ExtResource("7_i6w0p")]
-position = Vector2(330, -3)
+[node name="Baddie 6_" parent="." node_paths=PackedStringArray("_debugLine") instance=ExtResource("7_i6w0p")]
+position = Vector2(259, -3)
+_debugLine = NodePath("../DebugLine")
 
 [node name="DebugLine" type="Line2D" parent="."]
+position = Vector2(1, -1)
 points = PackedVector2Array(0, 0, 0, 0)
 width = 2.0
 default_color = Color(1, 0, 1, 1)
