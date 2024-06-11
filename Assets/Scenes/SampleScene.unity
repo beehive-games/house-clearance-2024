@@ -1551,6 +1551,11 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!4 &439346167 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6596869638555836985, guid: 02ce8522a13666944947276d900cc471, type: 3}
+  m_PrefabInstance: {fileID: 1780693374}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &444282988
 GameObject:
   m_ObjectHideFlags: 0
@@ -2727,7 +2732,7 @@ BoxCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 817439668}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
@@ -2766,6 +2771,37 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.96, y: 3.34}
   m_EdgeRadius: 0
+--- !u!114 &817439678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 817439668}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddb6bcf22f97737419ccdfee320ea7fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _moveSpeed: 10
+  _movementSmoothing: 0.05
+  _jumpForce: 400
+  _gravityMultiplier: 1
+  _slideFriction: 15
+  _slideBoost: 300
+  _slideCooldown: 1
+  _fallAutoSlideVelocity: 750
+  _fallDeathVelocity: 1000
+  _facingRight: 0
+  _spriteObject: {fileID: 439346167}
+  _startingHealth: 100
+  _woundedHealthLevel: 0.33
+  _rehealCooldown: 3
+  _rehealSpeed: 20
+  onLandEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  actions: {fileID: -944628639613478452, guid: a060d8c5c8c8d2f4d8dbaf81a1780467, type: 3}
 --- !u!1 &822809628
 GameObject:
   m_ObjectHideFlags: 0
@@ -5668,6 +5704,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1022760201003215490, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1193461150839416136, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_LocalPosition.y
       value: 9.875
@@ -5675,6 +5715,10 @@ PrefabInstance:
     - target: {fileID: 1673066332199633252, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: jumpForce
       value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 1673066332199633252, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1673066332199633252, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: moveSpeed
@@ -5734,7 +5778,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5069945164908007434, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6596869638555836985, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5805,13 +5849,17 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents:
-    - {fileID: 5069945164908007434, guid: 02ce8522a13666944947276d900cc471, type: 3}
+    - {fileID: 1022760201003215490, guid: 02ce8522a13666944947276d900cc471, type: 3}
+    - {fileID: 1673066332199633252, guid: 02ce8522a13666944947276d900cc471, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4362976035354806133, guid: 02ce8522a13666944947276d900cc471, type: 3}
       insertIndex: -1
       addedObject: {fileID: 817439673}
+    - targetCorrespondingSourceObject: {fileID: 4362976035354806133, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 817439678}
   m_SourcePrefab: {fileID: 100100000, guid: 02ce8522a13666944947276d900cc471, type: 3}
 --- !u!1 &1793115247
 GameObject:
