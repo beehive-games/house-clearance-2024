@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
+using Utils;
 
 namespace Player
 {
@@ -293,7 +294,8 @@ namespace Player
                 {
                     _queueSlide = true;
                     // slide with a bit more oomf, based on Y velocity
-                    _rigidbody2D.velocityX += _rigidbody2D.velocityY / 2f;
+                    var newVeloX = _rigidbody2D.VelocityX() + _rigidbody2D.VelocityY() / 2f;
+                    _rigidbody2D.SetVelocityY(newVeloX);
                 }
                 
             }
@@ -427,8 +429,8 @@ namespace Player
             if (_playerState is PlayerState.DeadFall or PlayerState.DeadShot or PlayerState.Immobile)
             {
                 UpdateSprites(moveVector);
-                _rigidbody2D.velocityX = 0;
-                _rigidbody2D.velocityY = 0;
+                _rigidbody2D.SetVelocityX(0f);
+                _rigidbody2D.SetVelocityY(0f);
                 return;
             }
             
@@ -444,7 +446,7 @@ namespace Player
                 moveVector = new Vector2(0f, moveVector.y);
             }
             
-            var vX = _rigidbody2D.velocityX;
+            var vX = _rigidbody2D.VelocityX();
             var minVx = slideMinimumVelocity.x;
             var stopThreshold = vX < minVx && vX > -minVx;
         
@@ -490,7 +492,7 @@ namespace Player
                 {
                     _queueJump = false;
                     _rigidbody2D.AddForce(Vector2.up * jumpForce);
-                    _rigidbody2D.velocityX = moveVector.x * moveSpeed;
+                    _rigidbody2D.SetVelocityX(moveVector.x * moveSpeed);
                 }
                 else
                 {
@@ -535,7 +537,7 @@ namespace Player
 
                         }
 
-                        _rigidbody2D.velocityX = pseudoVelocity;
+                        _rigidbody2D.SetVelocityX(pseudoVelocity);
 
                     }
                     else // sliding
@@ -543,22 +545,24 @@ namespace Player
                         if (_queueSlide)
                         {
                             _queueSlide = false;
-                            if (_rigidbody2D.velocityX < minVx)
+                            if (_rigidbody2D.VelocityX() < minVx)
                             {
-                                _rigidbody2D.velocityX = (slideBoostForce * (_spriteRenderer.flipX ? -1 : 1)) * Time.fixedDeltaTime;
+                                var veloX = (slideBoostForce * (_spriteRenderer.flipX ? -1 : 1)) * Time.fixedDeltaTime;
+                                _rigidbody2D.SetVelocityX(veloX);
                             }
                             else
                             {
                                 // If we're already moving we want to slide faster than stationary, but full speed is a bit too much
-                                _rigidbody2D.velocityX /= 2f;
+                                var veloX =_rigidbody2D.VelocityX() / 2f;
+                                _rigidbody2D.SetVelocityX(veloX);
                                 _rigidbody2D.AddForce(Vector2.right * (slideBoostForce * (_spriteRenderer.flipX ? -1 : 1)));
 
                             }
                         }// not a fresh slide, stop if we input-move the opposite direction to travel
                         else if (!Mathf.Approximately(moveVector.x, 0f) &&
-                                 (int)Mathf.Sign(_rigidbody2D.velocityX) != (int)Mathf.Sign(moveVector.x))
+                                 (int)Mathf.Sign(_rigidbody2D.VelocityX()) != (int)Mathf.Sign(moveVector.x))
                         {
-                            _rigidbody2D.velocityX = 0f;
+                            _rigidbody2D.SetVelocityX(0f);
                         }
                     }
                 }

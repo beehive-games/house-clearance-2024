@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Utils;
 
 namespace Character.Player
 {
@@ -76,7 +77,8 @@ namespace Character.Player
             base.Move();
         
             _xInput = _moveAction.ReadValue<Vector2>().x;
-            _rigidbody2D.velocityX = _moveSpeed * _xInput;
+            _rigidbody2D.SetVelocityX(_moveSpeed * _xInput);
+            _rigidbody2D.SetVelocityX(_moveSpeed * _xInput);
         }
     }
 }
