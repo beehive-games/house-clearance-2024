@@ -3,6 +3,7 @@ using Combat.Weapon;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
+using Utils;
 
 public enum DamageType
 {
@@ -158,7 +159,7 @@ public class CharacterBase : MonoBehaviour
 		// Death from fall?
 		if (_previousVY > -_fallDeathVelocity) return;
 		
-		_rigidbody2D.velocityY = 0f;
+		_rigidbody2D.SetVelocityY(0f);
 		Kill(DamageType.Fall);
 	}
 
@@ -184,7 +185,7 @@ public class CharacterBase : MonoBehaviour
 	{
 		if(CanMove())
 			Move();
-		_previousVY = _rigidbody2D.velocityY;
+		_previousVY = _rigidbody2D.VelocityY();
 	}
 	
 	private static AliveState SwitchDamageStatToAliveState(DamageType damageType)

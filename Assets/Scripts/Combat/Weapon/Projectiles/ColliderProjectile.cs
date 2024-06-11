@@ -1,5 +1,6 @@
 using Character;
 using UnityEngine;
+using Utils;
 
 namespace Combat.Weapon.Projectiles
 {
@@ -20,7 +21,7 @@ namespace Combat.Weapon.Projectiles
         
             if (_rigidbody2D != null)
             {
-                _rigidbody2D.velocityX = speed;
+                _rigidbody2D.SetVelocityX(speed);
                 startPosition = _rigidbody2D.position;
             }
             else
