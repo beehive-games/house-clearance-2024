@@ -12,6 +12,14 @@ public enum Allegiance
     Enemy
 }
 
+public enum SubProjectileSpawn
+{
+    FirstContact,
+    DamageTick,
+    OnDestroy
+}
+
+
 public class ProjectileBase : MonoBehaviour
 {
     [SerializeField] protected float _damageLow = 1f;
@@ -19,6 +27,8 @@ public class ProjectileBase : MonoBehaviour
     [SerializeField] protected float _damageRepeatTime = 0f;
     [SerializeField] protected int _damageRepeats = 0;
     [SerializeField] protected float _lifeTime = 1f;
+    [SerializeField] protected GameObject _subProjectile;
+    [SerializeField] protected SubProjectileSpawn _subProjectileSpawn;
     
     public DamageType damageType;
     [HideInInspector] public float damage;
@@ -38,6 +48,12 @@ public class ProjectileBase : MonoBehaviour
     {
         lifetimeTimer = StartCoroutine(Lifetime());
     }
+
+    private void SpawnSubProjectile()
+    {
+        var tf = transform;
+        Instantiate(_subProjectile, tf.position, tf.rotation);
+    }
     
     protected virtual void FixedUpdate() { }
 
@@ -50,7 +66,12 @@ public class ProjectileBase : MonoBehaviour
     private IEnumerator DamageTime(HitBox hitBox)
     {
         hitBox.Hit(damage, damageType, allegiance);
-
+        
+        if (_subProjectileSpawn is SubProjectileSpawn.FirstContact or SubProjectileSpawn.DamageTick)
+        {
+            SpawnSubProjectile();
+        }
+        
         if (!(_damageRepeatTime > 0f) || _damageRepeats <= 0) yield break;
         
         while (_damageRepeats > 0)
@@ -58,9 +79,18 @@ public class ProjectileBase : MonoBehaviour
             _damageRepeats--;
             yield return new WaitForSeconds(_damageRepeatTime);
             hitBox.Hit(damage, damageType, allegiance);
+            if (_subProjectileSpawn is SubProjectileSpawn.DamageTick)
+            {
+                SpawnSubProjectile();
+            }
         }
         
         // Damage application complete, kill the projectile
+        if (_subProjectileSpawn is SubProjectileSpawn.OnDestroy)
+        {
+            SpawnSubProjectile();
+        }
+        
         Destroy(this);
     }
     

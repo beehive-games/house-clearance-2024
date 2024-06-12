@@ -20,8 +20,11 @@ public class CharacterBase : MonoBehaviour
 	[Header("Movement")]
 	[SerializeField] private protected float _moveSpeed = 10f;
 	[SerializeField] private protected float _movementSmoothing = 0.05f;
+	[SerializeField] private protected float _maxAcceleration = 35f;
+	[SerializeField] private protected float _maxAirAcceleration = 20f;
 	[SerializeField, Range(0,1)] private protected float _woundedSpeed = 0.66f;
-
+	
+	
 	[Space]
 	[SerializeField] private protected float _jumpForce = 400f;
 	[SerializeField] private protected float _gravityMultiplier = 1f;
@@ -32,8 +35,15 @@ public class CharacterBase : MonoBehaviour
 	[SerializeField] private protected float _slideCooldown = 1f;
 	
 	[Space]
-	[SerializeField] private protected float _fallAutoSlideVelocity = 750f;
-	[SerializeField] private protected float _fallDeathVelocity = 1f;
+	[SerializeField] private protected float _fallAutoSlideVelocity = 20f;
+	[SerializeField] private protected float _fallDeathVelocity = 30f;
+	
+	[Space]
+	[Header("Ground")]
+	[SerializeField] private protected float _groundCheckDistance = 0.25f;
+	[SerializeField] private protected Transform _groundCheckPivot;
+	[SerializeField] private protected LayerMask _groundCheckLayers;
+	[SerializeField] private protected float _groundCheckPivotRadius = 0.5f;
 
 	[Space] 
 	[Header("Art")]
@@ -60,10 +70,9 @@ public class CharacterBase : MonoBehaviour
 	private float _currentHealth;
 	private float _previousVY;
 	private protected float _lastDamageCounter;
-	
+	RaycastHit2D[] _results;
 	internal enum MovementState
 	{
-		Idle,
 		Walk,
 		Slide,
 		Cover,
@@ -92,6 +101,7 @@ public class CharacterBase : MonoBehaviour
 	protected virtual void Awake()
 	{
 		StartUpChecks();
+		_results = new RaycastHit2D[1];
 	}
 
 	private void StartUpChecks()
@@ -186,6 +196,32 @@ public class CharacterBase : MonoBehaviour
 		if(CanMove())
 			Move();
 		_previousVY = _rigidbody2D.VelocityY();
+		_spriteObject.position = _rigidbody2D.position;
+	}
+
+	private bool GroundCheckNonAlloc(Vector2 position, Vector2 direction, float maxDistance, LayerMask layerMask)
+	{
+		int hits = Physics2D.RaycastNonAlloc(position, direction, _results, maxDistance, layerMask);
+		return hits > 0;
+	}
+
+	protected virtual bool IsGrounded()
+	{
+		var position3D = _groundCheckPivot.position;
+		var position2D = new Vector2(position3D.x, position3D.y);
+		
+		var positionLeft = position2D - _groundCheckPivotRadius * Vector2.right;
+		var positionRight = position2D + _groundCheckPivotRadius * Vector2.right;
+
+		bool left = GroundCheckNonAlloc(positionLeft, Vector2.down, _groundCheckDistance, _groundCheckLayers);
+		bool center = GroundCheckNonAlloc(position2D, Vector2.down, _groundCheckDistance, _groundCheckLayers);
+		bool right = GroundCheckNonAlloc(positionRight, Vector2.down, _groundCheckDistance, _groundCheckLayers);
+		
+		Debug.DrawRay(positionLeft, Vector2.down * _groundCheckDistance, left ? Color.red : Color.magenta);
+		Debug.DrawRay(position2D, Vector2.down * _groundCheckDistance, center ? Color.green : Color.yellow);
+		Debug.DrawRay(positionRight, Vector2.down * _groundCheckDistance, right? Color.blue : Color.cyan);
+
+		return left || right || center;
 	}
 	
 	private static AliveState SwitchDamageStatToAliveState(DamageType damageType)
@@ -206,7 +242,8 @@ public class CharacterBase : MonoBehaviour
 	{
 		_aliveState = SwitchDamageStatToAliveState(damageType);
 		_movementState = MovementState.Dead;
-		weapon.DisableShooting();
+		if(weapon != null)
+			weapon.DisableShooting();
 	}
 	
 	// This should only really be called from HitBox components or AOE objects
@@ -224,7 +261,13 @@ public class CharacterBase : MonoBehaviour
 			_aliveState = AliveState.Wounded;
 		}
 	}
+
+	protected virtual void Jump()
+	{
+		_rigidbody2D.AddForce(_jumpForce * Vector2.up);
+	}
 	
+
 	public virtual void Heal(float health)
 	{
 		if (_aliveState is AliveState.Alive or AliveState.Wounded)

@@ -9,9 +9,11 @@ namespace Character.Player
         [Space]
         [Header("Player controls")]
         [SerializeField] private InputActionAsset actions;
+        [SerializeField] private float inAirControlForce = 100f;
         private InputAction _moveAction;
         private bool _waitForMoveActionDepress;
         private float _xInput;
+        private bool _queueJump;
     
     
         // -------------------------
@@ -24,6 +26,12 @@ namespace Character.Player
         private void OnDisable()
         {
             actions.FindActionMap("gameplay").Disable();
+        }
+        
+        private void OnSpecial(InputAction.CallbackContext context)
+        {
+            Debug.Log("Special!");
+            _queueJump = true;
         }
     
         protected override void Awake()
@@ -41,6 +49,9 @@ namespace Character.Player
             {
                 Debug.LogError("Move Action is NULL!!");
             }
+            
+            actions.FindActionMap("gameplay").FindAction("special").performed += OnSpecial;
+
         }
     
         protected override void Update()
@@ -70,15 +81,40 @@ namespace Character.Player
                 _waitForMoveActionDepress = false;
             }
         }
-    
-        // Called in FixedUpdate in parent class
+
+        private void XDirection(bool isGrounded)
+        {
+            var velocity = _rigidbody2D.velocity;
+            var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
+            var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
+            velocity.x = Mathf.MoveTowards(velocity.x, _moveSpeed * _xInput, maxSpeedDelta);
+            _rigidbody2D.velocity = velocity;
+        }
+        
+        private void YDirection(bool isGrounded)
+        {
+            if (_queueJump)
+            {
+                _queueJump = false;
+                if (isGrounded)
+                {
+                    Jump();
+                }
+            }
+        }
+        
+        // Called in FixedUpdate in parent class, only if we can move based on states
         protected override void Move()
         {
             base.Move();
-        
+            
             _xInput = _moveAction.ReadValue<Vector2>().x;
-            _rigidbody2D.SetVelocityX(_moveSpeed * _xInput);
-            _rigidbody2D.SetVelocityX(_moveSpeed * _xInput);
+            
+            bool isGrounded = IsGrounded();
+
+            XDirection(isGrounded);
+            YDirection(isGrounded);
+
         }
     }
 }

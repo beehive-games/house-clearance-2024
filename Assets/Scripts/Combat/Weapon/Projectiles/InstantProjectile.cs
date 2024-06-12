@@ -5,7 +5,10 @@ namespace Combat.Weapon.Projectiles
     public class InstantProjectile : ProjectileBase
     {
         [SerializeField] protected float range = 100f;
+        [SerializeField] protected GameObject impactVFX;
 
+        
+        
         protected override void Awake()
         {
             base.Awake();
@@ -21,6 +24,14 @@ namespace Combat.Weapon.Projectiles
             // their own shots
         
             // if we hit a hitbox, call DoDamage()
+            // if we dont, still spawn the VFX
+            
+            // TODO - make spawn position impact position
+            // TODO - make impactVFX destroy after timer - but make this internal
+            if (impactVFX != null)
+            {
+                Instantiate(impactVFX, transform.position, Quaternion.identity);
+            }
         }
     }
 }

@@ -148,12 +148,12 @@ MonoBehaviour:
   m_RequiresColorTexture: 0
   m_Version: 2
   m_TaaSettings:
-    quality: 3
-    frameInfluence: 0.1
-    jitterScale: 1
-    mipBias: 0
-    varianceClampScale: 0.9
-    contrastAdaptiveSharpening: 0
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
 --- !u!114 &1523333565508556035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -210,7 +210,9 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 9025472883500509361}
+  - {fileID: 7635938595988611182}
   m_Father: {fileID: 8826418121709608834}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!50 &7242331563667831781
@@ -248,7 +250,6 @@ CapsuleCollider2D:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4362976035354806133}
   m_Enabled: 1
-  serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -272,8 +273,7 @@ CapsuleCollider2D:
     m_Bits: 4294967295
   m_IsTrigger: 0
   m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
+  m_UsedByComposite: 0
   m_Offset: {x: 0, y: 1.7400953}
   m_Size: {x: 1.6715162, y: 3.487098}
   m_Direction: 0
@@ -317,21 +317,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9db36ebb60217cb47b022456019c60f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_JumpForce: 400
-  m_CrouchSpeed: 0.36
-  m_MovementSmoothing: 0.05
-  m_AirControl: 1
-  m_WhatIsGround:
+  _moveSpeed: 10
+  _movementSmoothing: 0.05
+  _woundedSpeed: 0.66
+  _groundCheckDistance: 0.25
+  _groundCheckPivot: {fileID: 0}
+  _groundCheckLayers:
     serializedVersion: 2
     m_Bits: 64
-  m_GroundCheck: {fileID: 9025472883500509361}
-  m_CeilingCheck: {fileID: 7635938595988611182}
-  m_CrouchDisableCollider: {fileID: 0}
-  actions: {fileID: -944628639613478452, guid: a060d8c5c8c8d2f4d8dbaf81a1780467, type: 3}
-  OnLandEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  OnCrouchEvent:
+  _groundCheckPivotRadius: 0.5
+  _jumpForce: 400
+  _gravityMultiplier: 1
+  _slideFriction: 15
+  _slideBoost: 300
+  _slideCooldown: 1
+  _fallAutoSlideVelocity: 750
+  _fallDeathVelocity: 1
+  _facingRight: 0
+  _spriteObject: {fileID: 0}
+  _startingHealth: 100
+  _woundedHealthLevel: 0.33
+  _rehealCooldown: 3
+  _rehealSpeed: 20
+  weapon: {fileID: 0}
+  onLandEvent:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &4597280789073467896
@@ -366,8 +375,6 @@ Transform:
   - {fileID: 1193461150839416136}
   - {fileID: 1858643333802270211}
   - {fileID: 6596869638555836985}
-  - {fileID: 9025472883500509361}
-  - {fileID: 7635938595988611182}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5226829273689869162
@@ -380,7 +387,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9025472883500509361}
   m_Layer: 0
-  m_Name: GrouchCheck
+  m_Name: GroundCheck
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -399,7 +406,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8826418121709608834}
+  m_Father: {fileID: 1858643333802270211}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7753868140848055751
 GameObject:
@@ -451,8 +458,6 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -490,7 +495,7 @@ SpriteRenderer:
   m_SpriteSortPoint: 0
 --- !u!95 &755438295353458273
 Animator:
-  serializedVersion: 7
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -504,7 +509,6 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -539,5 +543,5 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8826418121709608834}
+  m_Father: {fileID: 1858643333802270211}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
