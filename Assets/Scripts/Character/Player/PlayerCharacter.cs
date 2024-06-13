@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utils;
+using Vector3 = System.Numerics.Vector3;
 
 namespace Character.Player
 {
@@ -10,10 +11,12 @@ namespace Character.Player
         [Header("Player controls")]
         [SerializeField] private InputActionAsset actions;
         [SerializeField] private float inAirControlForce = 100f;
+        [SerializeField] private float gridSquaresPerUnit = 10f;
         private InputAction _moveAction;
         private bool _waitForMoveActionDepress;
         private float _xInput;
         private bool _queueJump;
+        private bool _queueSlide;
     
     
         // -------------------------
@@ -51,6 +54,8 @@ namespace Character.Player
             }
             
             actions.FindActionMap("gameplay").FindAction("special").performed += OnSpecial;
+            actions.FindActionMap("gameplay").FindAction("slide").performed += OnSlide;
+
 
         }
     
@@ -75,20 +80,79 @@ namespace Character.Player
         {
             if (!_waitForMoveActionDepress) return;
 
-            var inputMatchesFacingDirection = Flipped() ? _xInput < 0f  : _xInput > 0f;
+            var inputMatchesFacingDirection = _spriteRenderer.flipX ? _xInput < 0f  : _xInput > 0f;
             if (_moveAction.WasReleasedThisFrame() || !inputMatchesFacingDirection )
             {
                 _waitForMoveActionDepress = false;
             }
         }
 
+        private void SetRigidbody2DVelocityX(float x)
+        {
+            _rigidbody2D.velocity = new Vector2(x, _rigidbody2D.VelocityY());
+        }
+        
+        private void OnSlide(InputAction.CallbackContext context)
+        {
+            Debug.Log("Slide!");
+            _queueSlide = true;
+        }
+
+        private void StartSlide()
+        {
+            _movementState = MovementState.Slide;
+            float direction = _spriteRenderer.flipX ? -1 : 1;
+            SetRigidbody2DVelocityX(_slideBoost * _rigidbody2D.mass * direction);
+        }
+
+        private void DuringSlide(bool isGrounded)
+        {
+            _queueSlide = false;
+            if (!isGrounded || Mathf.Abs(_rigidbody2D.velocity.x) < 0.1f)
+            {
+                StopSlide();
+            }
+            else
+            {
+                float x = _rigidbody2D.velocity.x;
+                bool sign = Mathf.Sign(x) < 0f;
+                float deltaV = _slideFriction * Time.fixedDeltaTime;
+                var clamped1 = Mathf.Clamp(x + deltaV, x, 0f);
+                var clamped2 = Mathf.Clamp(x - deltaV, 0f, x);
+                SetRigidbody2DVelocityX(sign ? clamped1 : clamped2);
+            }
+        }
+        
+        private void StopSlide()
+        {
+            _movementState = MovementState.Walk;
+        }
+
         private void XDirection(bool isGrounded)
         {
-            var velocity = _rigidbody2D.velocity;
-            var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
-            var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
-            velocity.x = Mathf.MoveTowards(velocity.x, _moveSpeed * _xInput, maxSpeedDelta);
-            _rigidbody2D.velocity = velocity;
+            if (_movementState == MovementState.Slide)
+            {
+                DuringSlide(isGrounded);
+            }
+            else
+            {
+                if (isGrounded && _queueSlide)
+                {
+                    _queueSlide = false;
+                    StartSlide();
+                }
+                else
+                {
+                    if (_movementState is not MovementState.Slide or MovementState.Dead or MovementState.Immobile)
+                    {
+                        var velocity = _rigidbody2D.velocity;
+                        var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
+                        var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
+                        velocity.x = Mathf.MoveTowards(velocity.x, _moveSpeed * _xInput, maxSpeedDelta);
+                        _rigidbody2D.velocity = velocity;
+                    }
+                }
+            }
         }
         
         private void YDirection(bool isGrounded)
@@ -102,7 +166,8 @@ namespace Character.Player
                 }
             }
         }
-        
+
+      
         // Called in FixedUpdate in parent class, only if we can move based on states
         protected override void Move()
         {

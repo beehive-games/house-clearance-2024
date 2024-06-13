@@ -2728,22 +2728,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ddb6bcf22f97737419ccdfee320ea7fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _moveSpeed: 10
+  _moveSpeed: 20
   _movementSmoothing: 0.05
+  _maxAcceleration: 10000
+  _maxAirAcceleration: 20
   _woundedSpeed: 0.66
-  _groundCheckDistance: 0.01
+  _jumpForce: 750
+  _gravityMultiplier: 1
+  _slideFriction: 20
+  _slideBoost: 30
+  _slideCooldown: 1
+  _fallAutoSlideVelocity: 20
+  _fallDeathVelocity: 30
+  _groundCheckDistance: 0.25
   _groundCheckPivot: {fileID: 2109911178}
   _groundCheckLayers:
     serializedVersion: 2
     m_Bits: 64
   _groundCheckPivotRadius: 0
-  _jumpForce: 400
-  _gravityMultiplier: 1
-  _slideFriction: 15
-  _slideBoost: 300
-  _slideCooldown: 1
-  _fallAutoSlideVelocity: 200
-  _fallDeathVelocity: 300
   _facingRight: 0
   _spriteObject: {fileID: 439346167}
   _startingHealth: 100
@@ -2755,6 +2757,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   actions: {fileID: -944628639613478452, guid: a060d8c5c8c8d2f4d8dbaf81a1780467, type: 3}
+  inAirControlForce: 100
+  gridSquaresPerUnit: 10
 --- !u!1 &822809628
 GameObject:
   m_ObjectHideFlags: 0
@@ -5599,6 +5603,18 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: 9.875
       objectReference: {fileID: 0}
+    - target: {fileID: 1523333565508556035, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_AssetsPPU
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523333565508556035, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_RefResolutionX
+      value: 192
+      objectReference: {fileID: 0}
+    - target: {fileID: 1523333565508556035, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_RefResolutionY
+      value: 108
+      objectReference: {fileID: 0}
     - target: {fileID: 1673066332199633252, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: jumpForce
       value: 500
@@ -5661,7 +5677,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4952168963276234103, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: orthographic size
-      value: 18
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 5069945164908007434, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_Enabled
@@ -5694,6 +5710,10 @@ PrefabInstance:
     - target: {fileID: 7242331563667831781, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_GravityScale
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7753868140848055751, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8826418121709608834, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_LocalPosition.x

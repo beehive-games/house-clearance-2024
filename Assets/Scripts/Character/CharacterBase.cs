@@ -68,8 +68,8 @@ public class CharacterBase : MonoBehaviour
 	public UnityEvent onLandEvent;
 
 	private float _currentHealth;
-	private float _previousVY;
 	private protected float _lastDamageCounter;
+	private protected Vector2 _previousVelocity;
 	RaycastHit2D[] _results;
 	internal enum MovementState
 	{
@@ -167,7 +167,7 @@ public class CharacterBase : MonoBehaviour
 	private void OnCollisionEnter2D(Collision2D other)
 	{
 		// Death from fall?
-		if (_previousVY > -_fallDeathVelocity) return;
+		if (_previousVelocity.y > -_fallDeathVelocity) return;
 		
 		_rigidbody2D.SetVelocityY(0f);
 		Kill(DamageType.Fall);
@@ -195,8 +195,9 @@ public class CharacterBase : MonoBehaviour
 	{
 		if(CanMove())
 			Move();
-		_previousVY = _rigidbody2D.VelocityY();
+		_previousVelocity = _rigidbody2D.velocity;
 		_spriteObject.position = _rigidbody2D.position;
+		UpdateSprite();
 	}
 
 	private bool GroundCheckNonAlloc(Vector2 position, Vector2 direction, float maxDistance, LayerMask layerMask)
@@ -265,6 +266,7 @@ public class CharacterBase : MonoBehaviour
 	protected virtual void Jump()
 	{
 		_rigidbody2D.AddForce(_jumpForce * Vector2.up);
+		_rigidbody2D.AddForce((_gravityMultiplier - 1) * -9.81f * Vector2.up);
 	}
 	
 
@@ -281,21 +283,15 @@ public class CharacterBase : MonoBehaviour
 		return _movementState == MovementState.Cover;
 	}
 	
-	private void Flip()
+	protected virtual void UpdateSprite()
 	{
-		// Switch the way the player is labelled as facing.
-		_facingRight = !_facingRight;
-
-		// Multiply the player's x local scale by -1.
-		var currentTransform = transform;
-		Vector2 theScale = currentTransform.localScale;
-		theScale.x *= -1;
-		currentTransform.localScale = theScale;
-	}
-
-	protected bool Flipped()
-	{
-		return !_facingRight;
+		var vX = _rigidbody2D.velocity.x;
+		_spriteRenderer.flipX = vX switch
+		{
+			< 0f => true,
+			> 0f => false,
+			_ => _spriteRenderer.flipX
+		};
 	}
 
 }
