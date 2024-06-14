@@ -1,4 +1,5 @@
 using System;
+using Character.Player;
 using Combat.Weapon;
 using UnityEngine;
 using UnityEngine.Events;
@@ -26,13 +27,13 @@ public class CharacterBase : MonoBehaviour
 	
 	
 	[Space]
-	[SerializeField] private protected float _jumpForce = 400f;
+	[SerializeField] private protected float _jumpForce = 1250f;
 	[SerializeField] private protected float _gravityMultiplier = 1f;
 	
 	[Space]
 	[SerializeField] private protected float _slideFriction = 15f;
 	[SerializeField] private protected float _slideBoost = 300f;
-	[SerializeField] private protected float _slideCooldown = 1f;
+	//[SerializeField] private protected float _slideCooldown = 1f;
 	
 	[Space]
 	[SerializeField] private protected float _fallAutoSlideVelocity = 20f;
@@ -47,7 +48,6 @@ public class CharacterBase : MonoBehaviour
 
 	[Space] 
 	[Header("Art")]
-	[SerializeField] private protected bool _facingRight;
 	[SerializeField] private protected Transform _spriteObject;
 	private protected Rigidbody2D _rigidbody2D;
 	private protected Collider2D _collider2D;
@@ -162,20 +162,93 @@ public class CharacterBase : MonoBehaviour
 			Debug.LogWarning("Fall Velocity to Slide is greater than Fall Velocity to Die. Please check this is the behaviour you intended");
 		}
 	}
+	
+	protected void SetRigidbody2DVelocityX(float x)
+	{
+		_rigidbody2D.velocity = new Vector2(x, _rigidbody2D.VelocityY());
+	}
+
+	protected virtual void HitCover()
+	{
+		_movementState = MovementState.Cover;
+		SetRigidbody2DVelocityX(0f);
+	}
+	
+	protected bool CheckHitCharacter(Collision2D other, ref CharacterBase character)
+	{
+		var enemy = LayerMask.NameToLayer("Enemy");
+		var player = LayerMask.NameToLayer("Player");
+		var comparisonLayer = other.gameObject.layer;
+		
+		if (comparisonLayer != enemy && comparisonLayer != player) return false;
+		
+		character = other.gameObject.GetComponent<CharacterBase>();
+		return true;
+
+	}
+	
+	protected virtual void HitCharacter(CharacterBase character)
+	{
+		var playerCharacter = character as PlayerCharacter;
+		if (playerCharacter != null)
+		{
+			Debug.Log("Hit Player");
+		}
+		else
+		{
+			Debug.Log("Hit non-player character. Big TODO!");
+			if (_movementState == MovementState.Slide)
+			{
+				// stun!
+			}
+			else
+			{
+				// switch to melee attack!
+			}
+		}
+	}
+
+	protected bool CheckHitCover(Collider2D other)
+	{
+		return other.gameObject.layer == LayerMask.NameToLayer("Cover") && _movementState == MovementState.Slide;
+	}
+	
+	protected bool CheckFallDamage()
+	{
+		if (_aliveState is AliveState.Alive or AliveState.Wounded)
+		{
+			// Death from fall?
+			if (_previousVelocity.y > -_fallDeathVelocity) return false;
+		
+			_rigidbody2D.SetVelocityY(0f);
+			Kill(DamageType.Fall);
+		}
+		return true;
+	}
 
 	// Todo: move to hitbox code? ALl damage is from hitboxes only?
 	private void OnCollisionEnter2D(Collision2D other)
 	{
-		// Death from fall?
-		if (_previousVelocity.y > -_fallDeathVelocity) return;
+		if (CheckFallDamage()) return;
 		
-		_rigidbody2D.SetVelocityY(0f);
-		Kill(DamageType.Fall);
+		CharacterBase characterHit = null;
+		if (CheckHitCharacter(other, ref characterHit)) HitCharacter(characterHit);
+	}
+
+	private void OnCollisionExit2D(Collision2D other)
+	{
+
+	}
+	
+
+	private void OnTriggerExit2D(Collider2D other)
+	{
+		if (CheckHitCover(other)) Debug.Log("left cover");
 	}
 
 	private void OnTriggerEnter2D(Collider2D other)
 	{
-		// TODO: Support cover trigger volume collisions
+		if (CheckHitCover(other)) HitCover();
 	}
 
 	// This will contain the final movement logic based on 
@@ -195,6 +268,9 @@ public class CharacterBase : MonoBehaviour
 	{
 		if(CanMove())
 			Move();
+		
+		// Add extra gravity
+		_rigidbody2D.AddForce((_gravityMultiplier - 1) * -9.81f * Vector2.up);
 		_previousVelocity = _rigidbody2D.velocity;
 		_spriteObject.position = _rigidbody2D.position;
 		UpdateSprite();
@@ -245,6 +321,7 @@ public class CharacterBase : MonoBehaviour
 		_movementState = MovementState.Dead;
 		if(weapon != null)
 			weapon.DisableShooting();
+		Debug.Log(name + " died, due to "+damageType);
 	}
 	
 	// This should only really be called from HitBox components or AOE objects
@@ -263,10 +340,11 @@ public class CharacterBase : MonoBehaviour
 		}
 	}
 
+	
+	
 	protected virtual void Jump()
 	{
 		_rigidbody2D.AddForce(_jumpForce * Vector2.up);
-		_rigidbody2D.AddForce((_gravityMultiplier - 1) * -9.81f * Vector2.up);
 	}
 	
 

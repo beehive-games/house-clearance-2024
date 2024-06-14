@@ -17,6 +17,7 @@ namespace Character.Player
         private float _xInput;
         private bool _queueJump;
         private bool _queueSlide;
+        private float _slideToJumpMaxVX;
     
     
         // -------------------------
@@ -35,6 +36,15 @@ namespace Character.Player
         {
             Debug.Log("Special!");
             _queueJump = true;
+        }
+        
+        protected override void Jump()
+        {
+            base.Jump();
+            if (_movementState == MovementState.Slide)
+            {
+                SlideToJump();
+            }
         }
     
         protected override void Awake()
@@ -72,30 +82,26 @@ namespace Character.Player
         //--------------------------
         private void GetXAxisInput()
         {
-            ReleasedMoveKey();
-            _xInput = _waitForMoveActionDepress ? 0f : _moveAction.ReadValue<Vector2>().x;
+            var moveXInput = _moveAction.ReadValue<Vector2>().x;
+            ReleasedMoveKey(moveXInput);
+            _xInput = _waitForMoveActionDepress ? 0f : moveXInput;
         }
     
-        private void ReleasedMoveKey()
+        private void ReleasedMoveKey(float xInput)
         {
             if (!_waitForMoveActionDepress) return;
-
-            var inputMatchesFacingDirection = _spriteRenderer.flipX ? _xInput < 0f  : _xInput > 0f;
+            var inputMatchesFacingDirection = _spriteRenderer.flipX ? xInput < 0f  : xInput > 0f;
             if (_moveAction.WasReleasedThisFrame() || !inputMatchesFacingDirection )
             {
                 _waitForMoveActionDepress = false;
             }
         }
 
-        private void SetRigidbody2DVelocityX(float x)
-        {
-            _rigidbody2D.velocity = new Vector2(x, _rigidbody2D.VelocityY());
-        }
+        
         
         private void OnSlide(InputAction.CallbackContext context)
         {
-            Debug.Log("Slide!");
-            _queueSlide = true;
+            if(_movementState != MovementState.Slide) _queueSlide = true;
         }
 
         private void StartSlide()
@@ -122,14 +128,30 @@ namespace Character.Player
                 SetRigidbody2DVelocityX(sign ? clamped1 : clamped2);
             }
         }
+
+        protected override void HitCover()
+        {
+            base.HitCover();
+            _waitForMoveActionDepress = true;
+        }
+        
+        private void SlideToJump()
+        {
+            _slideToJumpMaxVX = Mathf.Abs(_rigidbody2D.velocity.x);
+        }
         
         private void StopSlide()
         {
             _movementState = MovementState.Walk;
+            _waitForMoveActionDepress = true;
         }
 
         private void XDirection(bool isGrounded)
         {
+            if (isGrounded)
+            {
+                _slideToJumpMaxVX = -1f;
+            }
             if (_movementState == MovementState.Slide)
             {
                 DuringSlide(isGrounded);
@@ -149,6 +171,13 @@ namespace Character.Player
                         var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
                         var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
                         velocity.x = Mathf.MoveTowards(velocity.x, _moveSpeed * _xInput, maxSpeedDelta);
+
+                        if (_slideToJumpMaxVX >= 0f)
+                        {
+                            var min = Mathf.Min(_slideToJumpMaxVX, -_slideToJumpMaxVX);
+                            var max = Mathf.Max(_slideToJumpMaxVX, -_slideToJumpMaxVX);
+                            velocity.x = Mathf.Clamp(velocity.x, min, max);
+                        }
                         _rigidbody2D.velocity = velocity;
                     }
                 }
@@ -172,9 +201,7 @@ namespace Character.Player
         protected override void Move()
         {
             base.Move();
-            
-            _xInput = _moveAction.ReadValue<Vector2>().x;
-            
+           
             bool isGrounded = IsGrounded();
 
             XDirection(isGrounded);
