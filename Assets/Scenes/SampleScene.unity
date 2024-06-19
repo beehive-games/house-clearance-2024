@@ -2867,8 +2867,8 @@ MonoBehaviour:
   _gravityMultiplier: 3
   _slideFriction: 20
   _slideBoost: 30
-  _fallAutoSlideVelocity: 20
-  _fallDeathVelocity: 30
+  _fallAutoSlideVelocity: 30
+  _fallDeathVelocity: 40
   _groundCheckDistance: 0.25
   _groundCheckPivot: {fileID: 2109911178}
   _groundCheckLayers:
