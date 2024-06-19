@@ -104,12 +104,7 @@ namespace Character.Player
             if(_movementState != MovementState.Slide) _queueSlide = true;
         }
 
-        private void StartSlide()
-        {
-            _movementState = MovementState.Slide;
-            float direction = _spriteRenderer.flipX ? -1 : 1;
-            SetRigidbody2DVelocityX(_slideBoost * _rigidbody2D.mass * direction);
-        }
+        
 
         private void DuringSlide(bool isGrounded)
         {
@@ -181,6 +176,16 @@ namespace Character.Player
                         _rigidbody2D.velocity = velocity;
                     }
                 }
+            }
+
+            if (!isGrounded && _aliveState is AliveState.Alive or AliveState.Wounded)
+            {
+                _movementState = MovementState.Jump;
+            }
+
+            if (isGrounded && _movementState is MovementState.Jump)
+            {
+                _movementState = MovementState.Walk;
             }
         }
         

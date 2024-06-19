@@ -11,6 +11,7 @@ public enum DamageType
 	Fall,
 	Melee,
 	Projectile,
+	ProjectileHead,
 	Explosion,
 	Fire,
 	Acid
@@ -90,13 +91,14 @@ public class CharacterBase : MonoBehaviour
 		DeadShot,
 		DeadGibs,
 		DeadBurnt,
-		DeadAcid
+		DeadAcid,
+		DeadHeadShot
 	}
-	
-	
 	
 	private protected MovementState _movementState;
 	private protected AliveState _aliveState;
+	private protected RuntimeAnimatorController _animationController;
+	private protected Animator _animator;
 	
 	protected virtual void Awake()
 	{
@@ -121,6 +123,7 @@ public class CharacterBase : MonoBehaviour
 		_spriteRenderer = _spriteObject.GetComponent<SpriteRenderer>();
 		_spriteAnimCtrl = _spriteObject.GetComponent<Animator>();
 		_collider2D = GetComponent<Collider2D>();
+		
 
 		if (!_rigidbody2D)
 		{
@@ -134,6 +137,26 @@ public class CharacterBase : MonoBehaviour
 			enabled = false;
 			Debug.LogError("_spriteObject missing from PlayerMovement!");
 			return;
+		}
+		else
+		{
+			_animator = _spriteObject.GetComponent<Animator>();
+			if (_animator != null)
+			{
+				_animationController = _animator.runtimeAnimatorController;
+				if (_animationController == null)
+				{
+					Debug.LogError("Animation Controller missing from _spriteObject's Animator!");
+					enabled = false;
+					return;
+				}
+			}
+			else
+			{
+				Debug.LogError("Animator missing from _spriteObject!");
+				enabled = false;
+				return;
+			}
 		}
         
 		if (!_spriteRenderer)
@@ -213,6 +236,13 @@ public class CharacterBase : MonoBehaviour
 		return other.gameObject.layer == LayerMask.NameToLayer("Cover") && _movementState == MovementState.Slide;
 	}
 	
+	protected void StartSlide()
+	{
+		_movementState = MovementState.Slide;
+		float direction = _spriteRenderer.flipX ? -1 : 1;
+		SetRigidbody2DVelocityX(_slideBoost * _rigidbody2D.mass * direction);
+	}
+	
 	protected bool CheckFallDamage()
 	{
 		if (_aliveState is AliveState.Alive or AliveState.Wounded)
@@ -230,7 +260,11 @@ public class CharacterBase : MonoBehaviour
 	private void OnCollisionEnter2D(Collision2D other)
 	{
 		if (CheckFallDamage()) return;
-		
+
+		if (_previousVelocity.y < -_fallAutoSlideVelocity)
+		{
+			StartSlide();
+		}
 		CharacterBase characterHit = null;
 		if (CheckHitCharacter(other, ref characterHit)) HitCharacter(characterHit);
 	}
@@ -308,6 +342,7 @@ public class CharacterBase : MonoBehaviour
 			DamageType.Fall => AliveState.DeadFall,
 			DamageType.Melee => AliveState.DeadMelee,
 			DamageType.Projectile => AliveState.DeadShot,
+			DamageType.ProjectileHead => AliveState.DeadHeadShot,
 			DamageType.Explosion => AliveState.DeadGibs,
 			DamageType.Acid => AliveState.DeadAcid,
 			DamageType.Fire => AliveState.DeadBurnt,
@@ -360,6 +395,33 @@ public class CharacterBase : MonoBehaviour
 	{
 		return _movementState == MovementState.Cover;
 	}
+
+	protected void UpdateSpriteState(string animationName)
+	{
+		_animator.Play(animationName);
+	}
+	
+	protected void UpdateDeadSprite()
+	{
+		switch (_aliveState)
+		{
+			case AliveState.Alive : return;
+			case AliveState.DeadFall    : UpdateSpriteState("Dead_Fall");
+				break;
+			case AliveState.DeadShot    : UpdateSpriteState("Dead_Shot");
+				break;
+			case AliveState.DeadAcid    : UpdateSpriteState("Dead_Shot");
+				break;
+			case AliveState.DeadBurnt   : UpdateSpriteState("Dead_Shot");
+				break;
+			case AliveState.DeadMelee   : UpdateSpriteState("Dead_Shot");
+				break;
+			case AliveState.DeadGibs    : UpdateSpriteState("Dead_Shot");
+				break;
+			case AliveState.DeadHeadShot: UpdateSpriteState("Dead_Headshot");
+				break;
+		}
+	}
 	
 	protected virtual void UpdateSprite()
 	{
@@ -370,6 +432,21 @@ public class CharacterBase : MonoBehaviour
 			> 0f => false,
 			_ => _spriteRenderer.flipX
 		};
+		
+		switch (_movementState)
+		{
+			case MovementState.Walk     : UpdateSpriteState("Idle");
+				break;
+			case MovementState.Cover    : UpdateSpriteState("Idle");
+				break;
+			case MovementState.Immobile : UpdateSpriteState("Stunned_Floor");
+				break;
+			case MovementState.Slide    : UpdateSpriteState("Slide");
+				break;
+			case MovementState.Jump     : UpdateSpriteState("Jump");
+				break;
+			case MovementState.Dead     : UpdateDeadSprite(); break;
+		}
 	}
 
 }

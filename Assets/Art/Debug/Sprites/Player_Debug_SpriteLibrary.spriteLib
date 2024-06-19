@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &1
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5e6fedc2472449cead18ef23b5cb30d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Library:
+  - m_Name: Idle
+    m_Hash: 1008081451
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: 0
+      m_Hash: 886824737
+      m_Sprite: {fileID: 21300000, guid: 5a0ea80105d01aa4eba05d46f749e6b7, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 5a0ea80105d01aa4eba05d46f749e6b7, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 1
+  - m_Name: Dead_Fall
+    m_Hash: 62723411
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: 0
+      m_Hash: 886824737
+      m_Sprite: {fileID: 21300000, guid: 2f97c79bf860de443b19a35c7b430477, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 2f97c79bf860de443b19a35c7b430477, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 1
+  - m_Name: Dead_HeadShot
+    m_Hash: 9538051
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: 0
+      m_Hash: 886824737
+      m_Sprite: {fileID: 21300000, guid: d6f5473658f54ff468c635fb89cf9e49, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: d6f5473658f54ff468c635fb89cf9e49, type: 3}
+    - m_Name: 1
+      m_Hash: 64810935
+      m_Sprite: {fileID: 21300000, guid: 6574445f0df2a5549ac08cb62fa51581, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 6574445f0df2a5549ac08cb62fa51581, type: 3}
+    - m_Name: 2
+      m_Hash: 450215437
+      m_Sprite: {fileID: 21300000, guid: 72d64e7991cc86841bab2bb9b600b8a8, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 72d64e7991cc86841bab2bb9b600b8a8, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 3
+  - m_Name: Dead_Shot
+    m_Hash: 334119652
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: 0
+      m_Hash: 886824737
+      m_Sprite: {fileID: 21300000, guid: 3e243a8686bc07840b452f6599e5bce4, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 3e243a8686bc07840b452f6599e5bce4, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 1
+  - m_Name: Jump
+    m_Hash: 125937960
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: 0
+      m_Hash: 886824737
+      m_Sprite: {fileID: 21300000, guid: 86cdf60369a21ed429261b7fd991b43e, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 86cdf60369a21ed429261b7fd991b43e, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 1
+  - m_Name: Slide
+    m_Hash: 858702182
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: T_Dbg_SpriteLayout_Slide
+      m_Hash: 740311365
+      m_Sprite: {fileID: 21300000, guid: 9092c31458d47e941ae51cba0c86a10d, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 9092c31458d47e941ae51cba0c86a10d, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 1
+  - m_Name: Stunned_Floor
+    m_Hash: 722355662
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: T_Dbg_SpriteLayout_Stunned_Floor
+      m_Hash: 346616803
+      m_Sprite: {fileID: 21300000, guid: 51758034408c2e243896064163d3360d, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 51758034408c2e243896064163d3360d, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 1
+  m_PrimaryLibraryGUID: 
+  m_ModificationHash: 638543903940113262
+  m_Version: 1
