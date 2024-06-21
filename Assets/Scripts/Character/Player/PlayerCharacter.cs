@@ -187,6 +187,11 @@ namespace Character.Player
             {
                 _movementState = MovementState.Walk;
             }
+
+            if (_movementState == MovementState.Cover && Mathf.Abs(_xInput) > 0.001f)
+            {
+                _movementState = MovementState.Walk;
+            }
         }
         
         private void YDirection(bool isGrounded)
@@ -201,12 +206,32 @@ namespace Character.Player
             }
         }
 
+        private bool TeleportCheck()
+        {
+            if (_canTeleport)
+            {
+                var moveYInput = _moveAction.ReadValue<Vector2>().y;
+                if (moveYInput > 0.3f)
+                {
+                    Teleport(_teleportLocation);
+                    return true;
+                }
+            }
+            return false;
+        }
       
         // Called in FixedUpdate in parent class, only if we can move based on states
         protected override void Move()
         {
             base.Move();
-           
+
+            if (_movementState == MovementState.Teleporting)
+            {
+                return;
+            }
+            
+            if(TeleportCheck()) return;
+            
             bool isGrounded = IsGrounded();
 
             XDirection(isGrounded);

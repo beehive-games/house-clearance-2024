@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using Character.Player;
 using Combat.Weapon;
 using UnityEngine;
@@ -25,6 +27,7 @@ public class CharacterBase : MonoBehaviour
 	[SerializeField] private protected float _maxAcceleration = 35f;
 	[SerializeField] private protected float _maxAirAcceleration = 20f;
 	[SerializeField, Range(0,1)] private protected float _woundedSpeed = 0.66f;
+	[SerializeField] private protected float _teleportSpeed = 1f;
 	
 	
 	[Space]
@@ -54,6 +57,7 @@ public class CharacterBase : MonoBehaviour
 	private protected Collider2D _collider2D;
 	private protected SpriteRenderer _spriteRenderer;
 	private protected Animator _spriteAnimCtrl;
+	[SerializeField] private protected Color _transitionalColorTint;
 	private readonly int _baseColor = Shader.PropertyToID("_BaseColor");
 	
 	[Space] 
@@ -68,6 +72,9 @@ public class CharacterBase : MonoBehaviour
 	[Header("Events")]
 	public UnityEvent onLandEvent;
 
+	protected bool _canTeleport;
+	protected Vector2 _teleportLocation;
+
 	private float _currentHealth;
 	private protected float _lastDamageCounter;
 	private protected Vector2 _previousVelocity;
@@ -79,7 +86,8 @@ public class CharacterBase : MonoBehaviour
 		Cover,
 		Jump,
 		Dead,
-		Immobile
+		Immobile,
+		Teleporting
 	}
 
 	internal enum AliveState
@@ -195,7 +203,20 @@ public class CharacterBase : MonoBehaviour
 	{
 		_movementState = MovementState.Cover;
 		SetRigidbody2DVelocityX(0f);
+		_spriteRenderer.color = _transitionalColorTint;
 	}
+	
+	protected virtual void HitTeleporter(Collider2D other)
+	{
+		var teleporter = other.GetComponent<Teleporter>();
+		if (teleporter != null && teleporter.teleportLocation != null)
+		{
+			_canTeleport = true;
+			_teleportLocation = teleporter.teleportLocation.position;
+		}
+	}
+	
+		
 	
 	protected bool CheckHitCharacter(Collision2D other, ref CharacterBase character)
 	{
@@ -236,6 +257,11 @@ public class CharacterBase : MonoBehaviour
 		return other.gameObject.layer == LayerMask.NameToLayer("Cover") && _movementState == MovementState.Slide;
 	}
 	
+	protected bool CheckHitTeleporter(Collider2D other)
+	{
+		return other.gameObject.layer == LayerMask.NameToLayer("Teleport");
+	}
+	
 	protected void StartSlide()
 	{
 		_movementState = MovementState.Slide;
@@ -273,16 +299,37 @@ public class CharacterBase : MonoBehaviour
 	{
 
 	}
-	
+	protected void LeaveTeleporter()
+	{
+		_canTeleport = false;
+	}
+
+	protected void LeaveCover()
+	{
+		if (_movementState == MovementState.Cover)
+			_movementState = MovementState.Walk;
+
+	}
 
 	private void OnTriggerExit2D(Collider2D other)
 	{
-		if (CheckHitCover(other)) Debug.Log("left cover");
+		if (CheckHitCover(other))
+		{
+			LeaveCover();
+			return;
+		}
+		if (CheckHitTeleporter(other)) LeaveTeleporter();
 	}
-
+	
+	private void OnTriggerStay2D(Collider2D other)
+	{
+		if (CheckHitTeleporter(other)) HitTeleporter(other);
+	}
+	
 	private void OnTriggerEnter2D(Collider2D other)
 	{
 		if (CheckHitCover(other)) HitCover();
+		if (CheckHitTeleporter(other)) HitTeleporter(other);
 	}
 
 	// This will contain the final movement logic based on 
@@ -308,6 +355,7 @@ public class CharacterBase : MonoBehaviour
 		_previousVelocity = _rigidbody2D.velocity;
 		_spriteObject.position = _rigidbody2D.position;
 		UpdateSprite();
+		_spriteRenderer.color = _movementState is MovementState.Cover or MovementState.Teleporting ? _transitionalColorTint : Color.white;
 	}
 
 	private bool GroundCheckNonAlloc(Vector2 position, Vector2 direction, float maxDistance, LayerMask layerMask)
@@ -375,6 +423,57 @@ public class CharacterBase : MonoBehaviour
 		}
 	}
 
+	private Coroutine _teleportOut, _teleportIn;
+
+	protected void Teleport(Vector2 newLocation)
+	{
+		if (_teleportIn != null || _teleportOut != null)
+		{
+			return;
+		}
+
+		_teleportOut = StartCoroutine(TeleportOutCo(newLocation, _teleportSpeed / 2f));
+
+	}
+
+	IEnumerator TeleportOutCo(Vector2 newLocation, float time)
+	{
+		_movementState = MovementState.Teleporting;
+		float elapsedTime = 0f;
+		while (elapsedTime < time)
+		{
+			var alpha = 1f / time * elapsedTime;
+			elapsedTime += Time.deltaTime;
+			_rigidbody2D.velocity = new Vector2(0f, _rigidbody2D.VelocityY());
+			_spriteRenderer.color = Color.Lerp(Color.white, _transitionalColorTint, alpha);
+			yield return null;
+		}
+
+		_rigidbody2D.position = newLocation;
+		if (_teleportIn != null)
+		{
+			StopCoroutine(_teleportIn);
+		}
+
+		_teleportOut = null;
+		_teleportIn = StartCoroutine(TeleportInCo(newLocation, time));
+	}
+	
+	IEnumerator TeleportInCo(Vector2 newLocation, float time)
+	{
+		float elapsedTime = 0f;
+		while (elapsedTime < time)
+		{
+			var alpha = 1f / time * elapsedTime;
+			elapsedTime += Time.deltaTime;
+			_rigidbody2D.velocity = new Vector2(0f, _rigidbody2D.VelocityY());
+			_spriteRenderer.color = Color.Lerp(_transitionalColorTint, Color.white, alpha);
+			yield return null;
+		}
+		if(_movementState != MovementState.Dead)
+			_movementState = MovementState.Walk;
+		_teleportIn = null;
+	}
 	
 	
 	protected virtual void Jump()
@@ -396,7 +495,7 @@ public class CharacterBase : MonoBehaviour
 		return _movementState == MovementState.Cover;
 	}
 
-	protected void UpdateSpriteState(string animationName)
+	protected void UpdateSpriteState(string animationName, bool tint = false)
 	{
 		_animator.Play(animationName);
 	}
@@ -435,17 +534,20 @@ public class CharacterBase : MonoBehaviour
 		
 		switch (_movementState)
 		{
-			case MovementState.Walk     : UpdateSpriteState("Idle");
+			case MovementState.Walk            : UpdateSpriteState("Idle");
 				break;
-			case MovementState.Cover    : UpdateSpriteState("Idle");
+			case MovementState.Cover           : UpdateSpriteState("Idle");
 				break;
-			case MovementState.Immobile : UpdateSpriteState("Stunned_Floor");
+			case MovementState.Immobile        : UpdateSpriteState("Stunned_Floor");
 				break;
-			case MovementState.Slide    : UpdateSpriteState("Slide");
+			case MovementState.Slide           : UpdateSpriteState("Slide");
 				break;
-			case MovementState.Jump     : UpdateSpriteState("Jump");
+			case MovementState.Jump            : UpdateSpriteState("Jump");
 				break;
-			case MovementState.Dead     : UpdateDeadSprite(); break;
+			case MovementState.Dead            : UpdateDeadSprite(); 
+				break;
+			case MovementState.Teleporting     : UpdateSpriteState("Idle");
+				break;
 		}
 	}
 
