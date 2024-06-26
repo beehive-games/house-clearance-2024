@@ -114,6 +114,20 @@ public class CharacterBase : MonoBehaviour
 		_results = new RaycastHit2D[1];
 	}
 
+	protected void SetRigidbodyX(float xValue)
+	{
+		var velocity = _rigidbody2D.velocity;
+		velocity.x = xValue;
+		_rigidbody2D.velocity = velocity;
+	}
+	
+	protected void SetRigidbodyY(float yValue)
+	{
+		var velocity = _rigidbody2D.velocity;
+		velocity.x = yValue;
+		_rigidbody2D.velocity = velocity;
+	}
+	
 	private void StartUpChecks()
 	{
 		
@@ -398,6 +412,24 @@ public class CharacterBase : MonoBehaviour
 		};
 	}
 
+	protected void MoveMechanics(bool isGrounded, float input, float slideToJumpMaxVx = -1f)
+	{
+		var velocity = _rigidbody2D.velocity;
+		var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
+		var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
+		velocity.x = Mathf.MoveTowards(velocity.x, _moveSpeed * input, maxSpeedDelta);
+
+		if (slideToJumpMaxVx >= 0f)
+		{
+			var min = Mathf.Min(slideToJumpMaxVx, -slideToJumpMaxVx);
+			var max = Mathf.Max(slideToJumpMaxVx, -slideToJumpMaxVx);
+			velocity.x = Mathf.Clamp(velocity.x, min, max);
+		}
+		_rigidbody2D.velocity = velocity;
+		
+	}
+	
+    
 	private void Kill(DamageType damageType)
 	{
 		_aliveState = SwitchDamageStatToAliveState(damageType);

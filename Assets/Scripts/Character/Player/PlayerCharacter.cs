@@ -162,18 +162,7 @@ namespace Character.Player
                 {
                     if (_movementState is not MovementState.Slide or MovementState.Dead or MovementState.Immobile)
                     {
-                        var velocity = _rigidbody2D.velocity;
-                        var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
-                        var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
-                        velocity.x = Mathf.MoveTowards(velocity.x, _moveSpeed * _xInput, maxSpeedDelta);
-
-                        if (_slideToJumpMaxVX >= 0f)
-                        {
-                            var min = Mathf.Min(_slideToJumpMaxVX, -_slideToJumpMaxVX);
-                            var max = Mathf.Max(_slideToJumpMaxVX, -_slideToJumpMaxVX);
-                            velocity.x = Mathf.Clamp(velocity.x, min, max);
-                        }
-                        _rigidbody2D.velocity = velocity;
+                        MoveMechanics(isGrounded, _xInput, _slideToJumpMaxVX);
                     }
                 }
             }
