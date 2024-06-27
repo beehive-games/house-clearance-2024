@@ -367,7 +367,9 @@ public class CharacterBase : MonoBehaviour
 		// Add extra gravity
 		_rigidbody2D.AddForce((_gravityMultiplier - 1) * -9.81f * Vector2.up);
 		_previousVelocity = _rigidbody2D.velocity;
-		_spriteObject.position = _rigidbody2D.position;
+		var position = _rigidbody2D.position;
+		
+		_spriteObject.position = new Vector2(position.x, position.y - _collider2D.bounds.size.y / 2f);//_rigidbody2D.position - vectorOffset;
 		UpdateSprite();
 		_spriteRenderer.color = _movementState is MovementState.Cover or MovementState.Teleporting ? _transitionalColorTint : Color.white;
 	}

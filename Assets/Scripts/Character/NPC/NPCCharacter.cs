@@ -1,21 +1,68 @@
 using System.Collections;
+using System.Numerics;
+using Unity.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Serialization;
+using Vector2 = UnityEngine.Vector2;
 
 namespace Character.NPC
 {
     public class NPCCharacter : CharacterBase
     {
-
+        [Header("NPC controls")]
         [SerializeField] private float _patrolRange = 10f;
         [SerializeField] private float _maxPatrolWaitTime = 4f;
         [SerializeField] private float _forwardCheckIntervalDistance = 2f;
+        [SerializeField] private float _maxPlayerVisibilityDistance = 10f;
+        [SerializeField] private float _distanceToPlayerToMaintain = 5f;
+        [SerializeField] private Transform _lineOfSightOrigin;
+        [SerializeField] private float _distanceToPlayerToMaintainThreshold = 1f;
         [SerializeField] private LayerMask _wallLayerMask;
+        [SerializeField] private LayerMask _playerLayerMask;
         private RaycastHit2D[] _results = new RaycastHit2D[1];
         private Vector2 _startLocation;
         private Vector2 _targetLocation;
         private Coroutine _patrolWaitCo;
         private bool _waiting;
+        private bool _couldSeePlayer;
+        private Transform _playerColliderTransform;
 
+        enum DebugNPCState
+        {
+            Patrol,
+            Combat
+        }
+        [FormerlySerializedAs("NPCState")]
+        [Header("Debugging")]
+        [SerializeField, ReadOnly] private DebugNPCState dbg_NPCState;
+        [SerializeField, ReadOnly] private bool dbg_canSeePlayer;
+
+        private void GrabPlayerCollider2D()
+        {
+            GameObject playerGameObject = GameObject.FindGameObjectWithTag("Player");
+            Collider2D playerCollider = null;
+            
+            if (playerGameObject != null)
+            {
+                playerCollider = playerGameObject.GetComponent<Collider2D>();
+            }
+            else
+            {
+                Debug.LogError("Can't locate player GameObject on "+name);
+
+            }
+
+            if (playerCollider == null)
+            {
+                Debug.LogError("Can't locate player Collider on "+name);
+            }
+            else
+            {
+                _playerColliderTransform = playerCollider.transform;
+            }
+        }
+        
         private void RevalidateStartPatrolPosition()
         {
             _startLocation = _rigidbody2D.position;
@@ -36,9 +83,31 @@ namespace Character.NPC
             return hits > 0;
         }
         
+        private bool RaycastPlayer()
+        {
+            Vector2 playerPosition = _playerColliderTransform.position;
+            Vector2 origin = _lineOfSightOrigin.position;
+
+            float facingDirection = _spriteRenderer.flipX ? -1 : 1;
+            
+            Vector2 direction = facingDirection * Vector2.right;
+            
+            int hits = Physics2D.RaycastNonAlloc(origin, direction, _results, _maxPlayerVisibilityDistance, _playerLayerMask);
+            
+            if (hits <= 0 || !_results[0])
+            {
+                Debug.DrawRay(origin, direction * _maxPlayerVisibilityDistance, Color.red);
+                return false;
+            }
+            
+            Debug.DrawLine(origin, _results[0].point, Color.green);
+            return _results[0].collider.CompareTag("Player");
+        }
+        
         protected override void Awake()
         {
             base.Awake();
+            GrabPlayerCollider2D();
             RevalidateStartPatrolPosition();
         }
 
@@ -71,7 +140,14 @@ namespace Character.NPC
                 StopCoroutine(_patrolWaitCo);
             }
 
+            _couldSeePlayer = false;
+            
             _patrolWaitCo = StartCoroutine(PatrolWait());
+        }
+
+        private float GetSignOfDirection(float a, float b)
+        {
+            return a - b < 0f ? -1f : 1f;
         }
         
         private void Patrol(bool isGrounded)
@@ -81,8 +157,8 @@ namespace Character.NPC
             var position = _groundCheckPivot.position;
             var velocity = _rigidbody2D.velocity;
             var fixedDelta = Time.fixedDeltaTime;
-            
-            float sign = _targetLocation.x - position.x < 0f ? -1f : 1f;
+
+            float sign = GetSignOfDirection(_targetLocation.x, position.x);
             Vector2 raycastWallCheckDirection = Vector2.right * sign;
             
             float maxMovePerFrameX = Mathf.Max(Mathf.Abs(velocity.x) * fixedDelta,_forwardCheckIntervalDistance);
@@ -92,7 +168,7 @@ namespace Character.NPC
             bool hitFloor = RaycastFloor(position, raycastWallCheckDirection, maxMovePerFrameY, maxMovePerFrameX);
             bool reachedDestination = Mathf.Abs(_targetLocation.x - position.x) < maxMovePerFrameX;
 
-            bool getNewPosition = hitWall || !hitFloor || reachedDestination;
+            bool getNewPosition = hitWall || !hitFloor || reachedDestination || _couldSeePlayer;
             
             if (getNewPosition)
             {
@@ -103,11 +179,70 @@ namespace Character.NPC
                 MoveMechanics(isGrounded, sign);
             }
         }
+
+        private void SetTargetToLocationFromPlayer(Vector2 playerPosition, Vector2 currentPosition)
+        {
+            var distance = Vector2.Distance(playerPosition, currentPosition);
+            var minDistance = _distanceToPlayerToMaintain - _distanceToPlayerToMaintainThreshold;
+            var maxDistance = _distanceToPlayerToMaintain + _distanceToPlayerToMaintainThreshold;
+
+            if (distance < minDistance || distance > maxDistance)
+            {
+                var direction = (playerPosition.x - currentPosition.x) > 0f ? 1f : -1f;
+                var directionV2 = new Vector2(direction * _distanceToPlayerToMaintain, 0f);
+                var targetPosition = playerPosition - directionV2;
+                _targetLocation = targetPosition;
+            }
+        }
+        
+        private void Combat(bool isGrounded)
+        {
+            var position = _groundCheckPivot.position;
+            var velocity = _rigidbody2D.velocity;
+            var fixedDelta = Time.fixedDeltaTime;
+            
+            float maxMovePerFrameX = Mathf.Max(Mathf.Abs(velocity.x) * fixedDelta,_forwardCheckIntervalDistance);
+            float maxMovePerFrameY = Mathf.Max(Mathf.Abs(velocity.y) * fixedDelta,_groundCheckDistance);
+            bool reachedDestination = Mathf.Abs(_targetLocation.x - position.x) < maxMovePerFrameX;
+            
+            var direction = reachedDestination ? 0f : GetSignOfDirection(_targetLocation.x, position.x);
+            
+            Vector2 raycastWallCheckDirection = Vector2.right * direction;
+            
+            bool hitWall = RaycastWalls(position, raycastWallCheckDirection, maxMovePerFrameX);
+            bool hitFloor = RaycastFloor(position, raycastWallCheckDirection, maxMovePerFrameY, maxMovePerFrameX);
+
+            if (hitFloor && !hitWall)
+            {
+                SetTargetToLocationFromPlayer(_playerColliderTransform.position, position);
+            }
+
+            if (!hitFloor)
+            {
+                direction = 0f;
+            }
+            
+            MoveMechanics(isGrounded, direction);
+        }
         
         private void XDirection(bool isGrounded)
         {
-            Patrol(isGrounded);
+            bool canSeePlayer = RaycastPlayer();
+            dbg_canSeePlayer = canSeePlayer;
             
+            if(canSeePlayer)
+            {
+                Combat(isGrounded);
+                dbg_NPCState = DebugNPCState.Combat;
+            }
+            else
+            {
+                Patrol(isGrounded);
+                dbg_NPCState = DebugNPCState.Patrol;
+            }
+
+            _couldSeePlayer = canSeePlayer;
+
             // TODO:
             // Initial Movement (patrol):
             // DONE
