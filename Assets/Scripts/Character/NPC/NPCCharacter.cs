@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Numerics;
+using Character.Player;
 using Unity.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -19,7 +20,10 @@ namespace Character.NPC
         [SerializeField] private Transform _lineOfSightOrigin;
         [SerializeField] private float _distanceToPlayerToMaintainThreshold = 1f;
         [SerializeField] private LayerMask _wallLayerMask;
-        [SerializeField] private LayerMask _playerLayerMask;
+        [SerializeField] private LayerMask _playerVisibilityLayerMask;
+        [SerializeField] private LayerMask _coverLayerMask;
+        [SerializeField] private float _coverSlideDistance = 2f;
+        [SerializeField] private float _maximumPursueDistance = 20f;
         private RaycastHit2D[] _results = new RaycastHit2D[1];
         private Vector2 _startLocation;
         private Vector2 _targetLocation;
@@ -27,6 +31,8 @@ namespace Character.NPC
         private bool _waiting;
         private bool _couldSeePlayer;
         private Transform _playerColliderTransform;
+        private bool _queueSlide;
+        private bool _pursusing;
 
         enum DebugNPCState
         {
@@ -76,6 +82,13 @@ namespace Character.NPC
             return hits > 0;
         }
         
+        private bool RaycastCover(Vector2 position, Vector2 moveDirection, float maxCheckDistance)
+        {
+            int hits = Physics2D.RaycastNonAlloc(position, moveDirection, _results, maxCheckDistance, _coverLayerMask);
+            Debug.DrawRay(position, moveDirection * maxCheckDistance, Color.magenta);
+            return hits > 0;
+        }
+        
         private bool RaycastFloor(Vector2 position, Vector2 moveDirection, float maxMovePerFrameY, float maxMovePerFrameX)
         {
             int hits = Physics2D.RaycastNonAlloc(position + Vector2.right * moveDirection * maxMovePerFrameX, Vector2.down, _results, maxMovePerFrameY, _wallLayerMask);
@@ -92,7 +105,7 @@ namespace Character.NPC
             
             Vector2 direction = facingDirection * Vector2.right;
             
-            int hits = Physics2D.RaycastNonAlloc(origin, direction, _results, _maxPlayerVisibilityDistance, _playerLayerMask);
+            int hits = Physics2D.RaycastNonAlloc(origin, direction, _results, _maxPlayerVisibilityDistance, _playerVisibilityLayerMask);
             
             if (hits <= 0 || !_results[0])
             {
@@ -101,6 +114,7 @@ namespace Character.NPC
             }
             
             Debug.DrawLine(origin, _results[0].point, Color.green);
+            
             return _results[0].collider.CompareTag("Player");
         }
         
@@ -180,6 +194,34 @@ namespace Character.NPC
             }
         }
 
+        private void Slide()
+        {
+            if(_movementState != MovementState.Slide) _queueSlide = true;
+        }
+
+        private void StopSlide()
+        {
+            _movementState = MovementState.Walk;
+        }
+
+        private void DuringSlide(bool isGrounded)
+        {
+            _queueSlide = false;
+            if (!isGrounded || Mathf.Abs(_rigidbody2D.velocity.x) < 0.1f)
+            {
+                StopSlide();
+            }
+            else
+            {
+                float x = _rigidbody2D.velocity.x;
+                bool sign = Mathf.Sign(x) < 0f;
+                float deltaV = _slideFriction * Time.fixedDeltaTime;
+                var clamped1 = Mathf.Clamp(x + deltaV, x, 0f);
+                var clamped2 = Mathf.Clamp(x - deltaV, 0f, x);
+                SetRigidbody2DVelocityX(sign ? clamped1 : clamped2);
+            }
+        }
+        
         private void SetTargetToLocationFromPlayer(Vector2 playerPosition, Vector2 currentPosition)
         {
             var distance = Vector2.Distance(playerPosition, currentPosition);
@@ -195,8 +237,24 @@ namespace Character.NPC
             }
         }
         
-        private void Combat(bool isGrounded)
+        private void Combat(bool isGrounded, bool canSeePlayer)
         {
+            if (_patrolWaitCo != null)
+            {
+                StopCoroutine(_patrolWaitCo);
+                _patrolWaitCo = null;
+            }
+
+            if (canSeePlayer && !_pursusing)
+            {
+                _pursusing = true;
+            }
+
+            if (!canSeePlayer && Vector2.Distance(_playerColliderTransform.position, _rigidbody2D.position) > _maximumPursueDistance)
+            {
+                _pursusing = false;
+            }
+            
             var position = _groundCheckPivot.position;
             var velocity = _rigidbody2D.velocity;
             var fixedDelta = Time.fixedDeltaTime;
@@ -211,18 +269,34 @@ namespace Character.NPC
             
             bool hitWall = RaycastWalls(position, raycastWallCheckDirection, maxMovePerFrameX);
             bool hitFloor = RaycastFloor(position, raycastWallCheckDirection, maxMovePerFrameY, maxMovePerFrameX);
+            bool canSeeCover = RaycastCover(position, raycastWallCheckDirection, _coverSlideDistance);
 
             if (hitFloor && !hitWall)
             {
-                SetTargetToLocationFromPlayer(_playerColliderTransform.position, position);
+                if (!canSeeCover)
+                {
+                    SetTargetToLocationFromPlayer(_playerColliderTransform.position, position);
+                }
+                else
+                {
+                    Slide();
+                }
             }
 
             if (!hitFloor)
             {
                 direction = 0f;
+                _movementState = MovementState.Walk;
             }
-            
-            MoveMechanics(isGrounded, direction);
+
+            if (_movementState == MovementState.Slide)
+            {
+                DuringSlide(isGrounded);
+            }
+            else
+            {
+                MoveMechanics(isGrounded, direction);
+            }
         }
         
         private void XDirection(bool isGrounded)
@@ -230,9 +304,11 @@ namespace Character.NPC
             bool canSeePlayer = RaycastPlayer();
             dbg_canSeePlayer = canSeePlayer;
             
-            if(canSeePlayer)
+            if(canSeePlayer || _pursusing)
             {
-                Combat(isGrounded);
+                Combat(isGrounded, canSeePlayer);
+                // turn to face player after moving
+                _spriteRenderer.flipX = _playerColliderTransform.position.x - _rigidbody2D.position.x < 0f; 
                 dbg_NPCState = DebugNPCState.Combat;
             }
             else
