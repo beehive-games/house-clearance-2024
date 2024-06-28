@@ -7461,7 +7461,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: _coverSlideDistance
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: _coverLayerMask.m_Bits
@@ -7470,6 +7470,10 @@ PrefabInstance:
     - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: _playerLayerMask.m_Bits
       value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
+      propertyPath: _transitionalColorTint.a
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: _distanceToPlayerToMaintain
@@ -7482,6 +7486,10 @@ PrefabInstance:
     - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: _playerVisibilityLayerMask.m_Bits
       value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
+      propertyPath: _minimumDistanceToPlayerForSliding
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: _distanceToPlayerToMaintainThreshold

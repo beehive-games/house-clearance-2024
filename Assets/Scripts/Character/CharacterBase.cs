@@ -215,6 +215,7 @@ public class CharacterBase : MonoBehaviour
 
 	protected virtual void HitCover()
 	{
+		Debug.Log(gameObject.name + " hit cover");
 		_movementState = MovementState.Cover;
 		SetRigidbody2DVelocityX(0f);
 		_spriteRenderer.color = _transitionalColorTint;

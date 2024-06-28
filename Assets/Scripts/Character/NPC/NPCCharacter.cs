@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Numerics;
 using Character.Player;
@@ -5,6 +6,7 @@ using Unity.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
 
 namespace Character.NPC
@@ -24,6 +26,7 @@ namespace Character.NPC
         [SerializeField] private LayerMask _coverLayerMask;
         [SerializeField] private float _coverSlideDistance = 2f;
         [SerializeField] private float _maximumPursueDistance = 20f;
+        [SerializeField] private float _minimumDistanceToPlayerForSliding = 2f;
         private RaycastHit2D[] _results = new RaycastHit2D[1];
         private Vector2 _startLocation;
         private Vector2 _targetLocation;
@@ -86,7 +89,13 @@ namespace Character.NPC
         {
             int hits = Physics2D.RaycastNonAlloc(position, moveDirection, _results, maxCheckDistance, _coverLayerMask);
             Debug.DrawRay(position, moveDirection * maxCheckDistance, Color.magenta);
-            return hits > 0;
+            if (hits > 0)
+            {
+                var playerDistance= Vector2.Distance(position, _playerColliderTransform.position);
+                var hitDistance= Vector2.Distance(position, _results[0].point);
+                return playerDistance > hitDistance;
+            }
+            return false;
         }
         
         private bool RaycastFloor(Vector2 position, Vector2 moveDirection, float maxMovePerFrameY, float maxMovePerFrameX)
@@ -202,12 +211,13 @@ namespace Character.NPC
         private void StopSlide()
         {
             _movementState = MovementState.Walk;
+            SetRigidbodyX(0f);
         }
 
         private void DuringSlide(bool isGrounded)
         {
             _queueSlide = false;
-            if (!isGrounded || Mathf.Abs(_rigidbody2D.velocity.x) < 0.1f)
+            if (!isGrounded || Mathf.Abs(_rigidbody2D.velocity.x) < 1f)
             {
                 StopSlide();
             }
@@ -220,6 +230,11 @@ namespace Character.NPC
                 var clamped2 = Mathf.Clamp(x - deltaV, 0f, x);
                 SetRigidbody2DVelocityX(sign ? clamped1 : clamped2);
             }
+        }
+
+        void ForceUpdateTargetPosition(Vector2 position)
+        {
+            _targetLocation = position;
         }
         
         private void SetTargetToLocationFromPlayer(Vector2 playerPosition, Vector2 currentPosition)
@@ -237,12 +252,14 @@ namespace Character.NPC
             }
         }
         
+        
         private void Combat(bool isGrounded, bool canSeePlayer)
         {
             if (_patrolWaitCo != null)
             {
                 StopCoroutine(_patrolWaitCo);
                 _patrolWaitCo = null;
+                _waiting = false;
             }
 
             if (canSeePlayer && !_pursusing)
@@ -262,20 +279,53 @@ namespace Character.NPC
             float maxMovePerFrameX = Mathf.Max(Mathf.Abs(velocity.x) * fixedDelta,_forwardCheckIntervalDistance);
             float maxMovePerFrameY = Mathf.Max(Mathf.Abs(velocity.y) * fixedDelta,_groundCheckDistance);
             bool reachedDestination = Mathf.Abs(_targetLocation.x - position.x) < maxMovePerFrameX;
-            
-            var direction = reachedDestination ? 0f : GetSignOfDirection(_targetLocation.x, position.x);
+
+            float signedDirection = GetSignOfDirection(_targetLocation.x, position.x);
+            var direction = reachedDestination ? 0f : signedDirection ;
             
             Vector2 raycastWallCheckDirection = Vector2.right * direction;
+            Vector2 coverCheckDirection = (_spriteRenderer.flipX ? -1f : 1f) * Vector2.right;
+
+            var playerPosition = _playerColliderTransform.position;
             
             bool hitWall = RaycastWalls(position, raycastWallCheckDirection, maxMovePerFrameX);
             bool hitFloor = RaycastFloor(position, raycastWallCheckDirection, maxMovePerFrameY, maxMovePerFrameX);
-            bool canSeeCover = RaycastCover(position, raycastWallCheckDirection, _coverSlideDistance);
+            bool canSeeCover = RaycastCover(_rigidbody2D.position, coverCheckDirection, _coverSlideDistance);
+            bool turnedAroundFromCover = RaycastCover(_rigidbody2D.position, coverCheckDirection, 1f);
+            bool sliding = _movementState == MovementState.Slide;
+            bool inCover = _movementState == MovementState.Cover;
+            bool stopped = Mathf.Abs(_rigidbody2D.velocity.x) < 0.1f; 
+            float signedDirPlayer =  GetSignOfDirection(playerPosition.x, _rigidbody2D.position.x);
+            bool directionsMatch = Mathf.Approximately(signedDirPlayer,_spriteRenderer.flipX ? -1 : 1);
 
-            if (hitFloor && !hitWall)
+            
+            if (!hitFloor && sliding)
             {
-                if (!canSeeCover)
+                StopSlide();
+                sliding = false;
+            }
+
+            if (!inCover && sliding && stopped)
+            {
+                StopSlide();
+                sliding = false;
+            }
+            
+            // checking to see if we've turned around from cover, if we're not facing cover, we should come out of it
+            if (inCover && !turnedAroundFromCover)
+            {
+                LeaveCover();
+            }
+            else if (inCover || sliding)
+            {
+                return;
+            }
+
+            if (hitFloor && !hitWall && !sliding)
+            {
+                if (!canSeeCover || !directionsMatch)
                 {
-                    SetTargetToLocationFromPlayer(_playerColliderTransform.position, position);
+                    SetTargetToLocationFromPlayer(playerPosition, position);
                 }
                 else
                 {
@@ -288,8 +338,14 @@ namespace Character.NPC
                 direction = 0f;
                 _movementState = MovementState.Walk;
             }
-
-            if (_movementState == MovementState.Slide)
+            
+            if (isGrounded && _queueSlide)
+            {
+                StartSlide();
+                Debug.Log("Sliding now....");
+                _queueSlide = false;
+            }
+            else if (_movementState == MovementState.Slide)
             {
                 DuringSlide(isGrounded);
             }
@@ -313,6 +369,13 @@ namespace Character.NPC
             }
             else
             {
+                bool inCover = _movementState == MovementState.Cover;
+
+                if (inCover)
+                {
+                    LeaveCover();
+                }
+                
                 Patrol(isGrounded);
                 dbg_NPCState = DebugNPCState.Patrol;
             }
