@@ -232,10 +232,27 @@ namespace Character.NPC
             }
         }
 
-        void ForceUpdateTargetPosition(Vector2 position)
+        private bool CanShoot()
         {
-            _targetLocation = position;
+            if (weapon == null) return false;
+            
+            var playerPosition = _playerColliderTransform.position;
+            var rbPosition = _rigidbody2D.position;
+
+            var distance = Vector2.Distance(playerPosition, rbPosition);
+            var signedDirection = GetSignOfDirection(playerPosition.x, rbPosition.x);
+            var facingSignedDirection = _spriteRenderer.flipX ? -1f : 1f;
+            var directionMatchesFacingDirection = Mathf.Approximately(facingSignedDirection, signedDirection);
+
+            if (directionMatchesFacingDirection && distance < _maxPlayerVisibilityDistance)
+            {
+                return true;
+            }
+            
+            return false;
         }
+        
+        
         
         private void SetTargetToLocationFromPlayer(Vector2 playerPosition, Vector2 currentPosition)
         {
@@ -253,7 +270,7 @@ namespace Character.NPC
         }
         
         
-        private void Combat(bool isGrounded, bool canSeePlayer)
+        private void CombatMovement(bool isGrounded, bool canSeePlayer)
         {
             if (_patrolWaitCo != null)
             {
@@ -362,10 +379,14 @@ namespace Character.NPC
             
             if(canSeePlayer || _pursusing)
             {
-                Combat(isGrounded, canSeePlayer);
+                CombatMovement(isGrounded, canSeePlayer);
                 // turn to face player after moving
                 _spriteRenderer.flipX = _playerColliderTransform.position.x - _rigidbody2D.position.x < 0f; 
                 dbg_NPCState = DebugNPCState.Combat;
+                if (CanShoot())
+                {
+                    weapon.Fire(true);
+                }
             }
             else
             {

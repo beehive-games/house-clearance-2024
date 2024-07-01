@@ -1,5 +1,7 @@
 using System.Collections;
+using Combat.Weapon.Projectiles;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 namespace Combat.Weapon
@@ -28,10 +30,13 @@ namespace Combat.Weapon
         private int _currentMagazineCapacity;
         private Coroutine _shootTimer;
         private Coroutine _reloadTimer;
+        private CharacterBase _parentCharacter;
+        [HideInInspector] public Allegiance allegiance;
 
         private void Awake()
         {
             _currentMagazineCapacity = _magazineCapacity;
+            _parentCharacter = gameObject.transform.parent.GetComponent<CharacterBase>();
         }
     
         IEnumerator ShotIntervalTimer()
@@ -63,36 +68,59 @@ namespace Combat.Weapon
     
         IEnumerator ReloadIntervalTimer()
         {
-            Debug.Log("Reloading!");
             _canShootInternal = false;
             _currentMagazineCapacity = 0;
             yield return new WaitForSeconds(_reloadTime);
             _currentMagazineCapacity = _magazineCapacity;
             _canShootInternal = true;
+            _reloadTimer = null;
         }
 
-        private void SpawnThing(GameObject gameObj, Vector2 position, Quaternion rotation)
+        private void SpawnThing(GameObject gameObj, Vector2 position, Quaternion rotation, Vector2 spawnVelocity)
         {
-            var projectile = Instantiate(gameObj, position, Quaternion.identity);
-            var tf = transform;
-            projectile.transform.LookAt(tf.position + tf.right);
+            if (gameObj == null) return;
+            
+            var projectile = Instantiate(gameObj, position, rotation);
+            var projectileRb = projectile.GetComponent<Rigidbody2D>();
+            if (projectileRb != null)
+            {
+                Debug.Log("Dir is " + transform.localScale.x);
+                projectileRb.velocity += spawnVelocity * transform.localScale.x;
+            }
+            else
+            {
+                Debug.Log("rb gone");
+
+            }
+
+            var projectileBase = projectile.GetComponent<ProjectileBase>();
+            if (projectileBase != null)
+            {
+                projectileBase.allegiance = allegiance;
+            }
+
+            var colliderBase = projectileBase as ColliderProjectile;
+            if(colliderBase != null)
+            {
+                colliderBase.SetStartSpeed(colliderBase.speed * transform.localScale.x);
+            }
         }
     
         private void SpawnProjectile()
         {
             var angle = Random.Range(0f, _spreadAngle) - 0.5f * _spreadAngle;
-            var rotation = Quaternion.Euler(0, angle, 0); // Rotate around the Y-axis
-            SpawnThing(_projectile, _muzzlePosition.position, rotation);
+            var rotation = Quaternion.Euler(0, 0, angle); // Rotate around the Y-axis
+            SpawnThing(_projectile, _muzzlePosition.position, rotation, Vector2.zero);
         }
 
         private void SpawnMuzzleVFX()
         {
-            SpawnThing(_muzzleVFX, _muzzlePosition.position, Quaternion.identity);
+            SpawnThing(_muzzleVFX, _muzzlePosition.position, Quaternion.identity, Vector2.zero);
         }
     
         private void SpawnEjectionVFX()
         {
-            SpawnThing(_ejectionVFX, _ejectionPosition.position,  Quaternion.identity);
+            SpawnThing(_ejectionVFX, _ejectionPosition.position,  Quaternion.identity, Vector2.zero);
         }
     
         private void DoShot()
@@ -104,10 +132,13 @@ namespace Combat.Weapon
             else
             {
                 _currentMagazineCapacity--;
-                Debug.Log("Shoot!");
                 SpawnProjectile();
                 SpawnEjectionVFX();
                 SpawnMuzzleVFX();
+                if (_parentCharacter != null)
+                {
+                    _parentCharacter.ShootFromCover();
+                }
             }
         }
     

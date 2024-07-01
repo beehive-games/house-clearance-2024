@@ -180,6 +180,7 @@ namespace Character.Player
             if (_movementState == MovementState.Cover && Mathf.Abs(_xInput) > 0.001f)
             {
                 _movementState = MovementState.Walk;
+                LeaveCover();
             }
         }
         

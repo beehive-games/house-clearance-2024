@@ -51,6 +51,7 @@ public class ProjectileBase : MonoBehaviour
 
     private void SpawnSubProjectile()
     {
+        if (_subProjectile == null) return;
         var tf = transform;
         Instantiate(_subProjectile, tf.position, tf.rotation);
     }
@@ -63,6 +64,15 @@ public class ProjectileBase : MonoBehaviour
         damageCoroutine ??= StartCoroutine(DamageTime(hitBox));
     }
 
+    private void ComputeHit(HitBox hitBox)
+    {
+        hitBox.Hit(damage, damageType, allegiance);
+        if (_subProjectileSpawn is SubProjectileSpawn.DamageTick)
+        {
+            SpawnSubProjectile();
+        }
+    }
+    
     private IEnumerator DamageTime(HitBox hitBox)
     {
         hitBox.Hit(damage, damageType, allegiance);
@@ -71,18 +81,20 @@ public class ProjectileBase : MonoBehaviour
         {
             SpawnSubProjectile();
         }
-        
-        if (!(_damageRepeatTime > 0f) || _damageRepeats <= 0) yield break;
+
+        if (!(_damageRepeatTime > 0f) || _damageRepeats <= 0)
+        {
+            ComputeHit(hitBox);
+            Destroy(gameObject);
+            yield break;
+        }
         
         while (_damageRepeats > 0)
         {
             _damageRepeats--;
             yield return new WaitForSeconds(_damageRepeatTime);
-            hitBox.Hit(damage, damageType, allegiance);
-            if (_subProjectileSpawn is SubProjectileSpawn.DamageTick)
-            {
-                SpawnSubProjectile();
-            }
+            ComputeHit(hitBox);
+
         }
         
         // Damage application complete, kill the projectile
@@ -90,8 +102,9 @@ public class ProjectileBase : MonoBehaviour
         {
             SpawnSubProjectile();
         }
-        
-        Destroy(this);
+
+        damageCoroutine = null;
+        Destroy(gameObject);
     }
     
     private IEnumerator Lifetime()
@@ -99,11 +112,11 @@ public class ProjectileBase : MonoBehaviour
         if (_lifeTime > 0f)
         {
             yield return new WaitForSeconds(_lifeTime);
-            Destroy(this);
+            Destroy(gameObject);
         }
         else
         {
-            Destroy(this);
+            Destroy(gameObject);
         }
     }
 

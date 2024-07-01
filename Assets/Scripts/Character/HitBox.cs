@@ -7,7 +7,7 @@ namespace Character
         private CharacterBase _parentCharacter;
         [SerializeField] private Allegiance _allegiance;
         [SerializeField] private float damageMultiplier = 1f;
-    
+
         private void Awake()
         {
             _parentCharacter = GetComponentInParent<CharacterBase>();
@@ -18,7 +18,9 @@ namespace Character
 
         public void Hit(float damage, DamageType damageType, Allegiance allegiance)
         {
+
             damage *= damageMultiplier;
+            Debug.Log("HIT!");
             if(_allegiance != allegiance || allegiance == Allegiance.Neutral || _allegiance == Allegiance.Neutral)    
                 _parentCharacter.Damage(damage,damageType);
         }

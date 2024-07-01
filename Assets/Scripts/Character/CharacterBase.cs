@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Character;
 using Character.Player;
 using Combat.Weapon;
 using UnityEngine;
@@ -66,7 +67,9 @@ public class CharacterBase : MonoBehaviour
 	[SerializeField, Range(0,1)] private protected float _woundedHealthLevel = 0.33f;
 	[SerializeField] private protected float _rehealCooldown = 3f;
 	[SerializeField] private protected float _rehealSpeed = 20f;
+	[SerializeField] private protected float _shootFromCoverExposedTime = 1f;
 	public WeaponBase weapon;
+	[SerializeField] private Allegiance _allegiance; 
 	[Space]
 
 	[Header("Events")]
@@ -79,6 +82,9 @@ public class CharacterBase : MonoBehaviour
 	private protected float _lastDamageCounter;
 	private protected Vector2 _previousVelocity;
 	RaycastHit2D[] _results;
+	private HitBox[] _hitBoxes;
+	private Coroutine _shootFromCoverCO;
+	
 	internal enum MovementState
 	{
 		Walk,
@@ -206,6 +212,14 @@ public class CharacterBase : MonoBehaviour
 		{
 			Debug.LogWarning("Fall Velocity to Slide is greater than Fall Velocity to Die. Please check this is the behaviour you intended");
 		}
+
+		_hitBoxes = GetComponentsInChildren<HitBox>();
+
+		if (weapon != null)
+		{
+			weapon.allegiance = _allegiance;
+		}
+
 	}
 	
 	protected void SetRigidbody2DVelocityX(float x)
@@ -272,6 +286,11 @@ public class CharacterBase : MonoBehaviour
 		return other.gameObject.layer == LayerMask.NameToLayer("Cover") && _movementState == MovementState.Slide;
 	}
 	
+	protected bool CheckLeaveCover(Collider2D other)
+	{
+		return other.gameObject.layer == LayerMask.NameToLayer("Cover");
+	}
+	
 	protected bool CheckHitTeleporter(Collider2D other)
 	{
 		return other.gameObject.layer == LayerMask.NameToLayer("Teleport");
@@ -319,18 +338,65 @@ public class CharacterBase : MonoBehaviour
 		_canTeleport = false;
 	}
 
+	public void ShootFromCover()
+	{
+		if (_movementState != MovementState.Cover)
+		{
+			return;
+		}
+
+		if (_shootFromCoverCO != null)
+		{
+			StopCoroutine(_shootFromCoverCO);
+		}
+		
+		_shootFromCoverCO = StartCoroutine(ShootFromCoverCO());
+	}
+
+	IEnumerator ShootFromCoverCO()
+	{
+		foreach (var hitbox in _hitBoxes)
+		{
+			hitbox.gameObject.SetActive(true);
+		}
+
+		_spriteRenderer.color = Color.white;
+		yield return new WaitForSeconds(_shootFromCoverExposedTime);
+		foreach (var hitbox in _hitBoxes)
+		{
+			if (_movementState == MovementState.Cover)
+			{
+				hitbox.gameObject.SetActive(false);
+				
+			}
+		}
+		_spriteRenderer.color = _transitionalColorTint;
+		_shootFromCoverCO = null;
+	}
+
 	protected void LeaveCover()
 	{
 		if (_movementState == MovementState.Cover)
+		{
+			foreach (var hitbox in _hitBoxes)
+			{
+				hitbox.gameObject.SetActive(true);
+			}
 			_movementState = MovementState.Walk;
-
+			if (_shootFromCoverCO != null)
+			{
+				StopCoroutine(_shootFromCoverCO);
+			}
+		}
+		_spriteRenderer.color = Color.white;
 	}
 
 	private void OnTriggerExit2D(Collider2D other)
 	{
-		if (CheckHitCover(other))
+		if (CheckLeaveCover(other))
 		{
 			LeaveCover();
+			Debug.Log(gameObject.name + " left cover");
 			return;
 		}
 		if (CheckHitTeleporter(other)) LeaveTeleporter();
@@ -372,7 +438,20 @@ public class CharacterBase : MonoBehaviour
 		
 		_spriteObject.position = new Vector2(position.x, position.y - _collider2D.bounds.size.y / 2f);//_rigidbody2D.position - vectorOffset;
 		UpdateSprite();
-		_spriteRenderer.color = _movementState is MovementState.Cover or MovementState.Teleporting ? _transitionalColorTint : Color.white;
+
+		if (weapon != null)
+		{
+			if (_spriteRenderer.flipX)
+			{
+				weapon.transform.localScale = new Vector2(-1,1);
+			}
+			else
+			{
+				weapon.transform.localScale = new Vector2(1,1);
+			}
+		}
+		
+		//_spriteRenderer.color = _movementState is MovementState.Cover or MovementState.Teleporting ? _transitionalColorTint : Color.white;
 	}
 
 	private bool GroundCheckNonAlloc(Vector2 position, Vector2 direction, float maxDistance, LayerMask layerMask)
@@ -446,7 +525,7 @@ public class CharacterBase : MonoBehaviour
 	public virtual void Damage(float damage, DamageType damageType)
 	{
 		if (_aliveState is not (AliveState.Alive or AliveState.Wounded)) return;
-		
+		Debug.Log("Ouchies! ");
 		_currentHealth -= damage;
 		if (_currentHealth <= 0f)
 		{
@@ -527,6 +606,10 @@ public class CharacterBase : MonoBehaviour
 
 	public bool InCover()
 	{
+		foreach (var hitbox in _hitBoxes)
+		{
+			hitbox.gameObject.SetActive(false);
+		}
 		return _movementState == MovementState.Cover;
 	}
 

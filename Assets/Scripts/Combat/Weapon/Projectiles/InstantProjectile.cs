@@ -32,6 +32,7 @@ namespace Combat.Weapon.Projectiles
             {
                 Instantiate(impactVFX, transform.position, Quaternion.identity);
             }
+            Destroy(gameObject);
         }
     }
 }
