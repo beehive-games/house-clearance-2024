@@ -33,10 +33,20 @@ namespace Combat.Weapon
         private CharacterBase _parentCharacter;
         [HideInInspector] public Allegiance allegiance;
 
+        public void Setup(Transform newParent)
+        {
+            Debug.Log(gameObject.name);
+            Debug.Log(gameObject.transform.parent.name);
+            _parentCharacter = gameObject.transform.parent.parent.GetComponent<CharacterBase>();
+            var tf = transform;
+            tf.parent = newParent;
+            var resetXPositionHack = new Vector2(0f, tf.localPosition.y);
+            tf.localPosition = resetXPositionHack;
+        }
+        
         private void Awake()
         {
             _currentMagazineCapacity = _magazineCapacity;
-            _parentCharacter = gameObject.transform.parent.GetComponent<CharacterBase>();
         }
     
         IEnumerator ShotIntervalTimer()
@@ -79,30 +89,22 @@ namespace Combat.Weapon
         private void SpawnThing(GameObject gameObj, Vector2 position, Quaternion rotation, Vector2 spawnVelocity)
         {
             if (gameObj == null) return;
-            
             var projectile = Instantiate(gameObj, position, rotation);
             var projectileRb = projectile.GetComponent<Rigidbody2D>();
             if (projectileRb != null)
             {
-                Debug.Log("Dir is " + transform.localScale.x);
                 projectileRb.velocity += spawnVelocity * transform.localScale.x;
             }
-            else
-            {
-                Debug.Log("rb gone");
-
-            }
-
+            
             var projectileBase = projectile.GetComponent<ProjectileBase>();
             if (projectileBase != null)
             {
                 projectileBase.allegiance = allegiance;
-            }
-
-            var colliderBase = projectileBase as ColliderProjectile;
-            if(colliderBase != null)
-            {
-                colliderBase.SetStartSpeed(colliderBase.speed * transform.localScale.x);
+                var colliderBase = projectileBase as ColliderProjectile;
+                if(colliderBase != null)
+                {
+                    colliderBase.SetStartSpeed(colliderBase.speed * transform.localScale.x);
+                }
             }
         }
     

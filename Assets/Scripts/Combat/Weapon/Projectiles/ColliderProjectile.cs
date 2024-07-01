@@ -49,14 +49,12 @@ namespace Combat.Weapon.Projectiles
         private void OnCollisionEnter2D(Collision2D other)
         {
             var hitBox = other.gameObject.GetComponent<HitBox>();
-            Debug.Log(gameObject.name +" detected a collision with "+other.gameObject.name);
             if (hitBox == null) return;
             DoDamage(hitBox);
         }
         
         private void OnTriggerEnter2D(Collider2D other)
         {
-            Debug.Log(gameObject.name +" detected a trigger overlap with "+other.gameObject.name);
             var hitBox = other.gameObject.GetComponent<HitBox>();
             if (hitBox == null) return;
             DoDamage(hitBox);

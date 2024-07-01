@@ -68,8 +68,11 @@ public class CharacterBase : MonoBehaviour
 	[SerializeField] private protected float _rehealCooldown = 3f;
 	[SerializeField] private protected float _rehealSpeed = 20f;
 	[SerializeField] private protected float _shootFromCoverExposedTime = 1f;
-	public WeaponBase weapon;
-	[SerializeField] private Allegiance _allegiance; 
+	public GameObject weaponPrefab;
+	[SerializeField] private protected Transform _weaponPosition;
+	[SerializeField] private protected Transform _weaponSpritePosition;
+	[SerializeField] private Allegiance _allegiance;
+	protected WeaponBase _weaponInstance;
 	[Space]
 
 	[Header("Events")]
@@ -215,9 +218,13 @@ public class CharacterBase : MonoBehaviour
 
 		_hitBoxes = GetComponentsInChildren<HitBox>();
 
-		if (weapon != null)
+		if (weaponPrefab != null)
 		{
-			weapon.allegiance = _allegiance;
+			var weaponGameObject = Instantiate(weaponPrefab.gameObject, _weaponPosition.position, _weaponPosition.rotation);
+			weaponGameObject.transform.parent = _weaponPosition;
+			_weaponInstance = weaponGameObject.GetComponent<WeaponBase>();
+			_weaponInstance.allegiance = _allegiance;
+			_weaponInstance.Setup(_weaponSpritePosition);
 		}
 
 	}
@@ -439,16 +446,9 @@ public class CharacterBase : MonoBehaviour
 		_spriteObject.position = new Vector2(position.x, position.y - _collider2D.bounds.size.y / 2f);//_rigidbody2D.position - vectorOffset;
 		UpdateSprite();
 
-		if (weapon != null)
+		if (_weaponInstance != null)
 		{
-			if (_spriteRenderer.flipX)
-			{
-				weapon.transform.localScale = new Vector2(-1,1);
-			}
-			else
-			{
-				weapon.transform.localScale = new Vector2(1,1);
-			}
+			_weaponInstance.transform.localScale = _spriteRenderer.flipX ? new Vector2(-1,1) : new Vector2(1,1);
 		}
 		
 		//_spriteRenderer.color = _movementState is MovementState.Cover or MovementState.Teleporting ? _transitionalColorTint : Color.white;
@@ -496,6 +496,8 @@ public class CharacterBase : MonoBehaviour
 
 	protected void MoveMechanics(bool isGrounded, float input, float slideToJumpMaxVx = -1f)
 	{
+		input = input * (_aliveState == AliveState.Wounded ? _woundedSpeed : 1f);
+		
 		var velocity = _rigidbody2D.velocity;
 		var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
 		var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
@@ -516,8 +518,8 @@ public class CharacterBase : MonoBehaviour
 	{
 		_aliveState = SwitchDamageStatToAliveState(damageType);
 		_movementState = MovementState.Dead;
-		if(weapon != null)
-			weapon.DisableShooting();
+		if(_weaponInstance != null)
+			_weaponInstance.DisableShooting();
 		Debug.Log(name + " died, due to "+damageType);
 	}
 	
@@ -525,7 +527,6 @@ public class CharacterBase : MonoBehaviour
 	public virtual void Damage(float damage, DamageType damageType)
 	{
 		if (_aliveState is not (AliveState.Alive or AliveState.Wounded)) return;
-		Debug.Log("Ouchies! ");
 		_currentHealth -= damage;
 		if (_currentHealth <= 0f)
 		{

@@ -234,7 +234,7 @@ namespace Character.NPC
 
         private bool CanShoot()
         {
-            if (weapon == null) return false;
+            if (weaponPrefab == null) return false;
             
             var playerPosition = _playerColliderTransform.position;
             var rbPosition = _rigidbody2D.position;
@@ -385,7 +385,7 @@ namespace Character.NPC
                 dbg_NPCState = DebugNPCState.Combat;
                 if (CanShoot())
                 {
-                    weapon.Fire(true);
+                    _weaponInstance.Fire(true);
                 }
             }
             else

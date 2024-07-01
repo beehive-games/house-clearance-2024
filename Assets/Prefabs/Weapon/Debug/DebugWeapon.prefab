@@ -109,7 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d20b1cf7db870f645b37107b115e5d25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _projectile: {fileID: 7766903124504915622, guid: fc12ac0b5e524724fa4bab381ed656dd, type: 3}
+  _projectile: {fileID: 7766903124504915622, guid: 25657d9823f68ba4ea448a55fc8b1086, type: 3}
   _shotsPerSecond: 3
   _magazineCapacity: 20
   _reloadTime: 1
@@ -119,6 +119,7 @@ MonoBehaviour:
   _muzzleVFX: {fileID: 0}
   _ejectionPosition: {fileID: 187324385642385524}
   _ejectionVFX: {fileID: 0}
+  allegiance: 0
 --- !u!212 &3818332884503267802
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -159,7 +160,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 10
   m_Sprite: {fileID: 21300000, guid: 4f977fe84bff34c4e83c6b75c7fef50f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
