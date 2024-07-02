@@ -109,7 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c18aff897fd95154eb05f708da01c7c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _allegiance: 0
+  _allegiance: 2
   _hitBoxType: 1
   damageMultiplier: 3
 --- !u!70 &6179124413067168508
@@ -223,7 +223,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c18aff897fd95154eb05f708da01c7c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _allegiance: 0
+  _allegiance: 2
   _hitBoxType: 0
   damageMultiplier: 1
 --- !u!70 &8875392679419190062
@@ -457,6 +457,8 @@ MonoBehaviour:
   _coverSlideDistance: 5
   _maximumPursueDistance: 20
   _minimumDistanceToPlayerForSliding: 1
+  _randomShotChance: 0.5
+  _PlayerInCoverDetectionDistance: 0.5
   dbg_NPCState: 0
   dbg_canSeePlayer: 0
 --- !u!1 &8330579073518193122

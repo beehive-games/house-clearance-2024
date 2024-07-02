@@ -27,6 +27,8 @@ namespace Character.NPC
         [SerializeField] private float _coverSlideDistance = 2f;
         [SerializeField] private float _maximumPursueDistance = 20f;
         [SerializeField] private float _minimumDistanceToPlayerForSliding = 2f;
+        [SerializeField, Range(0,1)] private float _randomShotChance = 0.5f;
+        [SerializeField, Range(0,1)] private float _PlayerInCoverDetectionDistance = 0.5f;
         private RaycastHit2D[] _results = new RaycastHit2D[1];
         private Vector2 _startLocation;
         private Vector2 _targetLocation;
@@ -34,6 +36,7 @@ namespace Character.NPC
         private bool _waiting;
         private bool _couldSeePlayer;
         private Transform _playerColliderTransform;
+        private PlayerCharacter _playerCharacter;
         private bool _queueSlide;
         private bool _pursusing;
 
@@ -121,9 +124,20 @@ namespace Character.NPC
                 Debug.DrawRay(origin, direction * _maxPlayerVisibilityDistance, Color.red);
                 return false;
             }
+
+            if (!_results[0].collider.CompareTag("Player"))
+            {
+                Debug.DrawRay(origin, direction * _maxPlayerVisibilityDistance, Color.red);
+                return false;
+            }
             
+            if (_playerCharacter.IsInCover() && !_pursusing && Vector2.Distance(playerPosition, _rigidbody2D.position) > _PlayerInCoverDetectionDistance )
+            {
+                Debug.DrawLine(origin, _results[0].point, new Color(1f,1.5f,0f));
+                return false;
+            }
+
             Debug.DrawLine(origin, _results[0].point, Color.green);
-            
             return _results[0].collider.CompareTag("Player");
         }
         
@@ -132,6 +146,11 @@ namespace Character.NPC
             base.Awake();
             GrabPlayerCollider2D();
             RevalidateStartPatrolPosition();
+            _playerCharacter = _playerColliderTransform.GetComponent<PlayerCharacter>();
+            if (_playerCharacter == null)
+            {
+                Debug.LogError("Player character not found! (on "+gameObject.name+")");
+            }
         }
 
         IEnumerator PatrolWait()
@@ -232,8 +251,10 @@ namespace Character.NPC
             }
         }
 
-        private bool CanShoot()
+        private bool CanShoot(bool canSeePlayer)
         {
+            if (!canSeePlayer) return false;
+            
             if (weaponPrefab == null) return false;
             
             var playerPosition = _playerColliderTransform.position;
@@ -246,7 +267,8 @@ namespace Character.NPC
 
             if (directionMatchesFacingDirection && distance < _maxPlayerVisibilityDistance)
             {
-                return true;
+                var randomChance = Random.Range(0f, 1f) < _randomShotChance;
+                return randomChance;
             }
             
             return false;
@@ -349,10 +371,19 @@ namespace Character.NPC
                     Slide();
                 }
             }
+            else if (hitFloor && hitWall && !directionsMatch)
+            {
+                if (sliding)
+                {
+                    StopSlide();
+                }
+                SetTargetToLocationFromPlayer(playerPosition, position);
+            }
 
             if (!hitFloor)
             {
                 direction = 0f;
+                SetRigidbodyX(0f);
                 _movementState = MovementState.Walk;
             }
             
@@ -383,7 +414,7 @@ namespace Character.NPC
                 // turn to face player after moving
                 _spriteRenderer.flipX = _playerColliderTransform.position.x - _rigidbody2D.position.x < 0f; 
                 dbg_NPCState = DebugNPCState.Combat;
-                if (CanShoot())
+                if (CanShoot(canSeePlayer))
                 {
                     _weaponInstance.Fire(true);
                 }

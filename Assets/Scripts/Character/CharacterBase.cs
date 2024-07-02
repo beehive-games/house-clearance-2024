@@ -116,6 +116,11 @@ public class CharacterBase : MonoBehaviour
 	private protected AliveState _aliveState;
 	private protected RuntimeAnimatorController _animationController;
 	private protected Animator _animator;
+
+	protected internal virtual bool IsInCover()
+	{
+		return _movementState == MovementState.Cover && (_aliveState is AliveState.Alive or AliveState.Wounded);
+	}
 	
 	protected virtual void Awake()
 	{

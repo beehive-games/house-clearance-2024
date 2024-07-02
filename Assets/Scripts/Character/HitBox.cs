@@ -19,17 +19,22 @@ namespace Character
             enabled = false;
         }
 
-        public void Hit(float damage, DamageType damageType, Allegiance allegiance)
+        public bool Hit(float damage, DamageType damageType, Allegiance allegiance)
         {
 
             damage *= damageMultiplier;
-            Debug.Log("HIT!");
             if (damageType == DamageType.Projectile && _hitBoxType == HitBoxType.Head)
             {
                 damageType = DamageType.ProjectileHead;
             }
-            if(_allegiance != allegiance || allegiance == Allegiance.Neutral || _allegiance == Allegiance.Neutral)    
+
+            if (_allegiance != allegiance || allegiance == Allegiance.Neutral || _allegiance == Allegiance.Neutral)
+            {
                 _parentCharacter.Damage(damage,damageType);
+                return true;
+            }
+
+            return false;
         }
 
     }

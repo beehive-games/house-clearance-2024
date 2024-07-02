@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Character;
+using Unity.Collections;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -32,7 +33,7 @@ public class ProjectileBase : MonoBehaviour
     
     public DamageType damageType;
     [HideInInspector] public float damage;
-    [HideInInspector] public Allegiance allegiance;
+    [ReadOnly] public Allegiance allegiance;
 
     protected Vector2 startPosition;
     protected Coroutine lifetimeTimer;
@@ -75,7 +76,15 @@ public class ProjectileBase : MonoBehaviour
     
     private IEnumerator DamageTime(HitBox hitBox)
     {
-        hitBox.Hit(damage, damageType, allegiance);
+        // Hit() returns true if the hitbox can be damaged by projectile
+        // and will do damage if it does. We exit early as if nothing happened
+        // if Hit() returns false
+        var hitSuccessful = hitBox.Hit(damage, damageType, allegiance);
+        if (!hitSuccessful)
+        {
+            damageCoroutine = null;
+            yield break;
+        }
         
         if (_subProjectileSpawn is SubProjectileSpawn.FirstContact or SubProjectileSpawn.DamageTick)
         {
@@ -86,6 +95,7 @@ public class ProjectileBase : MonoBehaviour
         {
             ComputeHit(hitBox);
             Destroy(gameObject);
+            damageCoroutine = null;
             yield break;
         }
         

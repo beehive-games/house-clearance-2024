@@ -7561,6 +7561,10 @@ PrefabInstance:
       value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
+      propertyPath: _PlayerInCoverDetectionDistance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: _playerVisibilityLayerMask.m_Bits
       value: 200
       objectReference: {fileID: 0}
