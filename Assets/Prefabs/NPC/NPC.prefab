@@ -64,6 +64,73 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5314444900837635954}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3956963677525617623
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 720163678933418449}
+  - component: {fileID: 2291297007888893248}
+  m_Layer: 14
+  m_Name: EnemyTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &720163678933418449
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3956963677525617623}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5314444900837635954}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!70 &2291297007888893248
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3956963677525617623}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: -0.76}
+  m_Size: {x: 2.63, y: 2.06}
+  m_Direction: 0
 --- !u!1 &4416333188005241670
 GameObject:
   m_ObjectHideFlags: 0
@@ -324,6 +391,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 720163678933418449}
   - {fileID: 7353127534803468812}
   - {fileID: 2368258202971127539}
   - {fileID: 3793308771677236744}
@@ -412,6 +480,7 @@ MonoBehaviour:
   _maxAirAcceleration: 60
   _woundedSpeed: 0.66
   _teleportSpeed: 1
+  _stunnedTime: 3
   _jumpForce: 1000
   _gravityMultiplier: 3
   _slideFriction: 20
@@ -433,7 +502,7 @@ MonoBehaviour:
   _shootFromCoverExposedTime: 0.5
   weaponPrefab: {fileID: 6060197472441224524, guid: 9500ddcba850c62499390184d034a7ad, type: 3}
   _weaponPosition: {fileID: 10522623064498733}
-  _weaponSpritePosition: {fileID: 0}
+  _weaponSpritePosition: {fileID: 7913104468714580049}
   _allegiance: 2
   onLandEvent:
     m_PersistentCalls:
@@ -456,9 +525,8 @@ MonoBehaviour:
     m_Bits: 256
   _coverSlideDistance: 5
   _maximumPursueDistance: 20
-  _minimumDistanceToPlayerForSliding: 1
   _randomShotChance: 0.5
-  _PlayerInCoverDetectionDistance: 0.5
+  _PlayerInCoverDetectionDistance: 1
   dbg_NPCState: 0
   dbg_canSeePlayer: 0
 --- !u!1 &8330579073518193122
@@ -521,7 +589,7 @@ Transform:
   m_GameObject: {fileID: 8673108273587859115}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.04, y: -1.752, z: 0}
+  m_LocalPosition: {x: 0, y: -1.8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

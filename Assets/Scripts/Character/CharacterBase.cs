@@ -29,6 +29,7 @@ public class CharacterBase : MonoBehaviour
 	[SerializeField] private protected float _maxAirAcceleration = 20f;
 	[SerializeField, Range(0,1)] private protected float _woundedSpeed = 0.66f;
 	[SerializeField] private protected float _teleportSpeed = 1f;
+	[SerializeField] private protected float _stunnedTime = 3f;
 	
 	
 	[Space]
@@ -87,6 +88,8 @@ public class CharacterBase : MonoBehaviour
 	RaycastHit2D[] _results;
 	private HitBox[] _hitBoxes;
 	private Coroutine _shootFromCoverCO;
+	private Coroutine _downedTimerCO;
+	private GameObject _coverGameObject;
 	
 	internal enum MovementState
 	{
@@ -249,6 +252,7 @@ public class CharacterBase : MonoBehaviour
 		{
 			hitBox.gameObject.SetActive(false);
 		}
+		
 	}
 	
 	protected virtual void HitTeleporter(Collider2D other)
@@ -265,41 +269,60 @@ public class CharacterBase : MonoBehaviour
 	
 	protected bool CheckHitCharacter(Collision2D other, ref CharacterBase character)
 	{
-		var enemy = LayerMask.NameToLayer("Enemy");
-		var player = LayerMask.NameToLayer("Player");
+		return CheckHitCharacter(other.gameObject, ref character);
+	}
+	
+	protected bool CheckHitCharacter(Collider2D other, ref CharacterBase character)
+	{
+		return CheckHitCharacter(other.gameObject, ref character);
+	}
+	
+	protected bool CheckHitCharacter(GameObject other, ref CharacterBase character)
+	{
+		var enemy = LayerMask.NameToLayer("EnemyTrigger");
 		var comparisonLayer = other.gameObject.layer;
 		
-		if (comparisonLayer != enemy && comparisonLayer != player) return false;
+		// for player support for stunning form NPC:
+		// 		var player = LayerMask.NameToLayer("PlayerTrigger");
+		//			if(... && comparisonLayer != player
+		if (comparisonLayer != enemy) return false;
 		
 		character = other.gameObject.GetComponent<CharacterBase>();
 		return true;
 
 	}
+
+	IEnumerator DownedTimerCO()
+	{
+		_weaponInstance.SetShooting(false);
+		yield return new WaitForSeconds(_stunnedTime);
+		_downedTimerCO = null;
+		if (_movementState is MovementState.Immobile && _aliveState is AliveState.Alive or AliveState.Wounded)
+		{
+			_movementState = MovementState.Walk;
+			_weaponInstance.SetShooting(true);
+		}
+	}
 	
 	protected virtual void HitCharacter(CharacterBase character)
 	{
-		var playerCharacter = character as PlayerCharacter;
-		if (playerCharacter != null)
-		{
-			Debug.Log("Hit Player");
-		}
-		else
-		{
-			Debug.Log("Hit non-player character. Big TODO!");
-			if (_movementState == MovementState.Slide)
-			{
-				// stun!
-			}
-			else
-			{
-				// switch to melee attack!
-			}
-		}
+		// stun!
+		_movementState = MovementState.Immobile;
+		SetRigidbody2DVelocityX(0f);
+		_downedTimerCO = StartCoroutine(DownedTimerCO());
 	}
 
 	protected bool CheckHitCover(Collider2D other)
 	{
-		return other.gameObject.layer == LayerMask.NameToLayer("Cover") && _movementState == MovementState.Slide;
+		var objectCheck = other.gameObject.layer == LayerMask.NameToLayer("Cover") &&
+		                  _movementState == MovementState.Slide;
+		if (objectCheck && _coverGameObject != other.gameObject)
+		{
+			_coverGameObject = other.gameObject;
+			return true;
+		}
+
+		return false;
 	}
 	
 	protected bool CheckLeaveCover(Collider2D other)
@@ -341,6 +364,7 @@ public class CharacterBase : MonoBehaviour
 		{
 			StartSlide();
 		}
+		
 		CharacterBase characterHit = null;
 		if (CheckHitCharacter(other, ref characterHit)) HitCharacter(characterHit);
 	}
@@ -403,6 +427,7 @@ public class CharacterBase : MonoBehaviour
 				StopCoroutine(_shootFromCoverCO);
 			}
 		}
+		_coverGameObject = null;
 		_spriteRenderer.color = Color.white;
 	}
 
@@ -426,6 +451,8 @@ public class CharacterBase : MonoBehaviour
 	{
 		if (CheckHitCover(other)) HitCover();
 		if (CheckHitTeleporter(other)) HitTeleporter(other);
+		CharacterBase characterHit = null;
+		if (CheckHitCharacter(other, ref characterHit)) HitCharacter(characterHit);
 	}
 
 	// This will contain the final movement logic based on 
