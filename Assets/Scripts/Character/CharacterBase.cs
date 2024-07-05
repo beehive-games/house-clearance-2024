@@ -279,13 +279,13 @@ public class CharacterBase : MonoBehaviour
 	
 	protected bool CheckHitCharacter(GameObject other, ref CharacterBase character)
 	{
-		var enemy = LayerMask.NameToLayer("EnemyTrigger");
+		var player = LayerMask.NameToLayer("PlayerTrigger");
 		var comparisonLayer = other.gameObject.layer;
 		
 		// for player support for stunning form NPC:
 		// 		var player = LayerMask.NameToLayer("PlayerTrigger");
 		//			if(... && comparisonLayer != player
-		if (comparisonLayer != enemy) return false;
+		if (comparisonLayer != player) return false;
 		
 		character = other.gameObject.GetComponent<CharacterBase>();
 		return true;
