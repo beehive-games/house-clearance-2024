@@ -39,6 +39,7 @@ namespace Character.NPC
         private PlayerCharacter _playerCharacter;
         private bool _queueSlide;
         private bool _pursusing;
+        private bool _damageTaken;
 
         enum DebugNPCState
         {
@@ -290,7 +291,12 @@ namespace Character.NPC
                 _targetLocation = targetPosition;
             }
         }
-        
+
+        public override void Damage(float damage, DamageType damageType)
+        {
+            base.Damage(damage, damageType);
+            _damageTaken = true;
+        }
         
         private void CombatMovement(bool isGrounded, bool canSeePlayer)
         {
@@ -416,8 +422,9 @@ namespace Character.NPC
             bool canSeePlayer = RaycastPlayer();
             dbg_canSeePlayer = canSeePlayer;
             
-            if(canSeePlayer || _pursusing)
+            if(canSeePlayer || _pursusing || _damageTaken)
             {
+                _damageTaken = false;
                 CombatMovement(isGrounded, canSeePlayer);
                 // turn to face player after moving
                 _spriteRenderer.flipX = _playerColliderTransform.position.x - _rigidbody2D.position.x < 0f; 
