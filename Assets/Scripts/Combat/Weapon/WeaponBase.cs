@@ -54,6 +54,7 @@ namespace Combat.Weapon
             _canShootInternal = false;
             yield return new WaitForSeconds(1f / _shotsPerSecond);
             _canShootInternal = true;
+            _shootTimer = null;
         }
 
         public void EnableShooting()

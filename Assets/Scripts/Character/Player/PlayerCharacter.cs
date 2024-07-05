@@ -18,7 +18,8 @@ namespace Character.Player
         private bool _queueJump;
         private bool _queueSlide;
         private float _slideToJumpMaxVX;
-    
+        private bool _shooting = false;
+        
     
         // -------------------------
         // Unity-based events
@@ -30,6 +31,32 @@ namespace Character.Player
         private void OnDisable()
         {
             actions.FindActionMap("gameplay").Disable();
+        }
+        
+        private void OnShootHold(InputAction.CallbackContext context)
+        {
+            _shooting = true;
+            OnShootingHold();
+        }
+        
+        private void OnShootingHold()
+        {
+            Debug.Log("Shoot Hold!");
+            _weaponInstance.Fire(true);
+        }
+        
+        private void OnShootCancel(InputAction.CallbackContext context)
+        {
+            Debug.Log("Shoot Cancel!");
+            _shooting = false;
+        }
+        
+        private void OnShoot(InputAction.CallbackContext context)
+        {
+            if (!_shooting) return;
+            
+            Debug.Log("Shoot!");
+            _weaponInstance.Fire();
         }
         
         private void OnSpecial(InputAction.CallbackContext context)
@@ -64,6 +91,9 @@ namespace Character.Player
             }
             
             actions.FindActionMap("gameplay").FindAction("special").performed += OnSpecial;
+            actions.FindActionMap("gameplay").FindAction("shoot1").performed += OnShoot;
+            actions.FindActionMap("gameplay").FindAction("shoot1").started += OnShootHold;
+            actions.FindActionMap("gameplay").FindAction("shoot1").canceled += OnShootCancel;
             actions.FindActionMap("gameplay").FindAction("slide").performed += OnSlide;
 
 
@@ -226,6 +256,11 @@ namespace Character.Player
 
             XDirection(isGrounded);
             YDirection(isGrounded);
+
+            if (_shooting)
+            {
+                OnShootingHold();
+            }
 
         }
     }
