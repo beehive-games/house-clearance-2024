@@ -282,12 +282,9 @@ public class CharacterBase : MonoBehaviour
 		var player = LayerMask.NameToLayer("PlayerTrigger");
 		var comparisonLayer = other.gameObject.layer;
 		
-		// for player support for stunning form NPC:
-		// 		var player = LayerMask.NameToLayer("PlayerTrigger");
-		//			if(... && comparisonLayer != player
 		if (comparisonLayer != player) return false;
 		
-		character = other.gameObject.GetComponent<CharacterBase>();
+		character = other.transform.parent.GetComponent<CharacterBase>();
 		return true;
 
 	}
@@ -295,6 +292,7 @@ public class CharacterBase : MonoBehaviour
 	IEnumerator DownedTimerCO()
 	{
 		_weaponInstance.SetShooting(false);
+		_spriteRenderer.color = Color.white;
 		yield return new WaitForSeconds(_stunnedTime);
 		_downedTimerCO = null;
 		if (_movementState is MovementState.Immobile && _aliveState is AliveState.Alive or AliveState.Wounded)
@@ -307,6 +305,9 @@ public class CharacterBase : MonoBehaviour
 	protected virtual void HitCharacter(CharacterBase character)
 	{
 		// stun!
+		Debug.Log("Character = "+character);
+		if(character == null || character._movementState != MovementState.Slide)
+			return;
 		_movementState = MovementState.Immobile;
 		SetRigidbody2DVelocityX(0f);
 		_downedTimerCO = StartCoroutine(DownedTimerCO());

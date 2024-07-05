@@ -301,6 +301,14 @@ namespace Character.NPC
                 _waiting = false;
             }
 
+            if (_movementState == MovementState.Immobile)
+            {
+                StopSlide();
+                _pursusing = false;
+                SetRigidbodyX(0f);
+                return;
+            }
+            
             if (canSeePlayer && !_pursusing)
             {
                 _pursusing = true;
