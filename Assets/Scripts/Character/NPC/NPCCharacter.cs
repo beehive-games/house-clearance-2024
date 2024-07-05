@@ -26,7 +26,7 @@ namespace Character.NPC
         [SerializeField] private LayerMask _coverLayerMask;
         [SerializeField] private float _coverSlideDistance = 2f;
         [SerializeField] private float _maximumPursueDistance = 20f;
-        [SerializeField] private float _minimumDistanceToPlayerForSliding = 2f;
+        //[SerializeField] private float _minimumDistanceToPlayerForSliding = 2f;
         [SerializeField, Range(0,1)] private float _randomShotChance = 0.5f;
         [SerializeField, Range(0,1)] private float _PlayerInCoverDetectionDistance = 0.5f;
         private RaycastHit2D[] _results = new RaycastHit2D[1];

@@ -6,6 +6,18 @@ using Random = UnityEngine.Random;
 
 namespace Combat.Weapon
 {
+    public struct Ammo
+    {
+        public int currentAmmo;
+        public int magazineCapacity;
+
+        public Ammo(int ammo, int magazine)
+        {
+            currentAmmo = ammo;
+            magazineCapacity = magazine;
+        }
+    }
+    
     public class WeaponBase : MonoBehaviour
     {
         [Header("Base Properties")]
@@ -32,12 +44,27 @@ namespace Combat.Weapon
         private Coroutine _reloadTimer;
         private CharacterBase _parentCharacter;
         [HideInInspector] public Allegiance allegiance;
-
+      
+        
+        public Ammo GetAmmo()
+        {
+            return new Ammo(_currentMagazineCapacity, _magazineCapacity);
+        }
+        
         public void Setup(Transform newParent)
         {
             Debug.Log(gameObject.name);
             Debug.Log(gameObject.transform.parent.name);
             _parentCharacter = gameObject.transform.parent.parent.GetComponent<CharacterBase>();
+            if (_parentCharacter == null)
+            {
+                _parentCharacter = gameObject.transform.parent.parent.GetComponentInChildren<CharacterBase>();
+            }
+
+            if (_parentCharacter == null)
+            {
+                Debug.LogError("_playerCharacter missing!");
+            }
             var tf = transform;
             tf.parent = newParent;
             var resetXPositionHack = new Vector2(0f, tf.localPosition.y);

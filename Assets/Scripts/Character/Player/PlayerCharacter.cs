@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 using Utils;
 using Vector3 = System.Numerics.Vector3;
 
@@ -10,8 +12,9 @@ namespace Character.Player
         [Space]
         [Header("Player controls")]
         [SerializeField] private InputActionAsset actions;
-        [SerializeField] private float inAirControlForce = 100f;
-        [SerializeField] private float gridSquaresPerUnit = 10f;
+        [SerializeField] private UIDocument playerGUIDocument;
+        private Label _healthLabel;
+        private Label _ammoLabel;
         private InputAction _moveAction;
         private bool _waitForMoveActionDepress;
         private float _xInput;
@@ -41,13 +44,11 @@ namespace Character.Player
         
         private void OnShootingHold()
         {
-            Debug.Log("Shoot Hold!");
             _weaponInstance.Fire(true);
         }
         
         private void OnShootCancel(InputAction.CallbackContext context)
         {
-            Debug.Log("Shoot Cancel!");
             _shooting = false;
         }
         
@@ -55,7 +56,6 @@ namespace Character.Player
         {
             if (!_shooting) return;
             
-            Debug.Log("Shoot!");
             _weaponInstance.Fire();
         }
         
@@ -72,6 +72,11 @@ namespace Character.Player
             {
                 SlideToJump();
             }
+        }
+
+        private void OnRestart(InputAction.CallbackContext context)
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     
         protected override void Awake()
@@ -95,8 +100,17 @@ namespace Character.Player
             actions.FindActionMap("gameplay").FindAction("shoot1").started += OnShootHold;
             actions.FindActionMap("gameplay").FindAction("shoot1").canceled += OnShootCancel;
             actions.FindActionMap("gameplay").FindAction("slide").performed += OnSlide;
+            actions.FindActionMap("gameplay").FindAction("restart").performed += OnRestart;
+            
+            _healthLabel = playerGUIDocument.rootVisualElement.Q<Label>("healthValue");
+            _ammoLabel = playerGUIDocument.rootVisualElement.Q<Label>("ammoValue");
+        }
 
-
+        private void UpdateUI()
+        {
+            _healthLabel.text = _currentHealth + "/"+_startingHealth;
+            var ammoState = _weaponInstance.GetAmmo();
+            _ammoLabel.text = ammoState.currentAmmo +"/" + ammoState.magazineCapacity;
         }
     
         protected override void Update()
@@ -104,6 +118,8 @@ namespace Character.Player
             base.Update();
         
             GetXAxisInput();
+
+            UpdateUI();
         }
     
     

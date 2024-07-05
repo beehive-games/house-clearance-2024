@@ -81,7 +81,7 @@ public class CharacterBase : MonoBehaviour
 	protected bool _canTeleport;
 	protected Vector2 _teleportLocation;
 
-	private float _currentHealth;
+	protected float _currentHealth;
 	private protected float _lastDamageCounter;
 	private protected Vector2 _previousVelocity;
 	RaycastHit2D[] _results;
@@ -245,6 +245,10 @@ public class CharacterBase : MonoBehaviour
 		_movementState = MovementState.Cover;
 		SetRigidbody2DVelocityX(0f);
 		_spriteRenderer.color = _transitionalColorTint;
+		foreach (var hitBox in _hitBoxes)
+		{
+			hitBox.gameObject.SetActive(false);
+		}
 	}
 	
 	protected virtual void HitTeleporter(Collider2D other)
@@ -379,7 +383,6 @@ public class CharacterBase : MonoBehaviour
 			if (_movementState == MovementState.Cover)
 			{
 				hitbox.gameObject.SetActive(false);
-				
 			}
 		}
 		_spriteRenderer.color = _transitionalColorTint;
