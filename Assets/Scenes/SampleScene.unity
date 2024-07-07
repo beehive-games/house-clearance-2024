@@ -7461,6 +7461,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
+      propertyPath: _randomShotChance
+      value: 0.28
+      objectReference: {fileID: 0}
+    - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: _weaponSpritePosition
       value: 
       objectReference: {fileID: 419630450}
