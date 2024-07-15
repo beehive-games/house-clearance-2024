@@ -424,11 +424,6 @@ public class CharacterBase : MonoBehaviour
 		return true;
 	}
 
-	private void OnCollisionStay2D(Collision2D other)
-	{
-		throw new NotImplementedException();
-	}
-
 	// Todo: move to hitbox code? ALl damage is from hitboxes only?
 	private void OnCollisionEnter2D(Collision2D other)
 	{
