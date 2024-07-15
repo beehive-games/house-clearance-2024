@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Ground
   - Cover
+  - MeleeZone
   layers:
   - Default
   - TransparentFX
@@ -22,7 +23,7 @@ TagManager:
   - Hitbox
   - PlayerTrigger
   - EnemyTrigger
-  - 
+  - MeleeZone
   - 
   - 
   - 

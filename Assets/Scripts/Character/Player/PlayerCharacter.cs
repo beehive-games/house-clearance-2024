@@ -65,6 +65,15 @@ namespace Character.Player
             _queueJump = true;
         }
         
+        private void OnMelee(InputAction.CallbackContext context)
+        {
+            if (_movementState is MovementState.Walk or MovementState.Slide or MovementState.Cover &&
+                _aliveState is AliveState.Alive or AliveState.Wounded)
+            {
+                TryMelee();
+            }
+        }
+        
         protected override void Jump()
         {
             base.Jump();
@@ -100,6 +109,7 @@ namespace Character.Player
             actions.FindActionMap("gameplay").FindAction("shoot1").started += OnShootHold;
             actions.FindActionMap("gameplay").FindAction("shoot1").canceled += OnShootCancel;
             actions.FindActionMap("gameplay").FindAction("slide").performed += OnSlide;
+            actions.FindActionMap("gameplay").FindAction("melee").performed += OnMelee;
             actions.FindActionMap("gameplay").FindAction("restart").performed += OnRestart;
             
             _healthLabel = playerGUIDocument.rootVisualElement.Q<Label>("healthValue");
@@ -149,8 +159,7 @@ namespace Character.Player
         {
             if(_movementState != MovementState.Slide) _queueSlide = true;
         }
-
-        
+      
 
         private void DuringSlide(bool isGrounded)
         {

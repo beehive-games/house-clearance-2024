@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Character;
+using Character.NPC;
 using Character.Player;
 using Combat.Weapon;
 using UnityEngine;
@@ -119,6 +120,7 @@ public class CharacterBase : MonoBehaviour
 	private protected AliveState _aliveState;
 	private protected RuntimeAnimatorController _animationController;
 	private protected Animator _animator;
+	private protected List<NPCCharacter> _meleeTargets;
 
 	protected internal virtual bool IsInCover()
 	{
@@ -143,6 +145,13 @@ public class CharacterBase : MonoBehaviour
 		var velocity = _rigidbody2D.velocity;
 		velocity.x = yValue;
 		_rigidbody2D.velocity = velocity;
+	}
+
+	protected void MeleeAttack()
+	{
+		// if we're inside an NPC's melee attack trigger volume
+		// do damage
+		// TODO: play animation
 	}
 	
 	private void StartUpChecks()
@@ -235,6 +244,8 @@ public class CharacterBase : MonoBehaviour
 			_weaponInstance.Setup(_weaponSpritePosition);
 		}
 
+		_meleeTargets = new List<NPCCharacter>();
+
 	}
 	
 	protected void SetRigidbody2DVelocityX(float x)
@@ -264,7 +275,59 @@ public class CharacterBase : MonoBehaviour
 			_teleportLocation = teleporter.teleportLocation.position;
 		}
 	}
+
+	protected void TryMelee()
+	{
+		NPCCharacter nearestValidTargetComponent = null;
+		GameObject nearestValidTargetGameObject = null;
+		
+		foreach (var meleeTarget in _meleeTargets)
+		{
+			if (meleeTarget == null) continue;
+
+			if (meleeTarget._movementState != MovementState.Immobile ||
+			    meleeTarget._aliveState is not (AliveState.Alive or AliveState.Wounded)) continue;
+			
+			if (nearestValidTargetGameObject != null)
+			{
+				var distanceA = Vector2.Distance(nearestValidTargetGameObject.transform.position,
+					_rigidbody2D.transform.position);
+				var distanceB = Vector2.Distance(meleeTarget.gameObject.transform.position,
+					_rigidbody2D.transform.position);
+				
+				if (!(distanceB < distanceA)) continue;
+				
+				nearestValidTargetGameObject = meleeTarget.gameObject;
+				nearestValidTargetComponent = meleeTarget;
+			}
+			else
+			{
+				nearestValidTargetGameObject = meleeTarget.gameObject;
+				nearestValidTargetComponent = meleeTarget;
+			}
+		}
+
+		if (nearestValidTargetComponent != null)
+		{
+			nearestValidTargetComponent.Damage(10000f, DamageType.Melee);
+		}
+	}
 	
+	protected virtual void HitMeleeZone(Collider2D other)
+	{
+		var meleeZone = other.GetComponent<MeleeZone>();
+		if (meleeZone == null || meleeZone.npcCharacter == null)
+		{
+			return;
+		}
+
+		NPCCharacter npcCharacter = meleeZone.npcCharacter;
+
+		if (!_meleeTargets.Contains(npcCharacter))
+		{
+			_meleeTargets.Add(npcCharacter);
+		}
+	}
 		
 	
 	protected bool CheckHitCharacter(Collision2D other, ref CharacterBase character)
@@ -336,6 +399,11 @@ public class CharacterBase : MonoBehaviour
 		return other.gameObject.layer == LayerMask.NameToLayer("Teleport");
 	}
 	
+	protected bool CheckHitMeleeZone(Collider2D other)
+	{
+		return other.gameObject.layer == LayerMask.NameToLayer("MeleeZone");
+	}
+	
 	protected void StartSlide()
 	{
 		_movementState = MovementState.Slide;
@@ -354,6 +422,11 @@ public class CharacterBase : MonoBehaviour
 			Kill(DamageType.Fall);
 		}
 		return true;
+	}
+
+	private void OnCollisionStay2D(Collision2D other)
+	{
+		throw new NotImplementedException();
 	}
 
 	// Todo: move to hitbox code? ALl damage is from hitboxes only?
@@ -377,6 +450,17 @@ public class CharacterBase : MonoBehaviour
 	protected void LeaveTeleporter()
 	{
 		_canTeleport = false;
+	}
+	
+	protected void LeaveMeleeZone(Collider2D other)
+	{
+		var meleeZone = other.GetComponent<MeleeZone>();
+		NPCCharacter npcCharacter = meleeZone.npcCharacter;
+
+		if (_meleeTargets.Contains(npcCharacter))
+		{
+			_meleeTargets.Remove(npcCharacter);
+		}
 	}
 
 	public void ShootFromCover()
@@ -434,18 +518,15 @@ public class CharacterBase : MonoBehaviour
 
 	private void OnTriggerExit2D(Collider2D other)
 	{
-		if (CheckLeaveCover(other))
-		{
-			LeaveCover();
-			Debug.Log(gameObject.name + " left cover");
-			return;
-		}
+		if (CheckLeaveCover(other)) LeaveCover();
 		if (CheckHitTeleporter(other)) LeaveTeleporter();
+		if (CheckHitMeleeZone(other)) LeaveMeleeZone(other);
 	}
 	
 	private void OnTriggerStay2D(Collider2D other)
 	{
 		if (CheckHitTeleporter(other)) HitTeleporter(other);
+		if (CheckHitMeleeZone(other)) HitMeleeZone(other);
 	}
 	
 	private void OnTriggerEnter2D(Collider2D other)

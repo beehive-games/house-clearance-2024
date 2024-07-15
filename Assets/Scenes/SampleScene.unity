@@ -1523,11 +1523,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!4 &419630450 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7913104468714580049, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
-  m_PrefabInstance: {fileID: 4034715912455174540}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &437710238
 GameObject:
   m_ObjectHideFlags: 0
@@ -7464,14 +7459,6 @@ PrefabInstance:
       propertyPath: _randomShotChance
       value: 0.28
       objectReference: {fileID: 0}
-    - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
-      propertyPath: _weaponSpritePosition
-      value: 
-      objectReference: {fileID: 419630450}
-    - target: {fileID: 1025113634247933974, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
-      propertyPath: _PlayerInCoverDetectionDistance
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 1175325931432267764, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: m_Name
       value: NPC
@@ -7518,11 +7505,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7913104468714580049, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -0.496
       objectReference: {fileID: 0}
     - target: {fileID: 7913104468714580049, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.8
+      value: -1.357
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
