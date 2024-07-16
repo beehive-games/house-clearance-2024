@@ -46,17 +46,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _damageLow: 1
-  _damageHigh: 1
+  _damageHigh: 2
   _damageRepeatTime: 0
   _damageRepeats: 0
   _lifeTime: 1
   _subProjectile: {fileID: 0}
   _subProjectileSpawn: 0
-  damageType: 0
+  damageType: 2
+  directionSign: 0
   damage: 0
   allegiance: 0
   range: 100
   impactVFX: {fileID: 0}
+  trailVFX: {fileID: 5704713746455368232, guid: 0a12efb3b7991404db553ec96fe4b115, type: 3}
+  hitBoxlayerMask:
+    serializedVersion: 2
+    m_Bits: 4096
+  vfxlayerMask:
+    serializedVersion: 2
+    m_Bits: 192
 --- !u!212 &2255504888647508019
 SpriteRenderer:
   m_ObjectHideFlags: 0

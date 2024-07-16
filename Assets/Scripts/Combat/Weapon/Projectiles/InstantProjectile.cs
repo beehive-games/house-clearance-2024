@@ -1,4 +1,8 @@
+using Character;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.Serialization;
+using Utils;
 
 namespace Combat.Weapon.Projectiles
 {
@@ -6,33 +10,63 @@ namespace Combat.Weapon.Projectiles
     {
         [SerializeField] protected float range = 100f;
         [SerializeField] protected GameObject impactVFX;
+        [SerializeField] protected GameObject trailVFX;
+        [SerializeField] protected LayerMask hitBoxlayerMask;
+        [SerializeField] protected LayerMask vfxlayerMask;
 
-        
-        
-        protected override void Awake()
+        public override void StartMethod()
         {
-            base.Awake();
             InstaHit();
-
         }
 
         private void InstaHit()
         {
-            //TODO:
-            // Raycast forward direction by range, check against player tag and npc tag
-            // separately - based on allegiance. this is to avoid enemies blocking
-            // their own shots
-        
-            // if we hit a hitbox, call DoDamage()
-            // if we dont, still spawn the VFX
             
-            // TODO - make spawn position impact position
-            // TODO - make impactVFX destroy after timer - but make this internal
+            var hit = Physics2D.Raycast(transform.position, transform.right * directionSign, range, vfxlayerMask);
+            Vector2 hitpoint = transform.position + transform.right * range;
+            
+            if (hit.collider != null)
+            {
+                hitpoint = hit.point;
+            }
+
             if (impactVFX != null)
             {
-                Instantiate(impactVFX, transform.position, Quaternion.identity);
+                Instantiate(impactVFX, hitpoint, Quaternion.identity);
             }
-            Destroy(gameObject);
+            
+            
+            hit = Physics2D.Raycast(transform.position, transform.right, range, hitBoxlayerMask);
+            if (hit.collider != null)
+            {
+                hitpoint = hit.point;
+                var hitBox = hit.collider.gameObject.GetComponent<HitBox>();
+                if (hitBox != null)
+                {
+                    DoDamage(hitBox);
+                }
+                Debug.DrawLine(transform.position, hitpoint, Color.cyan, 3f);
+            }
+            else
+            {
+                Debug.DrawLine(transform.position, hitpoint, Color.red, 3f);
+            }
+            
+            if (trailVFX != null)
+            {
+                var instantiated = Instantiate(trailVFX, transform.position, Quaternion.identity);
+                TrailRenderer trailRenderer = instantiated.GetComponent<TrailRenderer>();
+                if (trailRenderer != null)
+                {
+                    trailRenderer.AddPosition(transform.position);
+                    trailRenderer.AddPosition(hitpoint);
+                }
+
+                var selfDestruct = instantiated.AddComponent<SelfDestruct>();
+                selfDestruct.lifetime = _lifeTime;
+                selfDestruct.StartSelfDestruct();
+
+            }
         }
     }
 }

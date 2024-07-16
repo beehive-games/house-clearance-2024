@@ -5888,9 +5888,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4125241692120992936, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: weaponPrefab
+      value: 
+      objectReference: {fileID: 6060197472441224524, guid: 3650ac595c6f5e44896b202309de1033, type: 3}
     - target: {fileID: 4597280789073467896, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 4952168963276234103, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: orthographic size
+      value: 32
       objectReference: {fileID: 0}
     - target: {fileID: 8826418121709608834, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_LocalPosition.x

@@ -74,7 +74,7 @@ GameObject:
   - component: {fileID: 6902534507891225096}
   - component: {fileID: 3818332884503267802}
   m_Layer: 0
-  m_Name: DebugWeapon
+  m_Name: DebugWeapon_Instant
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -109,7 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d20b1cf7db870f645b37107b115e5d25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _projectile: {fileID: 7766903124504915622, guid: 25657d9823f68ba4ea448a55fc8b1086, type: 3}
+  _projectile: {fileID: 7766903124504915622, guid: fc12ac0b5e524724fa4bab381ed656dd, type: 3}
   _shotsPerSecond: 3
   _magazineCapacity: 20
   _reloadTime: 1

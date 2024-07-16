@@ -32,6 +32,7 @@ public class ProjectileBase : MonoBehaviour
     [SerializeField] protected SubProjectileSpawn _subProjectileSpawn;
     
     public DamageType damageType;
+    [HideInInspector] public float directionSign;
     [HideInInspector] public float damage;
     [ReadOnly] public Allegiance allegiance;
 
@@ -72,6 +73,11 @@ public class ProjectileBase : MonoBehaviour
         {
             SpawnSubProjectile();
         }
+    }
+
+    public virtual void StartMethod()
+    {
+        
     }
     
     private IEnumerator DamageTime(HitBox hitBox)

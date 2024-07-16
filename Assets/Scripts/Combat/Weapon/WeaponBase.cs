@@ -117,7 +117,21 @@ namespace Combat.Weapon
         private void SpawnThing(GameObject gameObj, Vector2 position, Quaternion rotation, Vector2 spawnVelocity)
         {
             if (gameObj == null) return;
-            var projectile = Instantiate(gameObj, position, rotation);
+
+            var adjustedRotation = Quaternion.Euler(rotation.eulerAngles + Vector3.forward * 180f);
+            var adjustedTransform = new GameObject
+            {
+                transform =
+                {
+                    position = position,
+                    rotation = transform.localScale.x > 0f? rotation : adjustedRotation
+                }
+            };
+
+            Transform tf = adjustedTransform.transform;
+            
+            var projectile = Instantiate(gameObj, tf.position, tf.rotation);
+            
             var projectileRb = projectile.GetComponent<Rigidbody2D>();
             if (projectileRb != null)
             {
@@ -133,7 +147,10 @@ namespace Combat.Weapon
                 {
                     colliderBase.SetStartSpeed(colliderBase.speed * transform.localScale.x);
                 }
+
+                projectileBase.StartMethod();
             }
+            Destroy(adjustedTransform);
         }
     
         private void SpawnProjectile()
