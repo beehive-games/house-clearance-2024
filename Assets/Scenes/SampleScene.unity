@@ -5898,7 +5898,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4952168963276234103, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: orthographic size
-      value: 27.625
+      value: 44.625
       objectReference: {fileID: 0}
     - target: {fileID: 8826418121709608834, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7668,6 +7668,10 @@ PrefabInstance:
     - target: {fileID: 6816457629927903901, guid: edc9dc5a06dbe5f4b82e8f6dcac5296f, type: 3}
       propertyPath: allegiance
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6816457629927903901, guid: edc9dc5a06dbe5f4b82e8f6dcac5296f, type: 3}
+      propertyPath: _triggerFalloff
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

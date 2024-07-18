@@ -20,6 +20,13 @@ public enum SubProjectileSpawn
     OnDestroy
 }
 
+enum TriggerFalloff
+{
+    Binary,
+    LinearInterpolate,
+    InverseSquared
+};
+
 
 public class ProjectileBase : MonoBehaviour
 {
@@ -34,6 +41,7 @@ public class ProjectileBase : MonoBehaviour
     public DamageType damageType;
     [HideInInspector] public float directionSign;
     [HideInInspector] public float damage;
+    private protected float _falloffAdjustedDamage;
     [ReadOnly] public Allegiance allegiance;
 
     protected Vector2 startPosition;
@@ -43,6 +51,7 @@ public class ProjectileBase : MonoBehaviour
     protected virtual void Awake()
     {
         damage = Random.Range(_damageLow, _damageHigh);
+        _falloffAdjustedDamage = damage;
         startPosition = transform.position;
     }
 
@@ -58,6 +67,21 @@ public class ProjectileBase : MonoBehaviour
         Instantiate(_subProjectile, tf.position, tf.rotation);
     }
     
+    private protected float FalloffAdjusted(float incomingDamage, Vector2 hitBoxPosition, TriggerFalloff triggerFalloff)
+    {
+        float distance = Vector2.Distance(hitBoxPosition, transform.position);
+        float inverseDistance = Mathf.Clamp01(1f / distance);
+        float inverseSquareDistance = Mathf.Clamp01(1f / (distance * distance));
+        switch (triggerFalloff)
+        {
+            case TriggerFalloff.Binary: return incomingDamage;
+            case TriggerFalloff.InverseSquared: return Mathf.Lerp(0f,incomingDamage, inverseSquareDistance);
+            case TriggerFalloff.LinearInterpolate: return Mathf.Lerp(0f,incomingDamage, inverseDistance);
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+    
     protected virtual void FixedUpdate() { }
 
     protected virtual void DoDamage(HitBox hitBox)
@@ -68,15 +92,17 @@ public class ProjectileBase : MonoBehaviour
 
     protected void StopDamage()
     {
+        Debug.Log("Stop damaging!");
         if (damageCoroutine != null)
         {
             StopCoroutine(damageCoroutine);
+            damageCoroutine = null;
         }
     }
 
     private void ComputeHit(HitBox hitBox)
     {
-        hitBox.Hit(damage, damageType, allegiance);
+        hitBox.Hit(_falloffAdjustedDamage, damageType, allegiance);
         if (_subProjectileSpawn is SubProjectileSpawn.DamageTick)
         {
             SpawnSubProjectile();
@@ -93,7 +119,7 @@ public class ProjectileBase : MonoBehaviour
         // Hit() returns true if the hitbox can be damaged by projectile
         // and will do damage if it does. We exit early as if nothing happened
         // if Hit() returns false
-        var hitSuccessful = hitBox.Hit(damage, damageType, allegiance);
+        var hitSuccessful = hitBox.Hit(_falloffAdjustedDamage, damageType, allegiance);
         if (!hitSuccessful)
         {
             damageCoroutine = null;
