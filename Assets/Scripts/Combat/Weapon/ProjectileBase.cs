@@ -66,6 +66,14 @@ public class ProjectileBase : MonoBehaviour
         damageCoroutine ??= StartCoroutine(DamageTime(hitBox));
     }
 
+    protected void StopDamage()
+    {
+        if (damageCoroutine != null)
+        {
+            StopCoroutine(damageCoroutine);
+        }
+    }
+
     private void ComputeHit(HitBox hitBox)
     {
         hitBox.Hit(damage, damageType, allegiance);
@@ -97,12 +105,20 @@ public class ProjectileBase : MonoBehaviour
             SpawnSubProjectile();
         }
 
-        if (!(_damageRepeatTime > 0f) || _damageRepeats <= 0)
+
+        bool dontRepeat = _damageRepeats <= 0f ? _damageRepeatTime <= 0f : _damageRepeats <= 0f;
+        if (dontRepeat)
         {
             ComputeHit(hitBox);
             Destroy(gameObject);
             damageCoroutine = null;
             yield break;
+        }
+
+        // If damage repeats is 0, we assume we mean to use it indefinitely
+        if (_damageRepeats <= 0f)
+        {
+            _damageRepeats = 1000000;
         }
         
         while (_damageRepeats > 0)
@@ -110,19 +126,21 @@ public class ProjectileBase : MonoBehaviour
             _damageRepeats--;
             yield return new WaitForSeconds(_damageRepeatTime);
             ComputeHit(hitBox);
-
         }
         
         // Damage application complete, kill the projectile
+        damageCoroutine = null;
+        Destroy(gameObject);
+    }
+
+    private void OnDestroy()
+    {
         if (_subProjectileSpawn is SubProjectileSpawn.OnDestroy)
         {
             SpawnSubProjectile();
         }
-
-        damageCoroutine = null;
-        Destroy(gameObject);
     }
-    
+
     private IEnumerator Lifetime()
     {
         if (_lifeTime > 0f)
