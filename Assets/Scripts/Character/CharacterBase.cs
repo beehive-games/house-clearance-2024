@@ -91,6 +91,7 @@ public class CharacterBase : MonoBehaviour
 	private Coroutine _shootFromCoverCO;
 	private Coroutine _downedTimerCO;
 	private GameObject _coverGameObject;
+	protected TowerRotationService _towerRotationService;
 	
 	internal enum MovementState
 	{
@@ -100,7 +101,8 @@ public class CharacterBase : MonoBehaviour
 		Jump,
 		Dead,
 		Immobile,
-		Teleporting
+		Teleporting,
+		Rotating
 	}
 
 	internal enum AliveState
@@ -245,6 +247,8 @@ public class CharacterBase : MonoBehaviour
 		}
 
 		_meleeTargets = new List<NPCCharacter>();
+		
+		_towerRotationService ??= ServiceLocator.GetService<TowerRotationService>();
 
 	}
 	
@@ -632,7 +636,7 @@ public class CharacterBase : MonoBehaviour
 		_movementState = MovementState.Dead;
 		if(_weaponInstance != null)
 			_weaponInstance.DisableShooting();
-		Debug.Log(name + " died, due to "+damageType);
+		//Debug.Log(name + " died, due to "+damageType);
 	}
 	
 	// This should only really be called from HitBox components or AOE objects

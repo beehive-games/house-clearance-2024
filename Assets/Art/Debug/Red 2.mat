@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Red 1
+  m_Name: Red 2
   m_Shader: {fileID: -6465566751694194690, guid: 550a4854ce5b7214f9b93322097520f2, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

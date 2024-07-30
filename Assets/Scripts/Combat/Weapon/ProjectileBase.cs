@@ -44,7 +44,7 @@ public class ProjectileBase : MonoBehaviour
     private protected float _falloffAdjustedDamage;
     [ReadOnly] public Allegiance allegiance;
 
-    protected Vector2 startPosition;
+    protected Vector3 startPosition;
     protected Coroutine lifetimeTimer;
     protected Coroutine damageCoroutine;
     

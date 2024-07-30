@@ -26,14 +26,17 @@ namespace Combat.Weapon.Projectiles
             DoDamage(hitBox);
             
         }
-
-        private void StopContinueDamageCO()
+        
+        private void OnTriggerStay(Collider other)
         {
-            if (_exitDamage != null)
-            {
-                StopCoroutine(_exitDamage);
-                _exitDamage = null;
-            }
+            var hitBox = other.gameObject.GetComponent<HitBox>();
+            if (hitBox == null) return;
+
+            StopContinueDamageCO();
+            
+            _falloffAdjustedDamage = FalloffAdjusted(damage, hitBox.transform.position, _triggerFalloff);
+            DoDamage(hitBox);
+            
         }
         
         private void OnTriggerExit2D(Collider2D other)
@@ -46,6 +49,28 @@ namespace Combat.Weapon.Projectiles
                 _exitDamage = StartCoroutine(ContinueDamage(hitBox));
             }
         }
+        
+        private void OnTriggerExit(Collider other)
+        {
+            var hitBox = other.gameObject.GetComponent<HitBox>();
+            if (hitBox == null) return;
+            if (continueDamageTimeAfterExit > 0f)
+            {
+                StopContinueDamageCO();
+                _exitDamage = StartCoroutine(ContinueDamage(hitBox));
+            }
+        }
+
+        private void StopContinueDamageCO()
+        {
+            if (_exitDamage != null)
+            {
+                StopCoroutine(_exitDamage);
+                _exitDamage = null;
+            }
+        }
+        
+        
         
         private IEnumerator ContinueDamage(HitBox hitBox)
         {

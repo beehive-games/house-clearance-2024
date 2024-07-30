@@ -15,7 +15,7 @@ namespace Character
         {
             _parentCharacter = GetComponentInParent<CharacterBase>();
             if (_parentCharacter != null) return;
-            Debug.LogError("Hit box - can't find parent CharacterBase component");
+            //Debug.LogError("Hit box - can't find parent CharacterBase component");
             enabled = false;
         }
 

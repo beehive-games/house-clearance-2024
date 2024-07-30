@@ -110,7 +110,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _projectile: {fileID: 7766903124504915622, guid: 25657d9823f68ba4ea448a55fc8b1086, type: 3}
-  _shotsPerSecond: 3
+  _shotsPerSecond: 300
   _magazineCapacity: 20
   _reloadTime: 1
   _spreadAngle: 5

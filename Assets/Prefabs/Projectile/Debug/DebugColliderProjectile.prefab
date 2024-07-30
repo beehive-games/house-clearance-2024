@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 4448251961201765156}
   - component: {fileID: 2255504888647508019}
   - component: {fileID: 6311235393685165919}
-  - component: {fileID: 8060745181259431770}
-  - component: {fileID: 8463289648379031880}
+  - component: {fileID: 1311734118286011699}
+  - component: {fileID: 2023679506709107163}
   m_Layer: 11
   m_Name: DebugColliderProjectile
   m_TagString: Untagged
@@ -107,47 +107,46 @@ MonoBehaviour:
   _subProjectile: {fileID: 0}
   _subProjectileSpawn: 0
   damageType: 2
+  directionSign: 0
   damage: 0
   allegiance: 0
   speed: 100
   range: 100
   minimumSpeed: 1
---- !u!50 &8060745181259431770
-Rigidbody2D:
-  serializedVersion: 4
+--- !u!54 &1311734118286011699
+Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7766903124504915622}
-  m_BodyType: 0
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 0.001
-  m_LinearDrag: 0
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 0
-  m_Material: {fileID: 0}
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
   m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 4
---- !u!58 &8463289648379031880
-CircleCollider2D:
+  m_Constraints: 0
+  m_CollisionDetection: 1
+--- !u!135 &2023679506709107163
+SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7766903124504915622}
-  m_Enabled: 1
-  m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -156,21 +155,9 @@ CircleCollider2D:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
   m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
-  serializedVersion: 2
-  m_Radius: 0.08
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 16.3
+  m_Center: {x: 0, y: 0, z: 0}

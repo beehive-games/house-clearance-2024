@@ -1,3 +1,4 @@
+using Environment;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -20,10 +21,16 @@ namespace Character.Player
         private float _xInput;
         private bool _queueJump;
         private bool _queueSlide;
+        private bool _queueRotate;
         private float _slideToJumpMaxVX;
         private bool _shooting = false;
+        private TowerCorner _activeCorner;
+
+        public void InTowerCorner(TowerCorner currentCorner)
+        {
+            _activeCorner = currentCorner;
+        }
         
-    
         // -------------------------
         // Unity-based events
         //--------------------------
@@ -65,6 +72,12 @@ namespace Character.Player
             _queueJump = true;
         }
         
+        private void OnTowerRotation(InputAction.CallbackContext context)
+        {
+            Debug.Log("Rotate!");
+            _queueRotate = true;
+        }
+        
         private void OnMelee(InputAction.CallbackContext context)
         {
             if (_movementState is MovementState.Walk or MovementState.Slide or MovementState.Cover &&
@@ -91,6 +104,7 @@ namespace Character.Player
         protected override void Awake()
         {
             base.Awake();
+            
         
             if (!actions)
             {
@@ -111,6 +125,7 @@ namespace Character.Player
             actions.FindActionMap("gameplay").FindAction("slide").performed += OnSlide;
             actions.FindActionMap("gameplay").FindAction("melee").performed += OnMelee;
             actions.FindActionMap("gameplay").FindAction("restart").performed += OnRestart;
+            actions.FindActionMap("gameplay").FindAction("towerTurn").performed += OnTowerRotation;
             
             _healthLabel = playerGUIDocument.rootVisualElement.Q<Label>("healthValue");
             _ammoLabel = playerGUIDocument.rootVisualElement.Q<Label>("ammoValue");
@@ -198,6 +213,31 @@ namespace Character.Player
 
         private void XDirection(bool isGrounded)
         {
+            // Rotation code, could do this better, but it should work for now
+            if (_queueRotate && isGrounded && !_towerRotationService.ROTATING)
+            {
+                if (_activeCorner != null)
+                {
+                    Debug.LogError("Need to rotate");
+                    _queueRotate = false;
+                    _xInput = 0;
+                    _queueSlide = false;
+                    _queueJump = false;
+                    if (_movementState != MovementState.Dead && _movementState != MovementState.Immobile)
+                    {
+                        _movementState = MovementState.Rotating;
+                    }
+                    
+                    _towerRotationService.Rotate(_activeCorner.towerCorner, _activeCorner.transform.position, _activeCorner.turnTime );
+                }                
+            }
+
+            if (_movementState == MovementState.Rotating && !_towerRotationService.ROTATING &&
+                _aliveState is AliveState.Alive or AliveState.Wounded)
+            {
+                _movementState = isGrounded ? MovementState.Jump : MovementState.Walk;
+            }
+            
             if (isGrounded)
             {
                 _slideToJumpMaxVX = -1f;
@@ -215,7 +255,10 @@ namespace Character.Player
                 }
                 else
                 {
-                    if (_movementState is not MovementState.Slide or MovementState.Dead or MovementState.Immobile)
+                    if (_movementState != MovementState.Slide && 
+                        _movementState != MovementState.Dead && 
+                        _movementState != MovementState.Immobile &&
+                        _movementState != MovementState.Rotating)
                     {
                         MoveMechanics(isGrounded, _xInput, _slideToJumpMaxVX);
                     }
