@@ -40,6 +40,7 @@ namespace Character.NPC
         private bool _queueSlide;
         private bool _pursusing;
         private bool _damageTaken;
+        private MovementState _preRotationMovementState;
 
         enum DebugNPCState
         {
@@ -478,11 +479,36 @@ namespace Character.NPC
             // location tricky. Though this could allow for some emergent gameplay if you can pull NPCs through portals
             // and they get stuck there
         }
-    
+
+
+        public void BeginRotation()
+        {
+            _preRotationMovementState = _movementState;
+            _movementState = MovementState.Rotating;
+            _rigidbody2D.isKinematic = true;
+        }
+
+        public void Rotation()
+        {
+            
+        }
+        
+        public void EndRotation()
+        {
+            _movementState = _preRotationMovementState;
+            _rigidbody2D.isKinematic = false;
+        }
+        
         protected override void Move()
         {
+            
             base.Move();
         
+            if (_movementState == MovementState.Rotating)
+            {
+                return;
+            }
+            
             bool isGrounded = IsGrounded();
             XDirection(isGrounded);
         

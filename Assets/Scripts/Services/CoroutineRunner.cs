@@ -8,6 +8,7 @@ public class CoroutineRunner : MonoBehaviour
     private void OnEnable()
     {
         var service = ServiceLocator.GetService<TowerRotationService>();
-        service._turningCoroutine = StartCoroutine(service.TurnWait(service.ROTATION_AMOUNT, service.ROTATION_ORIGIN));
+        service._internalCoroutine = StartCoroutine(service.TurnWait(service.ROTATION_AMOUNT, service.ROTATION_ORIGIN));
     }
 }
+

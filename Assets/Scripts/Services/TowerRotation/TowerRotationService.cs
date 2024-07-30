@@ -18,7 +18,7 @@ public enum TowerCorners
     NorthWest
 }
 
-public class TowerRotationService : IService
+public class TowerRotationService : Service, IService
 {
     public delegate void OnBeforeTurnDel();
     public event OnBeforeTurnDel OnBeforeTurn;
@@ -35,8 +35,7 @@ public class TowerRotationService : IService
     public float ROTATION_PROGRESSION { get; private set; }
     public TowerDirection TOWER_DIRECTION { get; private set; }
     public bool ROTATING { get; private set; }
-
-    public Coroutine _turningCoroutine;
+    
     private CoroutineRunner _coroutineRunner;
     
     
@@ -92,7 +91,7 @@ public class TowerRotationService : IService
         }
         
         UpdateFace(direction);
-        _turningCoroutine = null;
+        _internalCoroutine = null;
         Object.Destroy(_coroutineRunner);
         _coroutineRunner = null;
         ROTATION_PROGRESSION = 0f;

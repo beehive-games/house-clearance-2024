@@ -11,7 +11,7 @@ public class EnvironmentRotationController : MonoBehaviour
         
         if(_towerEnvironmentSetup != null) Destroy(_towerEnvironmentSetup);
         _towerEnvironmentSetup = new GameObject();
-        _towerEnvironmentSetup.AddComponent<TowerEnvironmentServiceSetup>();
+        _towerEnvironmentSetup.AddComponent<TowerServicesSetup>();
         
         _service = ServiceLocator.GetService<TowerRotationEnvironmentService>();
         _service.Register(transform);
