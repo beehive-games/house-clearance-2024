@@ -114,7 +114,7 @@ namespace Combat.Weapon
             _reloadTimer = null;
         }
 
-        private void SpawnThing(GameObject gameObj, Vector2 position, Quaternion rotation, Vector2 spawnVelocity)
+        private void SpawnThing(GameObject gameObj, Vector2 position, Quaternion rotation, Vector3 spawnVelocity)
         {
             if (gameObj == null) return;
 
@@ -132,10 +132,13 @@ namespace Combat.Weapon
             
             var projectile = Instantiate(gameObj, tf.position, tf.rotation);
             
-            var projectileRb = projectile.GetComponent<Rigidbody2D>();
+            var projectileRb = projectile.GetComponent<Rigidbody>();
+            
+            //float direction = _parentCharacter._spriteRenderer.flipX ? -1 : 1;
+            
             if (projectileRb != null)
             {
-                projectileRb.velocity += spawnVelocity * transform.localScale.x;
+                projectileRb.velocity += spawnVelocity * transform.localScale.x ;
             }
             
             var projectileBase = projectile.GetComponent<ProjectileBase>();
@@ -157,17 +160,17 @@ namespace Combat.Weapon
         {
             var angle = Random.Range(0f, _spreadAngle) - 0.5f * _spreadAngle;
             var rotation = Quaternion.Euler(0, 0, angle); // Rotate around the Y-axis
-            SpawnThing(_projectile, _muzzlePosition.position, rotation, Vector2.zero);
+            SpawnThing(_projectile, _muzzlePosition.position, rotation, Vector3.zero);
         }
 
         private void SpawnMuzzleVFX()
         {
-            SpawnThing(_muzzleVFX, _muzzlePosition.position, Quaternion.identity, Vector2.zero);
+            SpawnThing(_muzzleVFX, _muzzlePosition.position, Quaternion.identity, Vector3.zero);
         }
     
         private void SpawnEjectionVFX()
         {
-            SpawnThing(_ejectionVFX, _ejectionPosition.position,  Quaternion.identity, Vector2.zero);
+            SpawnThing(_ejectionVFX, _ejectionPosition.position,  Quaternion.identity, Vector3.zero);
         }
     
         private void DoShot()

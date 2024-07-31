@@ -21,23 +21,22 @@ namespace Combat.Weapon.Projectiles
 
         private void InstaHit()
         {
+            var hasHit = Physics.Raycast(transform.position, transform.right * directionSign, out var hit, range, vfxlayerMask);
+            Vector3 hitpoint = transform.position + transform.right * range;
             
-            var hit = Physics2D.Raycast(transform.position, transform.right * directionSign, range, vfxlayerMask);
-            Vector2 hitpoint = transform.position + transform.right * range;
-            
-            if (hit.collider != null)
+            if (hasHit)
             {
                 hitpoint = hit.point;
             }
 
-            if (impactVFX != null)
+            if (hasHit && impactVFX != null)
             {
                 Instantiate(impactVFX, hitpoint, Quaternion.identity);
             }
             
             
-            hit = Physics2D.Raycast(transform.position, transform.right, range, hitBoxlayerMask);
-            if (hit.collider != null)
+            hasHit = Physics.Raycast(transform.position, transform.right, out hit, range, hitBoxlayerMask);
+            if (hasHit)
             {
                 hitpoint = hit.point;
                 var hitBox = hit.collider.gameObject.GetComponent<HitBox>();

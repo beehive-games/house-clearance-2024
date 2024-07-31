@@ -33,6 +33,7 @@ public class TowerRotationService : Service, IService
     public float ROTATION_AMOUNT { get; private set; }
     public float ROTATION_TIME { get; private set; }
     public float ROTATION_PROGRESSION { get; private set; }
+    public float ROTATION_THIS_FRAME { get; private set; }
     public TowerDirection TOWER_DIRECTION { get; private set; }
     public bool ROTATING { get; private set; }
     
@@ -74,6 +75,7 @@ public class TowerRotationService : Service, IService
     public IEnumerator TurnWait(float direction, Vector3 origin)
     {
         var waitTime = 0f;
+        var interpolatedTime = 0f;
         while (waitTime < ROTATION_TIME)
         {
             if (waitTime + Time.deltaTime > ROTATION_TIME)
@@ -85,7 +87,9 @@ public class TowerRotationService : Service, IService
                 waitTime += Time.deltaTime;
             }
 
-            ROTATION_PROGRESSION = waitTime;
+            ROTATION_PROGRESSION = Mathf.InverseLerp(0, ROTATION_TIME, waitTime);
+
+            ROTATION_THIS_FRAME = ROTATION_AMOUNT * Time.deltaTime * (1f/ ROTATION_TIME);
             DoTurn();
             yield return 0;
         }

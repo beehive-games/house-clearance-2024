@@ -55,10 +55,10 @@ public class CharacterBase : MonoBehaviour
 
 	[Space] 
 	[Header("Art")]
-	[SerializeField] private protected Transform _spriteObject;
-	private protected Rigidbody2D _rigidbody2D;
-	private protected Collider2D _collider2D;
-	private protected SpriteRenderer _spriteRenderer;
+	public Transform _spriteObject;
+	private protected Rigidbody _rigidbody;
+	private protected Collider _collider;
+	public SpriteRenderer _spriteRenderer;
 	private protected Animator _spriteAnimCtrl;
 	[SerializeField] private protected Color _transitionalColorTint;
 	private readonly int _baseColor = Shader.PropertyToID("_BaseColor");
@@ -137,16 +137,16 @@ public class CharacterBase : MonoBehaviour
 
 	protected void SetRigidbodyX(float xValue)
 	{
-		var velocity = _rigidbody2D.velocity;
+		var velocity = _rigidbody.velocity;
 		velocity.x = xValue;
-		_rigidbody2D.velocity = velocity;
+		_rigidbody.velocity = velocity;
 	}
 	
 	protected void SetRigidbodyY(float yValue)
 	{
-		var velocity = _rigidbody2D.velocity;
+		var velocity = _rigidbody.velocity;
 		velocity.x = yValue;
-		_rigidbody2D.velocity = velocity;
+		_rigidbody.velocity = velocity;
 	}
 
 	protected void MeleeAttack()
@@ -169,15 +169,15 @@ public class CharacterBase : MonoBehaviour
 		onLandEvent ??= new UnityEvent();
 		_currentHealth = _startingHealth;
 		
-		_rigidbody2D = GetComponent<Rigidbody2D>();
+		_rigidbody = GetComponent<Rigidbody>();
 		_spriteRenderer = _spriteObject.GetComponent<SpriteRenderer>();
 		_spriteAnimCtrl = _spriteObject.GetComponent<Animator>();
-		_collider2D = GetComponent<Collider2D>();
+		_collider = GetComponent<Collider>();
 		
 
-		if (!_rigidbody2D)
+		if (!_rigidbody)
 		{
-			Debug.LogError("Rigidbody2D missing from PlayerMovement!");
+			Debug.LogError("Rigidbody missing from PlayerMovement!");
 			enabled = false;
 			return;
 		}
@@ -223,7 +223,7 @@ public class CharacterBase : MonoBehaviour
 			return;
 		}
 
-		if (!_collider2D)
+		if (!_collider)
 		{
 			Debug.LogError("Collider2D missing from PlayerMovement");
 			enabled = false;
@@ -254,7 +254,7 @@ public class CharacterBase : MonoBehaviour
 	
 	protected void SetRigidbody2DVelocityX(float x)
 	{
-		_rigidbody2D.velocity = new Vector2(x, _rigidbody2D.VelocityY());
+		_rigidbody.velocity = new Vector2(x, _rigidbody.VelocityY());
 	}
 
 	protected virtual void HitCover()
@@ -295,9 +295,9 @@ public class CharacterBase : MonoBehaviour
 			if (nearestValidTargetGameObject != null)
 			{
 				var distanceA = Vector2.Distance(nearestValidTargetGameObject.transform.position,
-					_rigidbody2D.transform.position);
+					_rigidbody.transform.position);
 				var distanceB = Vector2.Distance(meleeTarget.gameObject.transform.position,
-					_rigidbody2D.transform.position);
+					_rigidbody.transform.position);
 				
 				if (!(distanceB < distanceA)) continue;
 				
@@ -412,7 +412,7 @@ public class CharacterBase : MonoBehaviour
 	{
 		_movementState = MovementState.Slide;
 		float direction = _spriteRenderer.flipX ? -1 : 1;
-		SetRigidbody2DVelocityX(_slideBoost * _rigidbody2D.mass * direction);
+		SetRigidbody2DVelocityX(_slideBoost * _rigidbody.mass * direction);
 	}
 	
 	protected bool CheckFallDamage()
@@ -422,7 +422,7 @@ public class CharacterBase : MonoBehaviour
 			// Death from fall?
 			if (_previousVelocity.y > -_fallDeathVelocity) return false;
 		
-			_rigidbody2D.SetVelocityY(0f);
+			_rigidbody.SetVelocityY(0f);
 			Kill(DamageType.Fall);
 		}
 		return true;
@@ -555,11 +555,14 @@ public class CharacterBase : MonoBehaviour
 			Move();
 		
 		// Add extra gravity
-		_rigidbody2D.AddForce((_gravityMultiplier - 1) * -9.81f * Vector2.up);
-		_previousVelocity = _rigidbody2D.velocity;
-		var position = _rigidbody2D.position;
+		_rigidbody.AddForce((_gravityMultiplier - 1) * -9.81f * Vector2.up);
+		_previousVelocity = _rigidbody.velocity;
+		var position = _rigidbody.position;
 		
-		_spriteObject.position = new Vector2(position.x, position.y - _collider2D.bounds.size.y / 2f);//_rigidbody2D.position - vectorOffset;
+		// I _could_ make it use Rigidbody3D - but that is quite a chunk of work
+		// as the z-position is irrelevant for the purposes of movement (as we only truly move on a 2D plane during combat)
+		// we'll stick with this for now
+		_spriteObject.position = new Vector3(position.x, position.y - _collider.bounds.size.y / 2f, transform.position.z);//_rigidbody2D.position - vectorOffset;
 		UpdateSprite();
 
 		if (_weaponInstance != null)
@@ -614,7 +617,7 @@ public class CharacterBase : MonoBehaviour
 	{
 		input = input * (_aliveState == AliveState.Wounded ? _woundedSpeed : 1f);
 		
-		var velocity = _rigidbody2D.velocity;
+		var velocity = _rigidbody.velocity;
 		var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
 		var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
 		velocity.x = Mathf.MoveTowards(velocity.x, _moveSpeed * input, maxSpeedDelta);
@@ -625,7 +628,7 @@ public class CharacterBase : MonoBehaviour
 			var max = Mathf.Max(slideToJumpMaxVx, -slideToJumpMaxVx);
 			velocity.x = Mathf.Clamp(velocity.x, min, max);
 		}
-		_rigidbody2D.velocity = velocity;
+		_rigidbody.velocity = velocity;
 		
 	}
 	
@@ -675,12 +678,12 @@ public class CharacterBase : MonoBehaviour
 		{
 			var alpha = 1f / time * elapsedTime;
 			elapsedTime += Time.deltaTime;
-			_rigidbody2D.velocity = new Vector2(0f, _rigidbody2D.VelocityY());
+			_rigidbody.velocity = new Vector2(0f, _rigidbody.VelocityY());
 			_spriteRenderer.color = Color.Lerp(Color.white, _transitionalColorTint, alpha);
 			yield return null;
 		}
 
-		_rigidbody2D.position = newLocation;
+		_rigidbody.position = newLocation;
 		if (_teleportIn != null)
 		{
 			StopCoroutine(_teleportIn);
@@ -697,7 +700,7 @@ public class CharacterBase : MonoBehaviour
 		{
 			var alpha = 1f / time * elapsedTime;
 			elapsedTime += Time.deltaTime;
-			_rigidbody2D.velocity = new Vector2(0f, _rigidbody2D.VelocityY());
+			_rigidbody.velocity = new Vector2(0f, _rigidbody.VelocityY());
 			_spriteRenderer.color = Color.Lerp(_transitionalColorTint, Color.white, alpha);
 			yield return null;
 		}
@@ -709,7 +712,7 @@ public class CharacterBase : MonoBehaviour
 	
 	protected virtual void Jump()
 	{
-		_rigidbody2D.AddForce(_jumpForce * Vector2.up);
+		_rigidbody.AddForce(_jumpForce * Vector2.up);
 	}
 	
 
@@ -759,7 +762,7 @@ public class CharacterBase : MonoBehaviour
 	
 	protected virtual void UpdateSprite()
 	{
-		var vX = _rigidbody2D.velocity.x;
+		var vX = _rigidbody.velocity.x;
 		_spriteRenderer.flipX = vX switch
 		{
 			< 0f => true,

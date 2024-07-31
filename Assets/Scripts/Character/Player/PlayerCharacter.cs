@@ -179,13 +179,13 @@ namespace Character.Player
         private void DuringSlide(bool isGrounded)
         {
             _queueSlide = false;
-            if (!isGrounded || Mathf.Abs(_rigidbody2D.velocity.x) < 0.1f)
+            if (!isGrounded || Mathf.Abs(_rigidbody.velocity.x) < 0.1f)
             {
                 StopSlide();
             }
             else
             {
-                float x = _rigidbody2D.velocity.x;
+                float x = _rigidbody.velocity.x;
                 bool sign = Mathf.Sign(x) < 0f;
                 float deltaV = _slideFriction * Time.fixedDeltaTime;
                 var clamped1 = Mathf.Clamp(x + deltaV, x, 0f);
@@ -202,7 +202,7 @@ namespace Character.Player
         
         private void SlideToJump()
         {
-            _slideToJumpMaxVX = Mathf.Abs(_rigidbody2D.velocity.x);
+            _slideToJumpMaxVX = Mathf.Abs(_rigidbody.velocity.x);
         }
         
         private void StopSlide()
@@ -214,6 +214,10 @@ namespace Character.Player
         private void XDirection(bool isGrounded)
         {
             // Rotation code, could do this better, but it should work for now
+            if (_towerRotationService.ROTATING && _queueRotate)
+            {
+                _queueRotate = false;
+            }
             if (_queueRotate && isGrounded && !_towerRotationService.ROTATING)
             {
                 if (_activeCorner != null)
@@ -313,7 +317,7 @@ namespace Character.Player
         {
             base.Move();
 
-            if (_movementState == MovementState.Teleporting)
+            if (_movementState is /*MovementState.Rotating or*/ MovementState.Teleporting)
             {
                 return;
             }

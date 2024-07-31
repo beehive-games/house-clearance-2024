@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Numerics;
 using Character.Player;
 using Unity.Collections;
 using Unity.VisualScripting;
@@ -29,9 +28,9 @@ namespace Character.NPC
         //[SerializeField] private float _minimumDistanceToPlayerForSliding = 2f;
         [SerializeField, Range(0,1)] private float _randomShotChance = 0.5f;
         [SerializeField, Range(0,1)] private float _PlayerInCoverDetectionDistance = 0.5f;
-        private RaycastHit2D[] _results = new RaycastHit2D[1];
-        private Vector2 _startLocation;
-        private Vector2 _targetLocation;
+        private RaycastHit[] _results = new RaycastHit[1];
+        private Vector3 _startLocation;
+        private Vector3 _targetLocation;
         private Coroutine _patrolWaitCo;
         private bool _waiting;
         private bool _couldSeePlayer;
@@ -55,11 +54,11 @@ namespace Character.NPC
         private void GrabPlayerCollider2D()
         {
             GameObject playerGameObject = GameObject.FindGameObjectWithTag("Player");
-            Collider2D playerCollider = null;
+            Collider playerCollider = null;
             
             if (playerGameObject != null)
             {
-                playerCollider = playerGameObject.GetComponent<Collider2D>();
+                playerCollider = playerGameObject.GetComponent<Collider>();
             }
             else
             {
@@ -79,20 +78,48 @@ namespace Character.NPC
         
         private void RevalidateStartPatrolPosition()
         {
-            _startLocation = _rigidbody2D.position;
+            _startLocation = _rigidbody.position;
             CreateTargetLocation();
         }
 
+        
+        private bool RaycastWalls(Vector3 position, Vector3 moveDirection, float maxMovePerFrame)
+        {
+            int hits = Physics.RaycastNonAlloc(position, moveDirection, _results, maxMovePerFrame, _wallLayerMask);
+            Debug.DrawRay(position, moveDirection * maxMovePerFrame, Color.red);
+            return hits > 0;
+        }
+        
+        private bool RaycastCover(Vector3 position, Vector3 moveDirection, float maxCheckDistance)
+        {
+            int hits = Physics.RaycastNonAlloc(position, moveDirection, _results, maxCheckDistance, _coverLayerMask);
+            Debug.DrawRay(position, moveDirection * maxCheckDistance, Color.magenta);
+            if (hits > 0)
+            {
+                var playerDistance= Vector3.Distance(position, _playerColliderTransform.position);
+                var hitDistance= Vector3.Distance(position, _results[0].point);
+                return playerDistance > hitDistance;
+            }
+            return false;
+        }
+        
+        private bool RaycastFloor(Vector3 position, Vector3 moveDirection, float maxMovePerFrameY, float maxMovePerFrameX)
+        {
+            int hits = Physics.RaycastNonAlloc(position + moveDirection * maxMovePerFrameX, Vector3.down, _results, maxMovePerFrameY, _wallLayerMask);
+            Debug.DrawRay(position + moveDirection * maxMovePerFrameX, Vector3.down * maxMovePerFrameY, Color.cyan);
+            return hits > 0;
+        }
+        
         private bool RaycastWalls(Vector2 position, Vector2 moveDirection, float maxMovePerFrame)
         {
-            int hits = Physics2D.RaycastNonAlloc(position, moveDirection, _results, maxMovePerFrame, _wallLayerMask);
+            int hits = Physics.RaycastNonAlloc(position, moveDirection, _results, maxMovePerFrame, _wallLayerMask);
             Debug.DrawRay(position, moveDirection * maxMovePerFrame, Color.red);
             return hits > 0;
         }
         
         private bool RaycastCover(Vector2 position, Vector2 moveDirection, float maxCheckDistance)
         {
-            int hits = Physics2D.RaycastNonAlloc(position, moveDirection, _results, maxCheckDistance, _coverLayerMask);
+            int hits = Physics.RaycastNonAlloc(position, moveDirection, _results, maxCheckDistance, _coverLayerMask);
             Debug.DrawRay(position, moveDirection * maxCheckDistance, Color.magenta);
             if (hits > 0)
             {
@@ -105,23 +132,23 @@ namespace Character.NPC
         
         private bool RaycastFloor(Vector2 position, Vector2 moveDirection, float maxMovePerFrameY, float maxMovePerFrameX)
         {
-            int hits = Physics2D.RaycastNonAlloc(position + Vector2.right * moveDirection * maxMovePerFrameX, Vector2.down, _results, maxMovePerFrameY, _wallLayerMask);
+            int hits = Physics.RaycastNonAlloc(position + Vector2.right * moveDirection * maxMovePerFrameX, Vector2.down, _results, maxMovePerFrameY, _wallLayerMask);
             Debug.DrawRay(position + Vector2.right * moveDirection * maxMovePerFrameX, Vector2.down * maxMovePerFrameY, Color.cyan);
             return hits > 0;
         }
         
         private bool RaycastPlayer()
         {
-            Vector2 playerPosition = _playerColliderTransform.position;
-            Vector2 origin = _lineOfSightOrigin.position;
+            Vector3 playerPosition = _playerColliderTransform.position;
+            Vector3 origin = _lineOfSightOrigin.position;
 
             float facingDirection = _spriteRenderer.flipX ? -1 : 1;
             
-            Vector2 direction = facingDirection * Vector2.right;
+            Vector3 direction = facingDirection * Vector3.right;
             
-            int hits = Physics2D.RaycastNonAlloc(origin, direction, _results, _maxPlayerVisibilityDistance, _playerVisibilityLayerMask);
+            int hits = Physics.RaycastNonAlloc(origin, direction, _results, _maxPlayerVisibilityDistance, _playerVisibilityLayerMask);
             
-            if (hits <= 0 || !_results[0])
+            if (hits <= 0)
             {
                 Debug.DrawRay(origin, direction * _maxPlayerVisibilityDistance, Color.red);
                 return false;
@@ -133,7 +160,7 @@ namespace Character.NPC
                 return false;
             }
             
-            if (_playerCharacter.IsInCover() && !_pursusing && Vector2.Distance(playerPosition, _rigidbody2D.position) > _PlayerInCoverDetectionDistance )
+            if (_playerCharacter.IsInCover() && !_pursusing && Vector3.Distance(playerPosition, _rigidbody.position) > _PlayerInCoverDetectionDistance )
             {
                 Debug.DrawLine(origin, _results[0].point, new Color(1f,1.5f,0f));
                 return false;
@@ -169,7 +196,7 @@ namespace Character.NPC
         private void CreateTargetLocation()
         {
             float sign = Random.value > 0.5f ? 1f : -1f;
-            _targetLocation = _startLocation + (Vector2.right * (sign * _patrolRange));
+            _targetLocation = _startLocation + (Vector3.right * (sign * _patrolRange));
         }
 
         private void GetNewTargetLocation(bool isGrounded)
@@ -198,12 +225,12 @@ namespace Character.NPC
         {
             if (_waiting) return;
             
-            var position = _groundCheckPivot.position;
-            var velocity = _rigidbody2D.velocity;
+            Vector3 position = _groundCheckPivot.position;
+            Vector3 velocity = _rigidbody.velocity;
             var fixedDelta = Time.fixedDeltaTime;
 
             float sign = GetSignOfDirection(_targetLocation.x, position.x);
-            Vector2 raycastWallCheckDirection = Vector2.right * sign;
+            Vector3 raycastWallCheckDirection = Vector3.right * sign;
             
             float maxMovePerFrameX = Mathf.Max(Mathf.Abs(velocity.x) * fixedDelta,_forwardCheckIntervalDistance);
             float maxMovePerFrameY = Mathf.Max(Mathf.Abs(velocity.y) * fixedDelta,_groundCheckDistance);
@@ -238,13 +265,13 @@ namespace Character.NPC
         private void DuringSlide(bool isGrounded)
         {
             _queueSlide = false;
-            if (!isGrounded || Mathf.Abs(_rigidbody2D.velocity.x) < 1f)
+            if (!isGrounded || Mathf.Abs(_rigidbody.velocity.x) < 1f)
             {
                 StopSlide();
             }
             else
             {
-                float x = _rigidbody2D.velocity.x;
+                float x = _rigidbody.velocity.x;
                 bool sign = Mathf.Sign(x) < 0f;
                 float deltaV = _slideFriction * Time.fixedDeltaTime;
                 var clamped1 = Mathf.Clamp(x + deltaV, x, 0f);
@@ -260,7 +287,7 @@ namespace Character.NPC
             if (weaponPrefab == null) return false;
             
             var playerPosition = _playerColliderTransform.position;
-            var rbPosition = _rigidbody2D.position;
+            var rbPosition = _rigidbody.position;
 
             var distance = Vector2.Distance(playerPosition, rbPosition);
             var signedDirection = GetSignOfDirection(playerPosition.x, rbPosition.x);
@@ -276,7 +303,20 @@ namespace Character.NPC
             return false;
         }
         
-        
+        private void SetTargetToLocationFromPlayer(Vector3 playerPosition, Vector3 currentPosition)
+        {
+            var distance = Vector3.Distance(playerPosition, currentPosition);
+            var minDistance = _distanceToPlayerToMaintain - _distanceToPlayerToMaintainThreshold;
+            var maxDistance = _distanceToPlayerToMaintain + _distanceToPlayerToMaintainThreshold;
+
+            if (distance < minDistance || distance > maxDistance)
+            {
+                var direction = (playerPosition.x - currentPosition.x) > 0f ? 1f : -1f;
+                var directionV2 = new Vector3(direction * _distanceToPlayerToMaintain, 0f);
+                var targetPosition = playerPosition - directionV2;
+                _targetLocation = targetPosition;
+            }
+        }
         
         private void SetTargetToLocationFromPlayer(Vector2 playerPosition, Vector2 currentPosition)
         {
@@ -321,13 +361,13 @@ namespace Character.NPC
                 _pursusing = true;
             }
 
-            if (!canSeePlayer && Vector2.Distance(_playerColliderTransform.position, _rigidbody2D.position) > _maximumPursueDistance)
+            if (!canSeePlayer && Vector3.Distance(_playerColliderTransform.position, _rigidbody.position) > _maximumPursueDistance)
             {
                 _pursusing = false;
             }
             
-            var position = _groundCheckPivot.position;
-            var velocity = _rigidbody2D.velocity;
+            Vector3 position = _groundCheckPivot.position;
+            Vector3 velocity = _rigidbody.velocity;
             var fixedDelta = Time.fixedDeltaTime;
             
             float maxMovePerFrameX = Mathf.Max(Mathf.Abs(velocity.x) * fixedDelta,_forwardCheckIntervalDistance);
@@ -337,19 +377,19 @@ namespace Character.NPC
             float signedDirection = GetSignOfDirection(_targetLocation.x, position.x);
             var direction = reachedDestination ? 0f : signedDirection ;
             
-            Vector2 raycastWallCheckDirection = Vector2.right * direction;
-            Vector2 coverCheckDirection = (_spriteRenderer.flipX ? -1f : 1f) * Vector2.right;
+            Vector3 raycastWallCheckDirection = Vector3.right * direction;
+            Vector3 coverCheckDirection = (_spriteRenderer.flipX ? -1f : 1f) * Vector3.right;
 
             var playerPosition = _playerColliderTransform.position;
             
             bool hitWall = RaycastWalls(position, raycastWallCheckDirection, maxMovePerFrameX);
             bool hitFloor = RaycastFloor(position, raycastWallCheckDirection, maxMovePerFrameY, maxMovePerFrameX);
-            bool canSeeCover = RaycastCover(_rigidbody2D.position, coverCheckDirection, _coverSlideDistance);
-            bool turnedAroundFromCover = RaycastCover(_rigidbody2D.position, coverCheckDirection, 1f);
+            bool canSeeCover = RaycastCover(_rigidbody.position, coverCheckDirection, _coverSlideDistance);
+            bool turnedAroundFromCover = RaycastCover(_rigidbody.position, coverCheckDirection, 1f);
             bool sliding = _movementState == MovementState.Slide;
             bool inCover = _movementState == MovementState.Cover;
-            bool stopped = Mathf.Abs(_rigidbody2D.velocity.x) < 0.1f; 
-            float signedDirPlayer =  GetSignOfDirection(playerPosition.x, _rigidbody2D.position.x);
+            bool stopped = Mathf.Abs(_rigidbody.velocity.x) < 0.1f; 
+            float signedDirPlayer =  GetSignOfDirection(playerPosition.x, _rigidbody.position.x);
             bool directionsMatch = Mathf.Approximately(signedDirPlayer,_spriteRenderer.flipX ? -1 : 1);
 
             
@@ -428,7 +468,7 @@ namespace Character.NPC
                 _damageTaken = false;
                 CombatMovement(isGrounded, canSeePlayer);
                 // turn to face player after moving
-                _spriteRenderer.flipX = _playerColliderTransform.position.x - _rigidbody2D.position.x < 0f; 
+                _spriteRenderer.flipX = _playerColliderTransform.position.x - _rigidbody.position.x < 0f; 
                 dbg_NPCState = DebugNPCState.Combat;
                 if (CanShoot(canSeePlayer))
                 {
@@ -485,7 +525,7 @@ namespace Character.NPC
         {
             _preRotationMovementState = _movementState;
             _movementState = MovementState.Rotating;
-            _rigidbody2D.isKinematic = true;
+            _rigidbody.isKinematic = true;
         }
 
         public void Rotation()
@@ -495,8 +535,8 @@ namespace Character.NPC
         
         public void EndRotation()
         {
-            _movementState = _preRotationMovementState;
-            _rigidbody2D.isKinematic = false;
+            //_movementState = _preRotationMovementState;
+            //_rigidbody2D.isKinematic = false;
         }
         
         protected override void Move()
