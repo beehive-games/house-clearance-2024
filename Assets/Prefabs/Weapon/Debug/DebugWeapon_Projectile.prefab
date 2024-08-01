@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 187324385642385524}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: EjectionPosition
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5120829017634007499}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: MuzzlePosition
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -73,7 +73,7 @@ GameObject:
   - component: {fileID: 3924687831099655524}
   - component: {fileID: 6902534507891225096}
   - component: {fileID: 3818332884503267802}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: DebugWeapon_Projectile
   m_TagString: Untagged
   m_Icon: {fileID: 0}

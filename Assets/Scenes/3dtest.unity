@@ -750,7 +750,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6408331174287341576, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 1.24
       objectReference: {fileID: 0}
     - target: {fileID: 6408331174287341576, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: m_LocalRotation.w
@@ -783,6 +783,10 @@ PrefabInstance:
     - target: {fileID: 7779151793306729578, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
       propertyPath: m_Name
       value: HitBoxHead 3D
+      objectReference: {fileID: 0}
+    - target: {fileID: 8673108273587859115, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5210185900028524751, guid: 25f4fb886ba4e9742b9085912e229ffe, type: 3}
@@ -1661,7 +1665,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8826418121709608834, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 1.24
       objectReference: {fileID: 0}
     - target: {fileID: 8826418121709608834, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_LocalRotation.w

@@ -2,6 +2,7 @@ using System.Collections;
 using Combat.Weapon.Projectiles;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Utils;
 using Random = UnityEngine.Random;
 
 namespace Combat.Weapon
@@ -43,6 +44,8 @@ namespace Combat.Weapon
         private Coroutine _shootTimer;
         private Coroutine _reloadTimer;
         private CharacterBase _parentCharacter;
+        private Rigidbody _parentCharacterRB;
+        private TowerRotationService _service;
         [HideInInspector] public Allegiance allegiance;
       
         
@@ -53,9 +56,10 @@ namespace Combat.Weapon
         
         public void Setup(Transform newParent)
         {
-            Debug.Log(gameObject.name);
-            Debug.Log(gameObject.transform.parent.name);
+            _service = ServiceLocator.GetService<TowerRotationService>();
+            
             _parentCharacter = gameObject.transform.parent.parent.GetComponent<CharacterBase>();
+            _parentCharacterRB = _parentCharacter.GetComponent<Rigidbody>();
             if (_parentCharacter == null)
             {
                 _parentCharacter = gameObject.transform.parent.parent.GetComponentInChildren<CharacterBase>();
@@ -134,11 +138,16 @@ namespace Combat.Weapon
             
             var projectileRb = projectile.GetComponent<Rigidbody>();
             
-            //float direction = _parentCharacter._spriteRenderer.flipX ? -1 : 1;
+            Vector3 additionalVelocity = _parentCharacterRB.velocity;
+            
+            float directionalAdditionalVelocity = _service.TOWER_DIRECTION is TowerDirection.East or TowerDirection.West
+                ? additionalVelocity.z
+                : additionalVelocity.x;
             
             if (projectileRb != null)
             {
                 projectileRb.velocity += spawnVelocity * transform.localScale.x ;
+                
             }
             
             var projectileBase = projectile.GetComponent<ProjectileBase>();
@@ -148,7 +157,7 @@ namespace Combat.Weapon
                 var colliderBase = projectileBase as ColliderProjectile;
                 if(colliderBase != null)
                 {
-                    colliderBase.SetStartSpeed(colliderBase.speed * transform.localScale.x);
+                    colliderBase.SetStartSpeed(colliderBase.speed * transform.localScale.x + directionalAdditionalVelocity);
                 }
 
                 projectileBase.StartMethod();

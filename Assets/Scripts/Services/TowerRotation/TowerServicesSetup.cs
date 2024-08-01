@@ -9,7 +9,7 @@ public class TowerServicesSetup : MonoBehaviour
         var envService = ServiceLocator.GetService<TowerRotationEnvironmentService>();
         envService.HookUpToTransitionService();
         
-        var npcService = ServiceLocator.GetService<TowerRotationNPCService>();
+        var npcService = ServiceLocator.GetService<TowerRotationCharacterService>();
         npcService.HookUpToTransitionService();
         DontDestroyOnLoad(gameObject);
     }
@@ -19,7 +19,7 @@ public class TowerServicesSetup : MonoBehaviour
         var envService = ServiceLocator.GetService<TowerRotationEnvironmentService>();
         envService.CleanUpTransitionService();
         
-        var npcService = ServiceLocator.GetService<TowerRotationNPCService>();
+        var npcService = ServiceLocator.GetService<TowerRotationCharacterService>();
         npcService.CleanUpTransitionService();
     }
 }

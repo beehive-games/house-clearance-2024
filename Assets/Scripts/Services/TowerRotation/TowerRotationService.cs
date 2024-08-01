@@ -30,6 +30,7 @@ public class TowerRotationService : Service, IService
     public event OnPostTurnDel OnPostTurn;
     
     public Vector3 ROTATION_ORIGIN { get; private set; }
+    public Vector3 PLAYER_ORIGIN { get; private set; }
     public float ROTATION_AMOUNT { get; private set; }
     public float ROTATION_TIME { get; private set; }
     public float ROTATION_PROGRESSION { get; private set; }
@@ -40,7 +41,7 @@ public class TowerRotationService : Service, IService
     private CoroutineRunner _coroutineRunner;
     
     
-    public void Rotate(TowerCorners towerCorner, Vector3 rotationOrigin, float turnTime)
+    public void Rotate(TowerCorners towerCorner, Vector3 rotationOrigin, Vector3 playerPosition, float turnTime)
     {
         if (_coroutineRunner != null)
         {
@@ -63,6 +64,7 @@ public class TowerRotationService : Service, IService
         ROTATION_ORIGIN = rotationOrigin;
         ROTATION_AMOUNT = direction * 90f;
         ROTATION_TIME = turnTime;
+        PLAYER_ORIGIN = playerPosition;
         ROTATING = true;
         DoBeforeTurn();
         DoTurn();

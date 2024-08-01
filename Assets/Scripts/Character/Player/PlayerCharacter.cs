@@ -4,7 +4,6 @@ using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using Utils;
-using Vector3 = System.Numerics.Vector3;
 
 namespace Character.Player
 {
@@ -25,7 +24,6 @@ namespace Character.Player
         private float _slideToJumpMaxVX;
         private bool _shooting = false;
         private TowerCorner _activeCorner;
-
         public void InTowerCorner(TowerCorner currentCorner)
         {
             _activeCorner = currentCorner;
@@ -227,19 +225,14 @@ namespace Character.Player
                     _xInput = 0;
                     _queueSlide = false;
                     _queueJump = false;
-                    if (_movementState != MovementState.Dead && _movementState != MovementState.Immobile)
-                    {
-                        _movementState = MovementState.Rotating;
-                    }
-                    
-                    _towerRotationService.Rotate(_activeCorner.towerCorner, _activeCorner.transform.position, _activeCorner.turnTime );
+                    _towerRotationService.Rotate(_activeCorner.towerCorner, _activeCorner.transform.position, _rigidbody.position, _activeCorner.turnTime );
                 }                
             }
 
             if (_movementState == MovementState.Rotating && !_towerRotationService.ROTATING &&
                 _aliveState is AliveState.Alive or AliveState.Wounded)
             {
-                _movementState = isGrounded ? MovementState.Jump : MovementState.Walk;
+                _movementState = isGrounded ? MovementState.Walk : MovementState.Jump;
             }
             
             if (isGrounded)
@@ -312,28 +305,38 @@ namespace Character.Player
             return false;
         }
       
+        public override void BeginRotation()
+        {
+            base.BeginRotation();
+        }
+
+        public override void Rotation()
+        {
+            base.Rotation();
+
+        }
+        
+        public override void EndRotation()
+        {
+            base.EndRotation();
+        }
+        
         // Called in FixedUpdate in parent class, only if we can move based on states
         protected override void Move()
         {
             base.Move();
 
-            if (_movementState is /*MovementState.Rotating or*/ MovementState.Teleporting)
-            {
-                return;
-            }
-            
-            if(TeleportCheck()) return;
+            if (_movementState is MovementState.Teleporting) return;
+            if (TeleportCheck()) return;
             
             bool isGrounded = IsGrounded();
 
             XDirection(isGrounded);
             YDirection(isGrounded);
 
-            if (_shooting)
-            {
-                OnShootingHold();
-            }
-
+            if (!_shooting) return;
+            OnShootingHold();
+            OnShootingHold();
         }
     }
 }

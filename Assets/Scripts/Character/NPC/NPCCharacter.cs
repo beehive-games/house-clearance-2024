@@ -39,7 +39,6 @@ namespace Character.NPC
         private bool _queueSlide;
         private bool _pursusing;
         private bool _damageTaken;
-        private MovementState _preRotationMovementState;
 
         enum DebugNPCState
         {
@@ -521,22 +520,20 @@ namespace Character.NPC
         }
 
 
-        public void BeginRotation()
+        public override void BeginRotation()
         {
-            _preRotationMovementState = _movementState;
-            _movementState = MovementState.Rotating;
-            _rigidbody.isKinematic = true;
+            base.BeginRotation();
         }
 
-        public void Rotation()
+        public override void Rotation()
         {
-            
+            base.Rotation();
+
         }
         
-        public void EndRotation()
+        public override void EndRotation()
         {
-            //_movementState = _preRotationMovementState;
-            //_rigidbody2D.isKinematic = false;
+            base.EndRotation();
         }
         
         protected override void Move()

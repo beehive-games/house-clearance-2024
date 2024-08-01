@@ -92,6 +92,8 @@ public class CharacterBase : MonoBehaviour
 	private Coroutine _downedTimerCO;
 	private GameObject _coverGameObject;
 	protected TowerRotationService _towerRotationService;
+	public Vector2 previousPosition;
+	private MovementState _preRotationMovementState;
 	
 	internal enum MovementState
 	{
@@ -544,7 +546,7 @@ public class CharacterBase : MonoBehaviour
 	
 	protected virtual bool CanMove()
 	{
-		return _movementState is not (MovementState.Dead or MovementState.Immobile);
+		return _movementState is not (MovementState.Dead or MovementState.Immobile or MovementState.Rotating);
 	}
 	
 	protected virtual void Update() { }
@@ -569,10 +571,31 @@ public class CharacterBase : MonoBehaviour
 		{
 			_weaponInstance.transform.localScale = _spriteRenderer.flipX ? new Vector2(-1,1) : new Vector2(1,1);
 		}
-		
+
+		previousPosition = _rigidbody.position;
 		//_spriteRenderer.color = _movementState is MovementState.Cover or MovementState.Teleporting ? _transitionalColorTint : Color.white;
 	}
 
+	public virtual void BeginRotation()
+	{
+		_preRotationMovementState = _movementState;
+		_movementState = MovementState.Rotating;
+		var stopVelocity = new Vector3(0f, _rigidbody.velocity.y, 0f);
+		_rigidbody.velocity = stopVelocity;
+
+	}
+
+	public virtual void Rotation()
+	{
+		var stopVelocity = new Vector3(0f, _rigidbody.velocity.y, 0f);
+		_rigidbody.velocity = stopVelocity;
+	}
+        
+	public virtual void EndRotation()
+	{
+		_movementState = _preRotationMovementState;
+	}
+	
 	private bool GroundCheckNonAlloc(Vector2 position, Vector2 direction, float maxDistance, LayerMask layerMask)
 	{
 		int hits = Physics2D.RaycastNonAlloc(position, direction, _results, maxDistance, layerMask);
@@ -582,18 +605,17 @@ public class CharacterBase : MonoBehaviour
 	protected virtual bool IsGrounded()
 	{
 		var position3D = _groundCheckPivot.position;
-		var position2D = new Vector2(position3D.x, position3D.y);
 		
-		var positionLeft = position2D - _groundCheckPivotRadius * Vector2.right;
-		var positionRight = position2D + _groundCheckPivotRadius * Vector2.right;
+		var positionLeft = position3D - _groundCheckPivotRadius * transform.right;
+		var positionRight = position3D + _groundCheckPivotRadius * transform.right;
 
-		bool left = GroundCheckNonAlloc(positionLeft, Vector2.down, _groundCheckDistance, _groundCheckLayers);
-		bool center = GroundCheckNonAlloc(position2D, Vector2.down, _groundCheckDistance, _groundCheckLayers);
-		bool right = GroundCheckNonAlloc(positionRight, Vector2.down, _groundCheckDistance, _groundCheckLayers);
+		bool left = GroundCheckNonAlloc(positionLeft, Vector3.down, _groundCheckDistance, _groundCheckLayers);
+		bool center = GroundCheckNonAlloc(position3D, Vector3.down, _groundCheckDistance, _groundCheckLayers);
+		bool right = GroundCheckNonAlloc(positionRight, Vector3.down, _groundCheckDistance, _groundCheckLayers);
 		
-		Debug.DrawRay(positionLeft, Vector2.down * _groundCheckDistance, left ? Color.red : Color.magenta);
-		Debug.DrawRay(position2D, Vector2.down * _groundCheckDistance, center ? Color.green : Color.yellow);
-		Debug.DrawRay(positionRight, Vector2.down * _groundCheckDistance, right? Color.blue : Color.cyan);
+		Debug.DrawRay(positionLeft, Vector3.down * _groundCheckDistance, left ? Color.red : Color.magenta);
+		Debug.DrawRay(position3D, Vector3.down * _groundCheckDistance, center ? Color.green : Color.yellow);
+		Debug.DrawRay(positionRight, Vector3.down * _groundCheckDistance, right? Color.blue : Color.cyan);
 
 		return left || right || center;
 	}

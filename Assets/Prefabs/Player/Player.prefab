@@ -525,6 +525,7 @@ GameObject:
   - component: {fileID: 4125241692120992936}
   - component: {fileID: 5105585314817417841}
   - component: {fileID: 3019701233231098425}
+  - component: {fileID: 7349938037972346000}
   m_Layer: 3
   m_Name: PlayerController
   m_TagString: Player
@@ -602,6 +603,7 @@ MonoBehaviour:
   onLandEvent:
     m_PersistentCalls:
       m_Calls: []
+  previousPosition: {x: 0, y: 0}
   actions: {fileID: -944628639613478452, guid: a060d8c5c8c8d2f4d8dbaf81a1780467, type: 3}
   playerGUIDocument: {fileID: 7300096219510968583}
 --- !u!54 &5105585314817417841
@@ -654,6 +656,18 @@ CapsuleCollider:
   m_Height: 3.52
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7349938037972346000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4362976035354806133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d293fd287ff5bc40b21c091c09d8140, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4364763717403522996
 GameObject:
   m_ObjectHideFlags: 0
@@ -798,7 +812,7 @@ Transform:
   m_GameObject: {fileID: 5226829273689869162}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.743, z: -8.45}
+  m_LocalPosition: {x: 0, y: -1.743, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1167,7 +1181,7 @@ Transform:
   m_GameObject: {fileID: 8823934861681821286}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.62, z: -8.45}
+  m_LocalPosition: {x: 0, y: 1.62, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
