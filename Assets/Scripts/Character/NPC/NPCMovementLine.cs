@@ -3,128 +3,193 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.PackageManager.UI;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class NPCMovementLine : MonoBehaviour
 {
     public Transform[] locations;
-    [Range(0, 1)] public float amount = 0f;
-    public Transform artificialPoint;
-    private Vector3[] points;
+    [Range(0, 1)] public float debugInterpolatedValue = 0f;
+    public Transform debugArtificialPoint;
+    private Vector3[] _points;
 
-    public SampledLine GetLineData(Vector3 point)
+
+    
+/*
+    public Vector3 GetNormal(Rigidbody rigidbody)
     {
-        if (locations.Length < 2)
-        {
-            Debug.LogError("Line doesnt exist!");
-        }
-
-        if (points.Length < 1)
-        {
-            points = new Vector3[locations.Length + 1];
-            for(int j = 0; j < locations.Length; j++)
-            {
-                points[j] = locations[j].position;
-            }
-
-            points[locations.Length] = locations[0].position;
-        }
-
-        
-        
-        return new SampledLine(points, point);
+       return GetQuickInterpolatedNormal(rigidbody.position, _line);
     }
 
-    public struct SampledLine
+    public void RotateTransformToMatchNormal(ref Transform transform)
     {
-        private Vector3 _point; // point on line
-        private Vector3 _rawPoint; // point on line
-        private readonly Vector3[] _line;
-        private Vector3[] _edgePoints;
-        private Vector3 _edgeNormal;
-        private Vector3 _nearestPoint;
-        public float Increment;
-
-        public void GetNearestPointOnLine(Vector3 point)
-        {
-            _rawPoint = _point;
-            GetInterpolatedValue(_rawPoint, _line, ref _edgePoints, ref _edgeNormal, ref this._point, ref _nearestPoint);
-        }
-
-        public Vector3 InterpolatedPosition(float t)
-        {
-            return Interpolate(t, _line);
-        }
-
-        public SampledLine(Vector3[] line, Vector3 point)
-        {
-            _line = line;
-            _rawPoint = point;
-            
-            _point = new Vector3();
-            _edgePoints = new Vector3[2];
-            _edgeNormal = Vector3.right;
-            _nearestPoint = _point;
-            
-            float totalDistance = 0f;
-            for (int i = 1; i < line.Length; i++)
-            {
-                totalDistance += Vector3.Distance(line[i-1], line[i ]);
-            }
-            Increment = 1f / totalDistance;
-            
-            GetInterpolatedValue(_rawPoint, line, ref _edgePoints, ref _edgeNormal, ref this._point, ref _nearestPoint);
-        }
+        Quaternion rotation = Quaternion.LookRotation(EdgeNormal, transform.up);
+        Quaternion adjustedRotation = rotation * Quaternion.Euler(0, 90, 0);
+        transform.rotation = adjustedRotation;
     }
     
-    static Vector3 Interpolate(float t, Vector3[] line)
+    public void RotateRigidbodyToMatchNormal(ref Rigidbody rigidbody)
+    {
+        Transform transform = rigidbody.transform;
+        Quaternion rotation = Quaternion.LookRotation(EdgeNormal, transform.up);
+        Quaternion adjustedRotation = rotation * Quaternion.Euler(0, 90, 0);
+        rigidbody.MoveRotation(adjustedRotation);
+        //Debug.Log("Rotation is "+adjustedRotation.eulerAngles);
+    }
+
+    public void GetSetNearestPointOnLine(Vector3 point)
+    {
+        _rawPoint = point;
+        GetInterpolatedValue(_rawPoint, _line, ref _edgePoints, ref EdgeNormal, ref Point, ref _nearestPoint);
+    }
+    
+    public Vector3 GetNearestPointOnLine(Vector3 point)
+    {
+        return GetQuickInterpolatedValue(point, _line);
+    }
+
+    public Vector3 InterpolatedPosition(float t)
+    {
+        return Interpolate(t, _line);
+    }
+    
+    public float ReverseInterpolatedPosition(Vector3 t)
+    {
+        return ReverseInterpolate(t, _line);
+        }*/
+
+
+
+    private static float ReverseInterpolate(Vector3 point, Vector3[] line)
     {
         float totalLength = 0;
         for (int i = 1; i < line.Length; i++)
         {
             totalLength += Vector3.Distance(line[i - 1], line[i]);
         }
-        
-        float targetLength = t * totalLength;
+
         float accumulatedLength = 0;
 
         for (int i = 1; i < line.Length; i++)
         {
             float segmentLength = Vector3.Distance(line[i - 1], line[i]);
+            Vector3 segmentDirection = (line[i] - line[i - 1]).normalized;
+            Vector3 pointDirection = (point - line[i - 1]).normalized;
+
+            if (Vector3.Dot(segmentDirection, pointDirection) > 0.999f) // Check if the point is on the segment
+            {
+                float pointSegmentLength = Vector3.Distance(line[i - 1], point);
+                float segmentT = pointSegmentLength / segmentLength;
+                float t = (accumulatedLength + pointSegmentLength) / totalLength;
+                return t;
+            }
+
+            accumulatedLength += segmentLength;
+        }
+
+        return 1.0f; // If the point is at the end of the line
+    }
+
+    public float GetLineLength()
+    {
+        float totalLength = 0;
+        
+        for (int i = 1; i < _points.Length; i++)
+        {
+            totalLength += Vector3.Distance(_points[i - 1], _points[i]);
+        }
+
+        return totalLength;
+    }
+
+    // Take a point in line-space 0-1, and a direction +/- in world units, and return the new interpolated value of that
+    // world-space offset
+    // Used for patrolling - we don't want to follow a world-space target for this, as its harder to know where  to
+    // place it, than just using raw line-space
+    public float TrasformOffsetWorldSpaceToLineSpace(float worldSpaceUnits)
+    {
+        float lineLegth = GetLineLength();
+        float increment = 1f / lineLegth;
+        float offset = worldSpaceUnits * increment;
+        return offset;
+    }
+    
+    public Vector3 Interpolate(float t)
+    {
+        float totalLength = GetLineLength();
+        
+        float targetLength = t * totalLength;
+        float accumulatedLength = 0;
+
+        for (int i = 1; i < _points.Length; i++)
+        {
+            float segmentLength = Vector3.Distance(_points[i - 1], _points[i]);
             if (accumulatedLength + segmentLength >= targetLength)
             {
                 float segmentT = (targetLength - accumulatedLength) / segmentLength;
-                return Vector3.Lerp(line[i - 1], line[i], segmentT);
+                return Vector3.Lerp(_points[i - 1], _points[i], segmentT);
             }
             accumulatedLength += segmentLength;
         }
-        return line[^1];
+        return _points[^1];
     }
-    
-    
-    static Vector3 GetClosestPointOnFiniteLine(Vector3 point, Vector3 line_start, Vector3 line_end)
+
+
+    private static Vector3 GetClosestPointOnFiniteLine(Vector3 point, Vector3 lineStart, Vector3 lineEnd)
     {
-        Vector3 line_direction = line_end - line_start;
-        float line_length = line_direction.magnitude;
-        line_direction.Normalize();
-        float project_length = Mathf.Clamp(Vector3.Dot(point - line_start, line_direction), 0f, line_length);
-        return line_start + line_direction * project_length;
+        Vector3 lineDirection = lineEnd - lineStart;
+        float lineLength = lineDirection.magnitude;
+        lineDirection.Normalize();
+        float projectLength = Mathf.Clamp(Vector3.Dot(point - lineStart, lineDirection), 0f, lineLength);
+        return lineStart + lineDirection * projectLength;
     }
-    
-    static Vector3 GetPoint(Vector3 p, Vector3 a, Vector3 b)
+
+    private static Vector3 GetPoint(Vector3 p, Vector3 a, Vector3 b)
     {
         return a + Vector3.Project(p - a, b - a);
     }
 
+    private void Awake()
+    {
+        if (locations.Length < 2) return;
+        
+        _points = new Vector3[locations.Length + 1];
+        for(int j = 0; j < locations.Length; j++)
+        {
+            _points[j] = locations[j].position;
+        }
 
-    private static void GetInterpolatedValue(Vector3 point, Vector3[] line, ref Vector3[] edges, ref Vector3 normal, ref Vector3 sampledPoint, ref Vector3 nearestPoint )
+        _points[locations.Length] = locations[0].position;
+    }
+
+    public float GetInterpolatedPointFromAnyPosition(Vector3 point)
+    {
+        point = GetClosestPointOnLine(point);
+        var interpolatedPoint = ReverseInterpolate(point, _points);
+        return interpolatedPoint;
+    }
+    
+    public float GetInterpolatedPointFromPosition(Vector3 point)
+    {
+        var interpolatedPoint = ReverseInterpolate(point, _points);
+        return interpolatedPoint;
+    }
+    
+    public Vector3 GetClosestPointOnLine(Vector3 point)
+    {
+        var nearestPoints = GetLineSegment(point);
+        var closestPointOnLine = GetClosestPointOnFiniteLine(point, nearestPoints[0], nearestPoints[1]);
+        return closestPointOnLine;
+    }
+
+    Vector3[] GetLineSegment(Vector3 point)
     {
         float closestT = float.MaxValue;
         int closestIndex = 0;
         
         
-        for (int i = 0; i < line.Length; i++)
+        for (int i = 0; i < _points.Length; i++)
         {
-            float distance = Vector3.Distance(line[i], point);
+            float distance = Vector3.Distance(_points[i], point);
             if (distance < closestT)
             {
                 closestT = distance;
@@ -132,34 +197,52 @@ public class NPCMovementLine : MonoBehaviour
             }
         }
 
-        int nextIndex = closestIndex >= line.Length - 1 ? 0 : closestIndex + 1;
-        int prevIndex = closestIndex <= 0 ? line.Length - 2 : closestIndex - 1;
+        int nextIndex = closestIndex >= _points.Length - 1 ? 0 : closestIndex + 1;
+        int prevIndex = closestIndex <= 0 ? _points.Length - 2 : closestIndex - 1;
 
-        Vector3 nextIndexProjected = GetClosestPointOnFiniteLine(point, line[closestIndex], line[nextIndex] );
-        Vector3 prevIndexProjected = GetClosestPointOnFiniteLine(point, line[prevIndex], line[closestIndex] );
-        
+        Vector3 nextIndexProjected = GetClosestPointOnFiniteLine(point, _points[closestIndex], _points[nextIndex] );
+        Vector3 prevIndexProjected = GetClosestPointOnFiniteLine(point, _points[prevIndex], _points[closestIndex] );
         
         float nextIndexDistance = Vector3.Distance(nextIndexProjected, point);
         float prevIndexDistance = Vector3.Distance(prevIndexProjected, point);
 
-        Vector3 index = nextIndexDistance < prevIndexDistance ? nextIndexProjected : prevIndexProjected;
+        Vector3 index = nextIndexDistance < prevIndexDistance ? _points[nextIndex] : _points[prevIndex];
 
-        sampledPoint = GetPoint(point, line[closestIndex], index);
-        nearestPoint = line[closestIndex];
-        edges[0] = line[closestIndex];
-        edges[1] = index;
+        var retVector = new Vector3[2];
+        retVector[0] = index;
+        retVector[1] = _points[closestIndex];
+        return retVector;
     }
+
+    public Vector3 GetEdgeNormalFromLinePosition(Vector3 point)
+    {
+        var lineSegment = GetLineSegment(point);
+        var normal = (lineSegment[1] - lineSegment[0]).normalized;
+        return normal;
+    }
+
+    
+    public void RotateRigidbodyToMatchNormal(Rigidbody rb, Vector3 normal)
+    {
+        Transform tf = rb.transform;
+        var projectedPosition = GetClosestPointOnLine(rb.position);
+        Debug.DrawRay(projectedPosition, normal * 5, Color.cyan,20f);
+        //Debug.Log(normal);
+        Quaternion rotation = Quaternion.LookRotation(normal, tf.up);
+        Quaternion adjustedRotation = rotation * Quaternion.Euler(0, 90, 0);
+        rb.MoveRotation(adjustedRotation);
+        //Debug.Log("Rotation is "+adjustedRotation.eulerAngles);
+    }
+    
     
     public void DBG_GetInterpolatedValue(Vector3 point)
     {
         float closestT = float.MaxValue;
         int closestIndex = 0;
-        
-        
-        
-        for (int i = 0; i < points.Length; i++)
+
+        for (int i = 0; i < _points.Length; i++)
         {
-            float distance = Vector3.Distance(points[i], point);
+            float distance = Vector3.Distance(_points[i], point);
             if (distance < closestT)
             {
                 closestT = distance;
@@ -167,50 +250,50 @@ public class NPCMovementLine : MonoBehaviour
             }
         }
 
-        int nextIndex = closestIndex >= points.Length - 1 ? 0 : closestIndex + 1;
-        int prevIndex = closestIndex <= 0 ? points.Length - 2 : closestIndex - 1;
+        int nextIndex = closestIndex >= _points.Length - 1 ? 0 : closestIndex + 1;
+        int prevIndex = closestIndex <= 0 ? _points.Length - 2 : closestIndex - 1;
 
 
 
-        Vector3 nextIndexProjected = GetClosestPointOnFiniteLine(point, points[closestIndex], points[nextIndex] );
-        Vector3 prevIndexProjected = GetClosestPointOnFiniteLine(point, points[prevIndex], points[closestIndex] );
+        Vector3 nextIndexProjected = GetClosestPointOnFiniteLine(point, _points[closestIndex], _points[nextIndex] );
+        Vector3 prevIndexProjected = GetClosestPointOnFiniteLine(point, _points[prevIndex], _points[closestIndex] );
         
         
         float nextIndexDistance = Vector3.Distance(nextIndexProjected, point);
         float prevIndexDistance = Vector3.Distance(prevIndexProjected, point);
         Gizmos.color = Color.magenta;
 
-        Gizmos.DrawLine(point, points[nextIndex]);
+        Gizmos.DrawLine(point, _points[nextIndex]);
         Gizmos.color = Color.cyan;
 
-        Gizmos.DrawLine(point, points[prevIndex]);
+        Gizmos.DrawLine(point, _points[prevIndex]);
         Vector3 index = nextIndexDistance < prevIndexDistance ? nextIndexProjected : prevIndexProjected;
         if (nextIndexDistance < prevIndexDistance)
         {
             Gizmos.color = Color.white;
 
-            Gizmos.DrawCube(points[nextIndex], Vector3.one * 3f);
+            Gizmos.DrawCube(_points[nextIndex], Vector3.one * 3f);
 
         }
         else
         {
             Gizmos.color = Color.black;
 
-            Gizmos.DrawCube(points[prevIndex], Vector3.one * 3f);
+            Gizmos.DrawCube(_points[prevIndex], Vector3.one * 3f);
 
         }
         
-        Vector3 nearestPoint = points[closestIndex];
+        Vector3 nearestPoint = _points[closestIndex];
         Gizmos.color = Color.yellow;
         Gizmos.DrawCube(nearestPoint, Vector3.one * 3f);
         
         
         Gizmos.color = Color.green;
 
-        Gizmos.DrawCube(GetPoint(point,points[closestIndex], index ), Vector3.one * 1f);
+        Gizmos.DrawCube(GetPoint(point,_points[closestIndex], index ), Vector3.one * 1f);
         
         Gizmos.color = Color.grey;
-        Gizmos.DrawSphere(Interpolate(amount, points), 1f);
+        Gizmos.DrawSphere(Interpolate(debugInterpolatedValue), 1f);
         
         
 
@@ -221,38 +304,38 @@ public class NPCMovementLine : MonoBehaviour
 
         if (locations.Length < 2) return;
         
-        points = new Vector3[locations.Length + 1];
+        _points = new Vector3[locations.Length + 1];
         for(int j = 0; j < locations.Length; j++)
         {
-            points[j] = locations[j].position;
+            _points[j] = locations[j].position;
         }
 
-        points[locations.Length] = locations[0].position;
+        _points[locations.Length] = locations[0].position;
         
         Gizmos.color = Color.blue;
-        if (points != null && points.Length > 1)
+        if (_points != null && _points.Length > 1)
         {
-            for(int i = 0; i < points.Length -1; i++)
+            for(int i = 0; i < _points.Length -1; i++)
             {
-                Gizmos.DrawLine(points[i], points[i +1]);
+                Gizmos.DrawLine(_points[i], _points[i +1]);
             }
         }
         Gizmos.color = Color.cyan;
-        for(int i = 0; i < points.Length; i++)
+        for(int i = 0; i < _points.Length; i++)
         {
-            Gizmos.DrawCube(points[i], Vector3.one * 0.3f);
+            Gizmos.DrawCube(_points[i], Vector3.one * 0.3f);
         }
 
-        if (artificialPoint != null)
+        if (debugArtificialPoint != null)
         {
             Gizmos.color = Color.yellow;
-            Gizmos.DrawCube(artificialPoint.position, Vector3.one * 0.3f);
-            if (points != null && points.Length > 1)
+            Gizmos.DrawCube(debugArtificialPoint.position, Vector3.one * 0.3f);
+            if (_points != null && _points.Length > 1)
             {
                 //Vector3 pos = Interpolate(0.5f * (Mathf.Sin(Time.time) + 1));
                 //Vector3 pos = Interpolate(amount);
-                DBG_GetInterpolatedValue(artificialPoint.position);
-                Vector3 pos = Interpolate(amount, points);
+                DBG_GetInterpolatedValue(debugArtificialPoint.position);
+                Vector3 pos = Interpolate(debugInterpolatedValue);
                 Gizmos.color = Color.red;
                 Gizmos.DrawCube(pos, Vector3.one * 2f);
             }

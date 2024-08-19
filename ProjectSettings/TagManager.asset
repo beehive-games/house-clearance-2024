@@ -8,6 +8,7 @@ TagManager:
   - Cover
   - MeleeZone
   - TowerManager
+  - RotationZone
   layers:
   - Default
   - TransparentFX

@@ -11,9 +11,9 @@ namespace Environment
 
         private void CheckSetCorners(GameObject other)
         {
-            PlayerCharacter playerCharacter = other.GetComponentInParent<PlayerCharacter>();
-            if (playerCharacter == null) return;
-            playerCharacter.InTowerCorner(this);
+            CharacterBase character = other.GetComponentInParent<CharacterBase>();
+            if (character == null) return;
+            character.InTowerCorner(this);
         }
         
         private void OnCollisionStay(Collision other)
@@ -24,6 +24,13 @@ namespace Environment
         private void OnTriggerStay(Collider other)
         {
             CheckSetCorners(other.gameObject);
+        }
+        
+        private void OnTriggerExit(Collider other)
+        {
+            CharacterBase character = other.GetComponentInParent<CharacterBase>();
+            if (character == null) return;
+            character.OutTowerCorner();
         }
     }
 }

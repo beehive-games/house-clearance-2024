@@ -23,11 +23,7 @@ namespace Character.Player
         private bool _queueRotate;
         private float _slideToJumpMaxVX;
         private bool _shooting = false;
-        private TowerCorner _activeCorner;
-        public void InTowerCorner(TowerCorner currentCorner)
-        {
-            _activeCorner = currentCorner;
-        }
+        
         
         // -------------------------
         // Unity-based events
@@ -319,6 +315,11 @@ namespace Character.Player
         public override void EndRotation()
         {
             base.EndRotation();
+            currentTowerSide = _towerRotationService.TOWER_DIRECTION;
+            var targetPos = _activeCorner.transform.position;
+            var newPos = new Vector3(targetPos.x, _rigidbody.position.y, targetPos.z);
+            
+            _rigidbody.MovePosition(newPos);
         }
         
         // Called in FixedUpdate in parent class, only if we can move based on states

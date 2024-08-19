@@ -1,8 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Character.NPC;
 using Character.Player;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public class TowerRotationCharacterService : IService
 {
@@ -11,7 +13,7 @@ public class TowerRotationCharacterService : IService
     private readonly Dictionary<Rigidbody, Vector3> _endAngles = new();
     private readonly Dictionary<Rigidbody, Vector3> _endPositions = new();
     private TowerRotationService _service;
-    
+
     public void HookUpToTransitionService()
     {
         _service ??= ServiceLocator.GetService<TowerRotationService>();
@@ -26,6 +28,14 @@ public class TowerRotationCharacterService : IService
         ServiceLocator.GetService<TowerRotationService>().OnBeforeTurn -= OnBeforeTurn;
         ServiceLocator.GetService<TowerRotationService>().OnTurn -= OnTurn;
         ServiceLocator.GetService<TowerRotationService>().OnPostTurn -= OnPostTurn;
+    }
+
+    public bool AxesMatch(TowerDirection tower, TowerDirection character)
+    {
+        bool northSouthTower = tower is TowerDirection.North or TowerDirection.South;
+        bool northSouthCharacter = character is TowerDirection.North or TowerDirection.South;
+
+        return northSouthTower && northSouthCharacter;
     }
 
     public void Register(CharacterBase e)
@@ -77,20 +87,34 @@ public class TowerRotationCharacterService : IService
             
             tf.position = eTransform.position;
             tf.rotation = eTransform.rotation;
+            
+            
 
+            var player = e as PlayerCharacter;
+            var npc = e as NPCCharacter;
+            if (npc != null)
+            {
+                tf.RotateAround(_service.ROTATION_ORIGIN, Vector3.up, _service.ROTATION_AMOUNT);
+
+                Debug.Log("NPC = " +  tf.eulerAngles);
+            }
+            else// if (player != null)
+            {
+                
+                Debug.Log("player1 = " +  tf.eulerAngles);
+                tf.RotateAround(_service.ROTATION_ORIGIN, Vector3.up, _service.ROTATION_AMOUNT);
+                tf.eulerAngles = Vector3.zero;
+                Debug.Log("player2 = " +  tf.eulerAngles);
+
+                tf.position = new Vector3(_service.ROTATION_ORIGIN.x, eTransform.position.y, _service.ROTATION_ORIGIN.z);
+                
+            }
             
-            
-            tf.RotateAround(_service.ROTATION_ORIGIN, Vector3.up, _service.ROTATION_AMOUNT);
             var targetRotation = tf.eulerAngles;
             var targetPosition = tf.position;
             
             
             
-            var player = e as PlayerCharacter;
-            if (player != null)
-            {
-                targetPosition = new Vector3(_service.ROTATION_ORIGIN.x, eTransform.position.y, _service.ROTATION_ORIGIN.z);
-            }
             
             if (_endAngles.ContainsKey(eTransform))
             {
@@ -118,10 +142,14 @@ public class TowerRotationCharacterService : IService
     public void OnTurn()
     {
         _service ??= ServiceLocator.GetService<TowerRotationService>();
-        
+        GameObject tempTransform = new GameObject();
+        var tf = tempTransform.transform;
         foreach(var e in _characters)
         {
             var eTransform = e.GetComponent<Rigidbody>();
+            tf.position = eTransform.position;
+            tf.rotation = eTransform.rotation;
+            
             var rotation = eTransform.rotation.eulerAngles;
             var lerpAngle = Vector3.Lerp(rotation, _endAngles[eTransform],
                 _service.ROTATION_PROGRESSION);
@@ -132,12 +160,15 @@ public class TowerRotationCharacterService : IService
             {
                 eulerAngles = lerpAngle
             };
-            //e.transform.RotateAround(_service.ROTATION_ORIGIN, Vector3.up, _service.ROTATION_THIS_FRAME );
-            eTransform.Move(lerpPosition, rotationQuaterion);
+            tf.RotateAround(_service.ROTATION_ORIGIN, Vector3.up, _service.ROTATION_THIS_FRAME );
+            eTransform.Move(tf.position, rotationQuaterion);
+            
             Vector3 targetPos = new Vector3(e.transform.position.x, e._spriteObject.position.y, e.transform.position.z);
             e._spriteObject.position = targetPos;
             e.Rotation();
         }
+
+        Object.Destroy(tempTransform);
     }
     
     public void OnPostTurn()
@@ -145,13 +176,30 @@ public class TowerRotationCharacterService : IService
         foreach(var e in _characters)
         {
             var eTransform = e.GetComponent<Rigidbody>();
-            eTransform.position = _endPositions[eTransform];
-            var rotation = new Quaternion
+            //eTransform.position = _endPositions[eTransform];
+            var rotationQuaterion = new Quaternion();
+            rotationQuaterion.eulerAngles = _endAngles[eTransform];
+            
+            var npc = e as NPCCharacter;
+            if (npc != null)
             {
-                eulerAngles = _endAngles[eTransform]
-            };
+                Debug.Log("end NPC = " + _endAngles[eTransform] +", "+eTransform.rotation.eulerAngles);
+                eTransform.Move(_endPositions[eTransform],rotationQuaterion);
 
-            eTransform.rotation = rotation;
+            }
+            else
+            {
+                //eTransform.rotation = rotationQuaterion;
+                Debug.Log("end player = " + _endAngles[eTransform] +", "+eTransform.rotation.eulerAngles);
+                //eTransform.Move(_endPositions[eTransform], eTransform.rotation);
+                Debug.Log("end player2 = " + _endAngles[eTransform] +", "+eTransform.rotation.eulerAngles);
+            }
+            
+
+            
+            
+
+            //e.transform.rotation = rotationQuaterion;
             e.EndRotation();
         }
     }

@@ -5,6 +5,7 @@ using Character;
 using Character.NPC;
 using Character.Player;
 using Combat.Weapon;
+using Environment;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -23,6 +24,7 @@ public enum DamageType
 
 public class CharacterBase : MonoBehaviour
 {
+
 	[Header("Movement")]
 	[SerializeField] private protected float _moveSpeed = 10f;
 	[SerializeField] private protected float _movementSmoothing = 0.05f;
@@ -51,6 +53,7 @@ public class CharacterBase : MonoBehaviour
 	[SerializeField] private protected float _groundCheckDistance = 0.25f;
 	[SerializeField] private protected Transform _groundCheckPivot;
 	[SerializeField] private protected LayerMask _groundCheckLayers;
+	[FormerlySerializedAs("_rotationZoneLayers")] [SerializeField] private protected LayerMask _rotationZoneLayer;
 	[SerializeField] private protected float _groundCheckPivotRadius = 0.5f;
 
 	[Space] 
@@ -86,7 +89,7 @@ public class CharacterBase : MonoBehaviour
 	protected float _currentHealth;
 	private protected float _lastDamageCounter;
 	private protected Vector2 _previousVelocity;
-	RaycastHit2D[] _results;
+	private protected RaycastHit[] _results;
 	private HitBox[] _hitBoxes;
 	private Coroutine _shootFromCoverCO;
 	private Coroutine _downedTimerCO;
@@ -94,6 +97,10 @@ public class CharacterBase : MonoBehaviour
 	protected TowerRotationService _towerRotationService;
 	public Vector2 previousPosition;
 	private MovementState _preRotationMovementState;
+	public TowerDirection currentTowerSide = TowerDirection.North;
+	protected TowerCorner _activeCorner;
+	public Vector3 worldPosition;
+
 	
 	internal enum MovementState
 	{
@@ -129,6 +136,18 @@ public class CharacterBase : MonoBehaviour
 	protected internal virtual bool IsInCover()
 	{
 		return _movementState == MovementState.Cover && (_aliveState is AliveState.Alive or AliveState.Wounded);
+	}
+	
+	public void InTowerCorner(TowerCorner currentCorner)
+	{
+		_activeCorner = currentCorner;
+		//Debug.Log(gameObject.name+" added "+_activeCorner.towerCorner +" to active!");
+	}
+	
+	public void OutTowerCorner()
+	{
+		//Debug.Log(gameObject.name+" removed "+_activeCorner.towerCorner +" from active!");
+		_activeCorner = null;
 	}
 	
 	protected virtual void Awake()
@@ -258,6 +277,19 @@ public class CharacterBase : MonoBehaviour
 	{
 		_rigidbody.velocity = new Vector2(x, _rigidbody.VelocityY());
 	}
+	
+	protected void SetRigidbodyVelocityX(float x)
+	{
+		_rigidbody.velocity = new Vector3(x, _rigidbody.VelocityY(), _rigidbody.VelocityZ());
+	}
+	protected void SetRigidbodyVelocityY(float y)
+	{
+		_rigidbody.velocity = new Vector3(_rigidbody.VelocityX(), y, _rigidbody.VelocityZ());
+	}
+	protected void SetRigidbodyVelocityZ(float z)
+	{
+		_rigidbody.velocity = new Vector3(_rigidbody.VelocityX(), _rigidbody.VelocityY(), z);
+	}
 
 	protected virtual void HitCover()
 	{
@@ -282,6 +314,16 @@ public class CharacterBase : MonoBehaviour
 		}
 	}
 
+	protected virtual void HitTeleporter(Collider other)
+	{
+		var teleporter = other.GetComponent<Teleporter>();
+		if (teleporter != null && teleporter.teleportLocation != null)
+		{
+			_canTeleport = true;
+			_teleportLocation = teleporter.teleportLocation.position;
+		}
+	}
+	
 	protected void TryMelee()
 	{
 		NPCCharacter nearestValidTargetComponent = null;
@@ -334,7 +376,32 @@ public class CharacterBase : MonoBehaviour
 			_meleeTargets.Add(npcCharacter);
 		}
 	}
+	
+	protected virtual void HitMeleeZone(Collider other)
+	{
+		var meleeZone = other.GetComponent<MeleeZone>();
+		if (meleeZone == null || meleeZone.npcCharacter == null)
+		{
+			return;
+		}
+
+		NPCCharacter npcCharacter = meleeZone.npcCharacter;
+
+		if (!_meleeTargets.Contains(npcCharacter))
+		{
+			_meleeTargets.Add(npcCharacter);
+		}
+	}
 		
+	protected bool CheckHitCharacter(Collision other, ref CharacterBase character)
+	{
+		return CheckHitCharacter(other.gameObject, ref character);
+	}
+	
+	protected bool CheckHitCharacter(Collider other, ref CharacterBase character)
+	{
+		return CheckHitCharacter(other.gameObject, ref character);
+	}
 	
 	protected bool CheckHitCharacter(Collision2D other, ref CharacterBase character)
 	{
@@ -380,6 +447,34 @@ public class CharacterBase : MonoBehaviour
 		_movementState = MovementState.Immobile;
 		SetRigidbody2DVelocityX(0f);
 		_downedTimerCO = StartCoroutine(DownedTimerCO());
+	}
+	
+	protected bool CheckHitCover(Collider other)
+	{
+		var objectCheck = other.gameObject.layer == LayerMask.NameToLayer("Cover") &&
+		                  _movementState == MovementState.Slide;
+		if (objectCheck && _coverGameObject != other.gameObject)
+		{
+			_coverGameObject = other.gameObject;
+			return true;
+		}
+
+		return false;
+	}
+	
+	protected bool CheckLeaveCover(Collider other)
+	{
+		return other.gameObject.layer == LayerMask.NameToLayer("Cover");
+	}
+	
+	protected bool CheckHitTeleporter(Collider other)
+	{
+		return other.gameObject.layer == LayerMask.NameToLayer("Teleport");
+	}
+	
+	protected bool CheckHitMeleeZone(Collider other)
+	{
+		return other.gameObject.layer == LayerMask.NameToLayer("MeleeZone");
 	}
 
 	protected bool CheckHitCover(Collider2D other)
@@ -464,6 +559,17 @@ public class CharacterBase : MonoBehaviour
 		}
 	}
 
+	protected void LeaveMeleeZone(Collider other)
+	{
+		var meleeZone = other.GetComponent<MeleeZone>();
+		NPCCharacter npcCharacter = meleeZone.npcCharacter;
+
+		if (_meleeTargets.Contains(npcCharacter))
+		{
+			_meleeTargets.Remove(npcCharacter);
+		}
+	}
+	
 	public void ShootFromCover()
 	{
 		if (_movementState != MovementState.Cover)
@@ -517,6 +623,28 @@ public class CharacterBase : MonoBehaviour
 		_spriteRenderer.color = Color.white;
 	}
 
+	
+	private void OnTriggerExit(Collider other)
+	{
+		if (CheckLeaveCover(other)) LeaveCover();
+		if (CheckHitTeleporter(other)) LeaveTeleporter();
+		if (CheckHitMeleeZone(other)) LeaveMeleeZone(other);
+	}
+	
+	private void OnTriggerStay(Collider other)
+	{
+		if (CheckHitTeleporter(other)) HitTeleporter(other);
+		if (CheckHitMeleeZone(other)) HitMeleeZone(other);
+	}
+	
+	private void OnTriggerEnter(Collider other)
+	{
+		if (CheckHitCover(other)) HitCover();
+		if (CheckHitTeleporter(other)) HitTeleporter(other);
+		CharacterBase characterHit = null;
+		if (CheckHitCharacter(other, ref characterHit)) HitCharacter(characterHit);
+	}
+	
 	private void OnTriggerExit2D(Collider2D other)
 	{
 		if (CheckLeaveCover(other)) LeaveCover();
@@ -542,7 +670,11 @@ public class CharacterBase : MonoBehaviour
 	// inherited class behaviour
 	// i.e. for Player, we will take controller input
 	// for NPC we will use some AI logic
-	protected virtual void Move() { }
+	protected virtual void Move()
+	{
+		worldPosition = _rigidbody.position;
+		
+	}
 	
 	protected virtual bool CanMove()
 	{
@@ -550,9 +682,20 @@ public class CharacterBase : MonoBehaviour
 	}
 	
 	protected virtual void Update() { }
+
 	
+	protected void DrawRightDirection(Transform tf, float lineSize, float length, Color color)
+	{
+		Debug.DrawLine(tf.position + (tf.right *lineSize) + (tf.forward * lineSize), tf.position + tf.right * length, color);
+		Debug.DrawLine(tf.position + (tf.right * lineSize) - (tf.forward * lineSize), tf.position + tf.right * length, color);
+		Debug.DrawLine(tf.position + (tf.right * lineSize) + (tf.up * lineSize), tf.position + tf.right *length, color);
+		Debug.DrawLine(tf.position + (tf.right * lineSize) - (tf.up * lineSize), tf.position + tf.right * length, color);
+		Debug.DrawLine(tf.position, tf.position + tf.right * 2f, color);
+	}
 	protected virtual void FixedUpdate()
 	{
+		DrawRightDirection(transform, 0.8f, 3f, Color.white);
+		
 		if(CanMove())
 			Move();
 		
@@ -635,6 +778,28 @@ public class CharacterBase : MonoBehaviour
 		};
 	}
 
+	protected bool DirectionIsX()
+	{
+		if (_towerRotationService.TOWER_DIRECTION is TowerDirection.North or TowerDirection.South)
+		{
+			if (currentTowerSide is TowerDirection.North or TowerDirection.South)
+			{
+				return true;
+			}
+
+			return false;
+		}
+		else //_towerRotationService.TOWER_DIRECTION is TowerDirection.East or TowerDirection.West
+		{
+			if (currentTowerSide is TowerDirection.North or TowerDirection.South)
+			{
+				return false;
+			}
+
+			return true;
+		}
+	}
+
 	protected void MoveMechanics(bool isGrounded, float input, float slideToJumpMaxVx = -1f)
 	{
 		input = input * (_aliveState == AliveState.Wounded ? _woundedSpeed : 1f);
@@ -642,14 +807,33 @@ public class CharacterBase : MonoBehaviour
 		var velocity = _rigidbody.velocity;
 		var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
 		var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
-		velocity.x = Mathf.MoveTowards(velocity.x, _moveSpeed * input, maxSpeedDelta);
 
+		var isX = DirectionIsX();
+		
+		
+		if (isX)
+		{
+			velocity.x = Mathf.MoveTowards(velocity.x, _moveSpeed * input, maxSpeedDelta);
+		}
+		else
+		{
+			velocity.z = Mathf.MoveTowards(velocity.z, _moveSpeed * input, maxSpeedDelta);
+		}
+		
 		if (slideToJumpMaxVx >= 0f)
 		{
 			var min = Mathf.Min(slideToJumpMaxVx, -slideToJumpMaxVx);
 			var max = Mathf.Max(slideToJumpMaxVx, -slideToJumpMaxVx);
-			velocity.x = Mathf.Clamp(velocity.x, min, max);
+			if (isX)
+			{
+				velocity.x = Mathf.Clamp(velocity.x, min, max);
+			}
+			else
+			{
+				velocity.z = Mathf.Clamp(velocity.x, min, max);
+			}
 		}
+		
 		_rigidbody.velocity = velocity;
 		
 	}
