@@ -11,6 +11,7 @@ namespace Utils
 
         public static void SetVelocityY(this Rigidbody2D rb, float y)
         {
+            Debug.LogError("Velocity y set to "+y);
             rb.velocity = new Vector2(rb.velocity.y, y);
         }
 

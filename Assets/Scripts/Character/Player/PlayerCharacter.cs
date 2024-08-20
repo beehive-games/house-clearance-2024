@@ -1,9 +1,12 @@
-using Environment;
+using System.Collections;
+using System.Numerics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
-using Utils;
+using Quaternion = UnityEngine.Quaternion;
+using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
 
 namespace Character.Player
 {
@@ -13,6 +16,9 @@ namespace Character.Player
         [Header("Player controls")]
         [SerializeField] private InputActionAsset actions;
         [SerializeField] private UIDocument playerGUIDocument;
+
+        public Vector3 rigidbodyVelocity;
+
         private Label _healthLabel;
         private Label _ammoLabel;
         private InputAction _moveAction;
@@ -21,9 +27,10 @@ namespace Character.Player
         private bool _queueJump;
         private bool _queueSlide;
         private bool _queueRotate;
+        private bool _rotating;
         private float _slideToJumpMaxVX;
         private bool _shooting = false;
-        
+        private Coroutine _rotationRunner;
         
         // -------------------------
         // Unity-based events
@@ -205,27 +212,131 @@ namespace Character.Player
             _waitForMoveActionDepress = true;
         }
 
+        private IEnumerator RotationRunner()
+        {
+            
+            _movementState = MovementState.Rotating;
+
+            /*
+             * This needs a bit of explanation
+             *
+             * We need to rotate the player so that they are aligned with the same axis as NPCs/Enemies
+             * Those NPCs are aligned based on NPCMovementLine.points.
+             *
+             * We therefore need to find out which point on that movement line are we currently on and which
+             * we are "rotating on to".
+             *
+             * To do this, we first go through the line points and find the point tha matches our _activeCorner
+             * This lets us find out which points are the previous and next points in those line.
+             *
+             * The problem is, we don't always know which direction is the right one. If we get this wrong, we end
+             * up with inverse left/right controls.
+             *
+             * So, we take a dot product of our transform.right against the "current corner and the next corner",
+             * and again, our transform.right against the "current corner and previous corner".
+             * 
+             * Whichever returns the highest absolute value dot product _must_ be the line we are currently "on". So we
+             * rotate to the _other_ line.
+             *
+             * We also have to re-align our position to be centered on the line, so we don't get x/z offset as this would
+             * cause issues as NPCs are bound to these lines.
+             * 
+             */
+            
+            // Get corners
+            float counter = 0f;
+            var cornerTransform = _activeCorner.transform;
+            var locations = movementLine.locations;
+            var points = movementLine.points;
+
+            int currentIndex = 0, nextIndex = 0, previousIndex = 0;
+            
+            for (int i = 0; i < locations.Length; i++)
+            {
+                var location = locations[i];
+                
+                if (location == cornerTransform)
+                {
+                    currentIndex = i;
+                }
+            }
+            
+            nextIndex = currentIndex >= points.Length - 1 ? 0 : currentIndex + 1;
+            previousIndex = currentIndex <= 0 ? points.Length - 2 : currentIndex - 1;
+
+            // get normals
+            var normalNext = (points[currentIndex] - points[nextIndex]).normalized;
+            var normalPrev = (points[currentIndex] - points[previousIndex]).normalized;
+            
+            // get correct orientation of normals
+            var dotProductNormalNext = Vector3.Dot(transform.right, normalNext);
+            var dotProductNormalPrevious = Vector3.Dot(transform.right, normalPrev);
+            if (Mathf.Abs(dotProductNormalNext) < Mathf.Abs(dotProductNormalPrevious))
+            {
+                (normalNext, normalPrev) = (normalPrev, normalNext);
+            }
+            
+            // set up movement & rotation
+            var initialRotation = _rigidbody.rotation;
+            var targetRotation = Quaternion.FromToRotation(normalPrev, normalNext) * initialRotation;
+
+            var turnTime = _activeCorner.turnTime;
+
+            var targetPosition = points[currentIndex];
+            var currentPos = _rigidbody.position;
+            targetPosition.y = currentPos.y;
+            var direction = (targetPosition - currentPos).normalized;
+            var distance = Vector3.Distance(targetPosition, currentPos);
+            
+            // Perform the movement & rotation
+            while (counter < turnTime)
+            {
+                
+                Debug.DrawRay(_rigidbody.position, normalPrev, Color.red);
+                Debug.DrawRay(_rigidbody.position, normalNext, Color.green);
+                var increment = counter / turnTime;
+                _rigidbody.MoveRotation(Quaternion.Slerp(initialRotation, targetRotation, increment));
+                _rigidbody.MovePosition(currentPos + direction * (distance * increment));
+                counter += Time.deltaTime;
+                yield return 0;
+            }
+            
+            // Timer finished, clean up everything
+            _rigidbody.MoveRotation(targetRotation);
+            _rigidbody.MovePosition(targetPosition);
+            
+            _rotating = false;
+            _rotationRunner = null;
+            _movementState = MovementState.Walk;
+        }
+        
         private void XDirection(bool isGrounded)
         {
             // Rotation code, could do this better, but it should work for now
-            if (_towerRotationService.ROTATING && _queueRotate)
+            if (_rotating && _queueRotate)
             {
                 _queueRotate = false;
             }
-            if (_queueRotate && isGrounded && !_towerRotationService.ROTATING)
+            if (_queueRotate && isGrounded && !_rotating)
             {
-                if (_activeCorner != null)
+                if (_activeCorner != null && _rotationRunner == null)
                 {
-                    Debug.LogError("Need to rotate");
+                    //Debug.LogError("Need to rotate");
+                    
+                    // Truthy rotation states
+                    _rotating = true;
+                    _rotationRunner = StartCoroutine(RotationRunner());
+                    //_towerRotationService.Rotate(_activeCorner.towerCorner, _activeCorner.transform.position, _rigidbody.position, _activeCorner.turnTime );
+                    
+                    // Falsify other states
                     _queueRotate = false;
-                    _xInput = 0;
                     _queueSlide = false;
                     _queueJump = false;
-                    _towerRotationService.Rotate(_activeCorner.towerCorner, _activeCorner.transform.position, _rigidbody.position, _activeCorner.turnTime );
+                    _xInput = 0f;
                 }                
             }
 
-            if (_movementState == MovementState.Rotating && !_towerRotationService.ROTATING &&
+            if (_movementState == MovementState.Rotating && !_rotating &&
                 _aliveState is AliveState.Alive or AliveState.Wounded)
             {
                 _movementState = isGrounded ? MovementState.Walk : MovementState.Jump;
@@ -315,11 +426,11 @@ namespace Character.Player
         public override void EndRotation()
         {
             base.EndRotation();
-            currentTowerSide = _towerRotationService.TOWER_DIRECTION;
+            /*currentTowerSide = _towerRotationService.TOWER_DIRECTION;
             var targetPos = _activeCorner.transform.position;
             var newPos = new Vector3(targetPos.x, _rigidbody.position.y, targetPos.z);
             
-            _rigidbody.MovePosition(newPos);
+            _rigidbody.MovePosition(newPos);*/
         }
         
         // Called in FixedUpdate in parent class, only if we can move based on states
@@ -334,9 +445,8 @@ namespace Character.Player
 
             XDirection(isGrounded);
             YDirection(isGrounded);
-
+            rigidbodyVelocity = _rigidbody.velocity;
             if (!_shooting) return;
-            OnShootingHold();
             OnShootingHold();
         }
     }

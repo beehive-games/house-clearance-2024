@@ -9,6 +9,7 @@ TagManager:
   - MeleeZone
   - TowerManager
   - RotationZone
+  - MovementLine
   layers:
   - Default
   - TransparentFX
@@ -28,7 +29,7 @@ TagManager:
   - MeleeZone
   - Rotation
   - Weapon
-  - 
+  - MovementLine
   - 
   - 
   - 

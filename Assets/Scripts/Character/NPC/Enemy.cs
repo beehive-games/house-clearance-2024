@@ -7,17 +7,20 @@ namespace Character.NPC
 {
     public class Enemy : CharacterBase
     {
-
-        public NPCMovementLine movementLine;
+        
         public float patrolWaitTimer = 3f;
         public float patrolDistance = 4f;
-        public float patrolDistanceArrivalThreshold = 0.1f;
+        public float distanceArrivalThreshold = 1f;
         [SerializeField] private Transform lineOfSightOrigin;
         [SerializeField] private float maxPlayerVisibilityDistance = 10f;
         [SerializeField] private LayerMask playerVisibilityLayerMask;
         [SerializeField, Range(0,1)] private float playerInCoverDetectionDistance = 0.5f;
         [SerializeField, Range(0,1)] private float randomShotChance = 0.5f;
+        [SerializeField] private float distanceToPlayerToMaintain = 5f;
+        [SerializeField] private float distanceToPlayerToMaintainThreshold = 1f;
+        [SerializeField] private float maximumPursueDistance = 20f;
 
+        
         private Vector3 _startPosV3;
         private float _startPosLs;
         private Coroutine _waitTimer;
@@ -25,23 +28,19 @@ namespace Character.NPC
         private float _previousSign;
         private Vector3 _targetPositionV3;
         private bool _waiting;
+        private LineOfSight _lineOfSight;
 
-        private enum EnemyState
+        public enum EnemyState
         {
             Idling,
             Patrolling,
             Combat
         }
 
-        private EnemyState _enemyState;
+        public EnemyState _enemyState;
         private Transform _playerColliderTransform;
         private PlayerCharacter _playerCharacter;
-
-        public Enemy(Vector3 targetPos)
-        {
-            _targetPos = targetPos;
-        }
-
+        
         private void GrabPlayerCollider()
         {
             GameObject playerGameObject = GameObject.FindGameObjectWithTag("Player");
@@ -69,8 +68,25 @@ namespace Character.NPC
         protected override void Awake()
         {
             base.Awake();
+            if (movementLine == false)
+            {
+                var lines = GameObject.FindGameObjectsWithTag("MovementLine");
+                var distance = Mathf.Infinity;
+                var position = transform.position;
+                NPCMovementLine nearestLine = lines[0].GetComponent<NPCMovementLine>();
+                foreach (var line in lines)
+                {
+                    var distanceToLine = Vector3.Distance(position, line.transform.position);
+                    if (distanceToLine < distance)
+                    {
+                        distance = distanceToLine;
+                        nearestLine = line.GetComponent<NPCMovementLine>();
+                    }
+                }
 
-            var newPos =movementLine.GetClosestPointOnLine(_rigidbody.position);
+                movementLine = nearestLine;
+            }
+            var newPos = movementLine.GetClosestPointOnLine(_rigidbody.position);
             _rigidbody.MovePosition(newPos);
             _startPosV3 = _rigidbody.position;
             _startPosLs = movementLine.GetInterpolatedPointFromPosition(newPos);
@@ -90,6 +106,8 @@ namespace Character.NPC
                 Debug.LogError("Player character not found! (on "+gameObject.name+")");
             }
 
+            _lineOfSight = lineOfSightOrigin.GetComponent<LineOfSight>();
+
         }
         
         private void GetSetNewPatrolTargetPosition()
@@ -107,32 +125,47 @@ namespace Character.NPC
 
             Vector3 playerPosition = _playerColliderTransform.position;
             Vector3 origin = lineOfSightOrigin.position;
-            Vector3 direction = (playerPosition - origin).normalized;
+            Vector3 direction = _lineOfSight.GetLookDirection(); //(playerPosition - origin).normalized;
 
-            float dotProduct = Vector3.Dot(direction, transform.right);
+            var dbg_offset = Vector3.up * 0.2f;
+
+            Debug.DrawLine(origin  + dbg_offset, playerPosition + dbg_offset, new Color(0.5f,0.75f,0.25f));
+
+            
+            var facingDirection = _spriteRenderer.flipX ? -1 : 1;
+            float dotProduct = Vector3.Dot(direction, transform.right * facingDirection);
             if (dotProduct < 0.9f)
             {
+                Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.magenta);
+                Debug.DrawRay(origin - dbg_offset, transform.right * facingDirection, Color.magenta * 0.5f);
                 return false;
             }
-            
+
+            _results = new RaycastHit[1];
             int hits = Physics.RaycastNonAlloc(origin, direction, _results, maxPlayerVisibilityDistance, playerVisibilityLayerMask);
             
             if (hits <= 0)
             {
+                Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.red);
                 return false;
             }
 
             if (!_results[0].collider.CompareTag("Player"))
             {
+                Debug.DrawLine(origin, _results[0].point, Color.yellow);
                 return false;
             }
             
             if (_playerCharacter.IsInCover() && _enemyState is not EnemyState.Combat && Vector3.Distance(playerPosition, _rigidbody.position) > playerInCoverDetectionDistance )
             {
+                Debug.DrawLine(origin, _results[0].point, new Color(1,0.5f,0f));
                 return false;
             }
+            var hitPlayer = _results[0].collider.CompareTag("Player");
+            
+            Debug.DrawLine(origin, _results[0].point, hitPlayer ? Color.green : Color.blue);
 
-            return _results[0].collider.CompareTag("Player");
+            return hitPlayer;
         }
         
         private IEnumerator PatrolWait()
@@ -146,13 +179,13 @@ namespace Character.NPC
             _waitTimer = null;
         }
 
-        private bool PatrolReachedDestination()
+        private bool ReachedDestination()
         {
             var targetPositionV2 = new Vector2(_targetPositionV3.x, _targetPositionV3.z);
             var rigidbodyPosition = _rigidbody.position;
             var rigidbodyPositionV2 = new Vector2(rigidbodyPosition.x, rigidbodyPosition.z);
             var distance = Vector3.Distance(targetPositionV2, rigidbodyPositionV2);
-            return distance < patrolDistanceArrivalThreshold;
+            return distance < distanceArrivalThreshold;
         }
 
         private void EnemyMoveMechanics(bool isGrounded, float input)
@@ -235,26 +268,72 @@ namespace Character.NPC
             var forwardPosition = movementLine.Interpolate(forwardDirectionForNormalInterpolated);
             var normal = (forwardPosition - transformPos).normalized;
 
+
+            var dotProduct = Mathf.Abs(Vector3.Dot(transform.right, normal));
+            if (dotProduct < 0.95f)
+            {
+                var realignPos = movementLine.GetClosestPointOnLine(_rigidbody.position);
+                var newPos = new Vector3(realignPos.x, _rigidbody.position.y, realignPos.z);
+                _rigidbody.MovePosition(newPos);
+            }
+            
             Debug.DrawLine(_rigidbody.position, targetPos, Color.magenta);
             movementLine.RotateRigidbodyToMatchNormal(_rigidbody, normal);
+
+            
+        }
+        
+        private void SetTargetToLocationFromPlayer(Vector3 playerPosition, Vector3 currentPosition)
+        {
+            var distance = Vector3.Distance(playerPosition, currentPosition);
+            var minDistance = distanceToPlayerToMaintain - distanceToPlayerToMaintainThreshold;
+            var maxDistance = distanceToPlayerToMaintain + distanceToPlayerToMaintainThreshold;
+            
+            if (distance < minDistance || distance > maxDistance)
+            {
+                var xzPlayerPosition = playerPosition;
+                xzPlayerPosition.y = currentPosition.y;
+                
+                var directionToPlayer = xzPlayerPosition - currentPosition;
+                directionToPlayer.Normalize();
+
+                var offset = directionToPlayer * ( distanceToPlayerToMaintain);
+                var targetPosition = xzPlayerPosition - offset;
+                targetPosition = movementLine.GetClosestPointOnLine(targetPosition);
+                _targetPositionV3 = targetPosition;
+            }
         }
         
         protected override void Move()
         {
             
             base.Move();
-
+            if(movementLine == null) return;
+            
             var isGrounded = IsGrounded();
             var canSeePlayer = RaycastPlayer();
+            var playerBeyondDistance = Vector3.Distance(_playerColliderTransform.position, _rigidbody.position) >
+                                       maximumPursueDistance;
             var walk = false;
             // temp
             var _damageTaken = false;
-            
+
+            if (playerBeyondDistance && _enemyState is EnemyState.Combat)
+            {
+                _enemyState = EnemyState.Patrolling;
+            }
             if(canSeePlayer || _enemyState is EnemyState.Combat || _damageTaken)
             {
+                if (_waitTimer != null)
+                {
+                    StopCoroutine(_waitTimer);
+                    _waitTimer = null;
+                }
+                
                 _damageTaken = false;
                 
                 // face player - set new target location
+                SetTargetToLocationFromPlayer(_playerColliderTransform.position, _rigidbody.position);
                 
                 //CombatMovement(isGrounded, canSeePlayer);
 
@@ -263,11 +342,15 @@ namespace Character.NPC
                 {
                     _weaponInstance.Fire(true);
                 }
-                walk = true;
+
+                if (!ReachedDestination())
+                {
+                    walk = true;
+                }
             }
             else
             {
-                var reachedDestination = PatrolReachedDestination();
+                var reachedDestination = ReachedDestination();
                 if (_enemyState is EnemyState.Patrolling)
                 {
                     if (reachedDestination)

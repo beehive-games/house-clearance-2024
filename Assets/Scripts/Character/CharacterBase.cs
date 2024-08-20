@@ -88,18 +88,20 @@ public class CharacterBase : MonoBehaviour
 
 	protected float _currentHealth;
 	private protected float _lastDamageCounter;
-	private protected Vector2 _previousVelocity;
+	private protected Vector3 _previousVelocity;
+	private protected RaycastHit2D[] _results2D;
 	private protected RaycastHit[] _results;
 	private HitBox[] _hitBoxes;
 	private Coroutine _shootFromCoverCO;
 	private Coroutine _downedTimerCO;
 	private GameObject _coverGameObject;
 	protected TowerRotationService _towerRotationService;
-	public Vector2 previousPosition;
+	public Vector3 previousPosition;
 	private MovementState _preRotationMovementState;
 	public TowerDirection currentTowerSide = TowerDirection.North;
 	protected TowerCorner _activeCorner;
 	public Vector3 worldPosition;
+	protected NPCMovementLine movementLine;
 
 	
 	internal enum MovementState
@@ -153,7 +155,7 @@ public class CharacterBase : MonoBehaviour
 	protected virtual void Awake()
 	{
 		StartUpChecks();
-		_results = new RaycastHit2D[1];
+		_results2D = new RaycastHit2D[1];
 	}
 
 	protected void SetRigidbodyX(float xValue)
@@ -623,6 +625,15 @@ public class CharacterBase : MonoBehaviour
 		_spriteRenderer.color = Color.white;
 	}
 
+	private void HitNPCMovementLine(Collider other)
+	{
+		movementLine = other.GetComponent<NPCMovementLine>();
+	}
+
+	private bool CheckHitNPCMovementLine(Collider other)
+	{
+		return other.gameObject.layer == LayerMask.NameToLayer("MovementLine");
+	}
 	
 	private void OnTriggerExit(Collider other)
 	{
@@ -635,6 +646,7 @@ public class CharacterBase : MonoBehaviour
 	{
 		if (CheckHitTeleporter(other)) HitTeleporter(other);
 		if (CheckHitMeleeZone(other)) HitMeleeZone(other);
+		if (CheckHitNPCMovementLine(other)) HitNPCMovementLine(other);
 	}
 	
 	private void OnTriggerEnter(Collider other)
@@ -673,7 +685,6 @@ public class CharacterBase : MonoBehaviour
 	protected virtual void Move()
 	{
 		worldPosition = _rigidbody.position;
-		
 	}
 	
 	protected virtual bool CanMove()
@@ -700,7 +711,7 @@ public class CharacterBase : MonoBehaviour
 			Move();
 		
 		// Add extra gravity
-		_rigidbody.AddForce((_gravityMultiplier - 1) * -9.81f * Vector2.up);
+		_rigidbody.AddForce((_gravityMultiplier - 1) * -9.81f * Vector3.up);
 		_previousVelocity = _rigidbody.velocity;
 		var position = _rigidbody.position;
 		
@@ -716,32 +727,26 @@ public class CharacterBase : MonoBehaviour
 		}
 
 		previousPosition = _rigidbody.position;
-		//_spriteRenderer.color = _movementState is MovementState.Cover or MovementState.Teleporting ? _transitionalColorTint : Color.white;
 	}
 
 	public virtual void BeginRotation()
 	{
-		_preRotationMovementState = _movementState;
-		_movementState = MovementState.Rotating;
-		var stopVelocity = new Vector3(0f, _rigidbody.velocity.y, 0f);
-		_rigidbody.velocity = stopVelocity;
 
 	}
 
 	public virtual void Rotation()
 	{
-		var stopVelocity = new Vector3(0f, _rigidbody.velocity.y, 0f);
-		_rigidbody.velocity = stopVelocity;
+
 	}
         
 	public virtual void EndRotation()
 	{
-		_movementState = _preRotationMovementState;
+
 	}
 	
 	private bool GroundCheckNonAlloc(Vector2 position, Vector2 direction, float maxDistance, LayerMask layerMask)
 	{
-		int hits = Physics2D.RaycastNonAlloc(position, direction, _results, maxDistance, layerMask);
+		int hits = Physics2D.RaycastNonAlloc(position, direction, _results2D, maxDistance, layerMask);
 		return hits > 0;
 	}
 
@@ -802,7 +807,7 @@ public class CharacterBase : MonoBehaviour
 
 	protected void MoveMechanics(bool isGrounded, float input, float slideToJumpMaxVx = -1f)
 	{
-		input = input * (_aliveState == AliveState.Wounded ? _woundedSpeed : 1f);
+		/*input = input * (_aliveState == AliveState.Wounded ? _woundedSpeed : 1f);
 		
 		var velocity = _rigidbody.velocity;
 		var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
@@ -834,6 +839,30 @@ public class CharacterBase : MonoBehaviour
 			}
 		}
 		
+		_rigidbody.velocity = velocity;*/
+		input = input * (_aliveState == AliveState.Wounded ? _woundedSpeed : 1f);
+		
+		var velocity = _rigidbody.velocity;
+            
+		var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
+		var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
+		var targetVelocity = transform.right * (input * _moveSpeed);
+
+		float dp = Vector3.Dot(transform.right, velocity);
+
+		if (dp > 0.95f)
+		{
+			velocity = new Vector3(
+				Mathf.MoveTowards(velocity.x, targetVelocity.x, maxSpeedDelta),
+				velocity.y,
+				Mathf.MoveTowards(velocity.z, targetVelocity.z, maxSpeedDelta)
+			);
+		}
+		else
+		{
+			velocity = new Vector3(targetVelocity.x, velocity.y, targetVelocity.z);
+		}
+            
 		_rigidbody.velocity = velocity;
 		
 	}
@@ -918,7 +947,8 @@ public class CharacterBase : MonoBehaviour
 	
 	protected virtual void Jump()
 	{
-		_rigidbody.AddForce(_jumpForce * Vector2.up);
+		_rigidbody.AddForce(_jumpForce * Vector3.up);
+		Debug.Log("Jumping with force "+(_jumpForce * Vector3.up) +", yV= "+_rigidbody.velocity.y );
 	}
 	
 
