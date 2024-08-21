@@ -6,6 +6,13 @@ namespace Environment
 {
     public class TowerCorner : MonoBehaviour
     {
+        public enum TowerCorners
+        {
+            NorthEast,
+            SouthEast,
+            SouthWest,
+            NorthWest
+        }
         public TowerCorners towerCorner;
         public float turnTime = 2f;
 

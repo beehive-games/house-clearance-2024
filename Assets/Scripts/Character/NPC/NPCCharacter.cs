@@ -106,11 +106,6 @@ namespace Character.NPC
                 Gizmos.DrawCube(_activeCorner.transform.position + (Vector3.up), Vector3.one * 0.3f); 
             }
 
-            bool snorth = currentTowerSide is TowerDirection.North or TowerDirection.South;
-            
-            Gizmos.color = snorth ? Color.black : Color.white;
-            Gizmos.DrawCube(_startLocation, new Vector3( snorth? 4: 1, 1, snorth ? 1: 4));
-
         }
         
         private void DrawStateGizmo(DebugState dbgState)
@@ -220,6 +215,10 @@ namespace Character.NPC
         
         protected override void Awake()
         {
+            Debug.LogError("NPCCharacter.cs is DEPRECATED! Disabling!");
+            this.enabled = false;
+            return;
+            
             base.Awake();
             GrabPlayerCollider();
             RevalidateStartPatrolPosition();
@@ -252,21 +251,13 @@ namespace Character.NPC
 
         private void UpdateTargetLocation(Vector3 newLocation)
         {
-            Debug.Log("<color=#4444BB> "+currentTowerSide +" and " +_towerRotationService.TOWER_DIRECTION +"</color>");
             _targetLocation = newLocation;
         }
         
         private void CreateTargetLocation()
         {
             float sign = Random.value > 0.5f ? 1f : -1f;
-            Vector3 direction = currentTowerSide is TowerDirection.North or TowerDirection.South
-                ? _towerRotationService.TOWER_DIRECTION is TowerDirection.North or TowerDirection.South
-                    ? Vector3.right
-                    : Vector3.forward
-                : _towerRotationService.TOWER_DIRECTION is TowerDirection.North or TowerDirection.South
-                    ? Vector3.forward
-                    : Vector3.right;
-            Debug.Log("<color=#44BB44> "+currentTowerSide +" and " +_towerRotationService.TOWER_DIRECTION +", " +direction+"</color>");
+            Vector3 direction = Vector3.right;
             UpdateTargetLocation(_startLocation + (direction * (sign * _patrolRange)));
         }
 
@@ -292,134 +283,7 @@ namespace Character.NPC
             return a - b < 0f ? -1f : 1f;
         }
 
-        private float LocalAxisValue(Vector3 vector, TowerDirection sideAxis)
-        {
-            var returnValue = 1f;
-            
-            /*returnValue = sideAxis switch
-            {
-                TowerDirection.North => vector.x,
-                TowerDirection.East => vector.z,
-                TowerDirection.South => vector.x,
-                TowerDirection.West => vector.z,
-                _ => 0f
-            };
-
-            return returnValue;*/
-            switch (sideAxis)
-            {
-                case TowerDirection.North :
-                    if (currentTowerSide is TowerDirection.North or TowerDirection.South)
-                    {
-                        returnValue = vector.x;
-                    }
-                    else
-                    {
-                        returnValue =  vector.z;
-                    }
-
-                    break;
-                case TowerDirection.East :
-                    if (currentTowerSide is TowerDirection.North or TowerDirection.South)
-                    {
-                        returnValue =  vector.z;
-                    }
-                    else
-                    {
-                        returnValue =  vector.x;
-                    }
-                    break;
-
-                case TowerDirection.South :
-                    if (currentTowerSide is TowerDirection.North or TowerDirection.South)
-                    {
-                        returnValue =  vector.x;
-                    }
-                    else
-                    {
-                        returnValue =  vector.z;
-                    }
-                    break;
-
-                case TowerDirection.West :
-                    if (currentTowerSide is TowerDirection.North or TowerDirection.South)
-                    {
-                        returnValue =  vector.z;
-                    }
-                    else
-                    {
-                        returnValue = vector.x;
-                    }
-                    break;
-            }
-            /*
-            var returnValue = sideAxis switch
-            {
-                TowerDirection.North => vector.x,
-                TowerDirection.East => vector.z,
-                TowerDirection.South => vector.x,
-                TowerDirection.West => vector.z,
-                _ => 0f
-            };
-*/
-            return returnValue;
-        }
-        
-        private float RotateNPC(TowerDirection characterAxis, TowerCorners cornerHit)
-        {
-            var returnValue = 0f;
-            switch (cornerHit)
-            {
-                case TowerCorners.NorthEast :
-                    if (characterAxis is TowerDirection.North)
-                    {
-                        returnValue = -1f;
-                    }
-                    else
-                    {
-                        returnValue =  1f;
-                    }
-
-                    break;
-                case TowerCorners.SouthEast :
-                    if (characterAxis is TowerDirection.East)
-                    {
-                        returnValue =  -1f;
-                    }
-                    else
-                    {
-                        returnValue =  1f;
-                    }
-                    break;
-
-                case TowerCorners.SouthWest :
-                    if (characterAxis is TowerDirection.South)
-                    {
-                        returnValue =  -1f;
-                    }
-                    else
-                    {
-                        returnValue =  1f;
-                    }
-                    break;
-
-                case TowerCorners.NorthWest :
-                    if (characterAxis is TowerDirection.West)
-                    {
-                        returnValue =  -1f;
-                    }
-                    else
-                    {
-                        returnValue =  1f;
-                    }
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(cornerHit), cornerHit, null);
-            }
-
-            return returnValue;
-        }
+       
 
         float GetSignOfFacingDirection()
         {
@@ -452,8 +316,8 @@ namespace Character.NPC
             Vector3 velocity = _rigidbody.velocity;
             var fixedDelta = Time.fixedDeltaTime;
 
-            float targetLocation = LocalAxisValue(_targetLocation, _towerRotationService.TOWER_DIRECTION);
-            float positionLocation = LocalAxisValue(position, _towerRotationService.TOWER_DIRECTION);
+            float targetLocation = 1;
+            float positionLocation = 1;
             
             float sign = GetSignOfDirection(targetLocation, positionLocation);
 
@@ -475,52 +339,8 @@ namespace Character.NPC
             {
                 DrawStateGizmo(DebugState.Rotating);
             }
-            if (_followingRotation && _activeCorner != null)
-            {
-                
 
-                _followingRotation = false;
-                var towerCornerPos = _activeCorner.transform.position;
-                var newPos = new Vector3(towerCornerPos.x, _rigidbody.position.y, towerCornerPos.z);
-                _startLocation = newPos;
 
-                var rotationAmount = 
-                    RotateNPC(currentTowerSide, _activeCorner.towerCorner);
-                var rotationValue = Quaternion.Euler((transform.rotation.eulerAngles ) + (transform.up * (90f * rotationAmount)));
-                //Debug.Log("Rotate : " +_targetLocation +" by " +rotationValue.eulerAngles);
-                var positionValue = newPos;//new Vector3(_targetLocation.x, _rigidbody.position.y, _targetLocation.z);
-                _rigidbody.Move(positionValue,rotationValue);
-
-                var player = RaycastPlayer();
-                if (player)
-                {
-                    SetTargetToLocationFromPlayer(_playerColliderTransform.position, _rigidbody.position);
-                }
-                else
-                {
-                    GetNewTargetLocation(isGrounded, Time.fixedDeltaTime + (1f/30f)); // hack to wait a short moment to allow rotation to happen
-                }
-                
-                switch (currentTowerSide)
-                {
-                    case TowerDirection.North:
-                        currentTowerSide = rotationAmount < 0f ? TowerDirection.East : TowerDirection.West;
-                        break;
-                    case TowerDirection.East: 
-                        currentTowerSide = rotationAmount < 0f ? TowerDirection.South : TowerDirection.North;
-                        break;;
-                    case TowerDirection.South: 
-                        currentTowerSide = rotationAmount < 0f ? TowerDirection.West : TowerDirection.East;
-                        break;;
-                    case TowerDirection.West: 
-                        currentTowerSide = rotationAmount < 0f ? TowerDirection.North : TowerDirection.South;
-                        break;;
-                }
-                
-                Debug.Log("NPC is now on " +currentTowerSide);
-                
-                return;
-            }
 
             bool getNewPosition = hitWall || !hitFloor || reachedDestination || _couldSeePlayer;
             
@@ -549,26 +369,24 @@ namespace Character.NPC
         private void DuringSlide(bool isGrounded)
         {
             _queueSlide = false;
-            var rigidbodyVelocity = LocalAxisValue(_rigidbody.velocity, currentTowerSide);
-            if (!isGrounded || Mathf.Abs(rigidbodyVelocity) < 1f)
+            var velocity = _rigidbody.velocity;
+            var maxV = Mathf.Max(Mathf.Abs(velocity.x), Mathf.Abs(velocity.z));
+            if (!isGrounded || maxV < 0.1f)
             {
                 StopSlide();
             }
             else
             {
-                float x = rigidbodyVelocity;
-                bool sign = Mathf.Sign(x) < 0f;
                 float deltaV = _slideFriction * Time.fixedDeltaTime;
-                var clamped1 = Mathf.Clamp(x + deltaV, x, 0f);
-                var clamped2 = Mathf.Clamp(x - deltaV, 0f, x);
-                if (DirectionIsX())
-                {
-                    SetRigidbodyVelocityX(sign ? clamped1 : clamped2);
-                }
-                else
-                {
-                    SetRigidbodyVelocityZ(sign ? clamped1 : clamped2);
-                }
+
+                var rbDirection = _rigidbody.velocity;
+                rbDirection.y = 0f;
+                var speed = rbDirection.magnitude;
+                rbDirection.Normalize();
+                speed -= deltaV;
+                rbDirection *= speed;
+                rbDirection.y = _rigidbody.velocity.y;
+                _rigidbody.velocity = rbDirection;
             }
         }
 
@@ -617,7 +435,7 @@ namespace Character.NPC
             
             if (distance < minDistance || distance > maxDistance)
             {
-                var isFrontal = currentTowerSide is TowerDirection.North or TowerDirection.South;
+                var isFrontal = true;
                 var directionalAdjusted = isFrontal
                     ? playerPosition.x - currentPosition.x
                     : playerPosition.z - currentPosition.z;
@@ -690,15 +508,13 @@ namespace Character.NPC
             float maxMovePerFrameX = Mathf.Max(Mathf.Abs(velocity.x) * fixedDelta,_forwardCheckIntervalDistance);
             float maxMovePerFrameY = Mathf.Max(Mathf.Abs(velocity.y) * fixedDelta,_groundCheckDistance);
             
-            var directionalAdjusted = currentTowerSide is TowerDirection.North or TowerDirection.South
-                ? _targetLocation.x - position.x
-                : _targetLocation.x - position.x;
+            var directionalAdjusted = 
+                _targetLocation.x - position.x;
             bool reachedDestination = Mathf.Abs(directionalAdjusted) < maxMovePerFrameX;
 
             
-            var signedDirectionalAdjusted = currentTowerSide is TowerDirection.North or TowerDirection.South
-                ? new Vector2(_targetLocation.x, position.x)
-                : new Vector2(_targetLocation.x, position.x);
+            var signedDirectionalAdjusted =
+                new Vector2(_targetLocation.x, position.x);
             float signedDirection = GetSignOfDirection(signedDirectionalAdjusted.x, signedDirectionalAdjusted.y);
             var direction = reachedDestination ? 0f : signedDirection ;
             
@@ -848,7 +664,7 @@ namespace Character.NPC
             var tempGameObject = new GameObject();
             var gameObjectTransform = tempGameObject.transform;
             gameObjectTransform.position = _startLocation;
-            gameObjectTransform.RotateAround(_towerRotationService.ROTATION_ORIGIN, Vector3.up, _towerRotationService.ROTATION_AMOUNT);
+            //gameObjectTransform.RotateAround(_towerRotationService.ROTATION_ORIGIN, Vector3.up, _towerRotationService.ROTATION_AMOUNT);
             gameObjectTransform.position = new Vector3(gameObjectTransform.position.x, transform.position.y,
                 gameObjectTransform.position.z);
             _startLocation = gameObjectTransform.position;
@@ -862,7 +678,7 @@ namespace Character.NPC
             
             var myPosition = _rigidbody.position;
             RaycastHit[] raycastHits = new RaycastHit[1];
-            var targetPos = _towerRotationService.ROTATION_ORIGIN + (Vector3.up * 0.1f);
+            var targetPos = (Vector3.up * 0.1f);
             var direction = (targetPos - myPosition).normalized;
             var hits = Physics.RaycastNonAlloc(myPosition, direction, raycastHits, Mathf.Infinity, _groundCheckLayers + _rotationZoneLayer);
             
@@ -873,7 +689,7 @@ namespace Character.NPC
                 _patrolWaitCo = null;  
             }
             
-            var dbgtargetPos = _towerRotationService.ROTATION_ORIGIN + (Vector3.up * 0.1f);
+            var dbgtargetPos = (Vector3.up * 0.1f);
 
             var dbgdirection = (dbgtargetPos - (myPosition  + (Vector3.up * 0.5f))).normalized;
             //Debug.DrawRay(dbgtargetPos,dbgdirection,Color.magenta, 5f);
@@ -882,7 +698,7 @@ namespace Character.NPC
             // if we hit something, see if its the right thing
             if (canReachRotationPoint && _pursusing && _couldSeePlayer)
             {
-                UpdateTargetLocation(_towerRotationService.ROTATION_ORIGIN);
+                UpdateTargetLocation(transform.position);
                 _followingRotation = true;
                 // TODO: set a new state to rotate and face player once we get there
                 Debug.DrawLine(myPosition, raycastHits[0].point,Color.green, 5f);

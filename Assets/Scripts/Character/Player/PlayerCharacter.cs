@@ -188,12 +188,9 @@ namespace Character.Player
             }
             else
             {
-                float x = _rigidbody.velocity.x;
-                bool sign = Mathf.Sign(x) < 0f;
+
                 float deltaV = _slideFriction * Time.fixedDeltaTime;
-                var clamped1 = Mathf.Clamp(x + deltaV, x, 0f);
-                var clamped2 = Mathf.Clamp(x - deltaV, 0f, x);
-                //SetRigidbody2DVelocityX(sign ? clamped1 : clamped2);
+
 
                 var rbDirection = _rigidbody.velocity;
                 rbDirection.y = 0f;

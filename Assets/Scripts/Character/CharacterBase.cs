@@ -95,10 +95,8 @@ public class CharacterBase : MonoBehaviour
 	private Coroutine _shootFromCoverCO;
 	private Coroutine _downedTimerCO;
 	private GameObject _coverGameObject;
-	protected TowerRotationService _towerRotationService;
 	public Vector3 previousPosition;
 	private MovementState _preRotationMovementState;
-	public TowerDirection currentTowerSide = TowerDirection.North;
 	protected TowerCorner _activeCorner;
 	public Vector3 worldPosition;
 	protected NPCMovementLine movementLine;
@@ -270,8 +268,6 @@ public class CharacterBase : MonoBehaviour
 		}
 
 		_meleeTargets = new List<NPCCharacter>();
-		
-		_towerRotationService ??= ServiceLocator.GetService<TowerRotationService>();
 
 	}
 	
@@ -786,28 +782,6 @@ public class CharacterBase : MonoBehaviour
 			DamageType.Fire => AliveState.DeadBurnt,
 			_ => AliveState.Alive
 		};
-	}
-
-	protected bool DirectionIsX()
-	{
-		if (_towerRotationService.TOWER_DIRECTION is TowerDirection.North or TowerDirection.South)
-		{
-			if (currentTowerSide is TowerDirection.North or TowerDirection.South)
-			{
-				return true;
-			}
-
-			return false;
-		}
-		else //_towerRotationService.TOWER_DIRECTION is TowerDirection.East or TowerDirection.West
-		{
-			if (currentTowerSide is TowerDirection.North or TowerDirection.South)
-			{
-				return false;
-			}
-
-			return true;
-		}
 	}
 
 	protected void MoveMechanics(bool isGrounded, float input, float slideToJumpMaxVx = -1f)

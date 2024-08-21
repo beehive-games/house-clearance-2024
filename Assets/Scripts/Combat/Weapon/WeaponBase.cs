@@ -45,7 +45,6 @@ namespace Combat.Weapon
         private Coroutine _reloadTimer;
         private CharacterBase _parentCharacter;
         private Rigidbody _parentCharacterRB;
-        private TowerRotationService _service;
         [HideInInspector] public Allegiance allegiance;
       
         
@@ -56,7 +55,7 @@ namespace Combat.Weapon
         
         public void Setup(Transform newParent)
         {
-            _service = ServiceLocator.GetService<TowerRotationService>();
+
             
             _parentCharacter = gameObject.transform.parent.parent.GetComponent<CharacterBase>();
             _parentCharacterRB = _parentCharacter.GetComponent<Rigidbody>();
