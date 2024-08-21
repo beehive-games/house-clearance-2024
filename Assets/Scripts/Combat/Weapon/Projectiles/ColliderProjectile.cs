@@ -46,6 +46,14 @@ namespace Combat.Weapon.Projectiles
             }
         }
         
+        public void SetStartSpeed(Vector3 newVelocity)
+        {
+            if (_rigidbody != null)
+            {
+                _rigidbody.velocity = newVelocity;
+            }
+        }
+        
         protected override void DoDamage(HitBox hitBox)
         {
             _collider.enabled = false;

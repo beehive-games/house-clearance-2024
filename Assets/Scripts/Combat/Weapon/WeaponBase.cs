@@ -118,20 +118,24 @@ namespace Combat.Weapon
             _reloadTimer = null;
         }
 
-        private void SpawnThing(GameObject gameObj, Vector2 position, Quaternion rotation, Vector3 spawnVelocity)
+        private void SpawnThing(GameObject gameObj, Vector3 position, Quaternion rotation, Vector3 spawnVelocity)
         {
             if (gameObj == null) return;
 
-            var adjustedRotation = Quaternion.Euler(rotation.eulerAngles + Vector3.forward * 180f);
+            var lookAtTarget = transform.forward;
+            Quaternion lookRotation = Quaternion.LookRotation(lookAtTarget);
+            Quaternion finalRotation = lookRotation * rotation;
             var adjustedTransform = new GameObject
             {
                 transform =
                 {
                     position = position,
-                    rotation = transform.localScale.x > 0f? rotation : adjustedRotation
+                    rotation = finalRotation
                 }
             };
 
+            
+            
             Transform tf = adjustedTransform.transform;
             
             var projectile = Instantiate(gameObj, tf.position, tf.rotation);
@@ -140,13 +144,9 @@ namespace Combat.Weapon
             
             Vector3 additionalVelocity = _parentCharacterRB.velocity;
             
-            float directionalAdditionalVelocity = _service.TOWER_DIRECTION is TowerDirection.East or TowerDirection.West
-                ? additionalVelocity.z
-                : additionalVelocity.x;
-            
             if (projectileRb != null)
             {
-                projectileRb.velocity += spawnVelocity * transform.localScale.x ;
+                projectileRb.velocity += spawnVelocity ;
                 
             }
             
@@ -157,11 +157,14 @@ namespace Combat.Weapon
                 var colliderBase = projectileBase as ColliderProjectile;
                 if(colliderBase != null)
                 {
-                    colliderBase.SetStartSpeed(colliderBase.speed * transform.localScale.x + directionalAdditionalVelocity);
+                    colliderBase.SetStartSpeed(colliderBase.speed * transform.right + additionalVelocity);
                 }
 
                 projectileBase.StartMethod();
             }
+            Debug.DrawRay(adjustedTransform.transform.position, adjustedTransform.transform.forward, Color.blue, 1f);
+            Debug.DrawRay(adjustedTransform.transform.position, adjustedTransform.transform.right, Color.grey, 1f);
+            Debug.DrawRay(adjustedTransform.transform.position, transform.right, Color.green, 1f);
             Destroy(adjustedTransform);
         }
     

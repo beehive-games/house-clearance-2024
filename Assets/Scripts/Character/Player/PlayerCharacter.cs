@@ -180,7 +180,9 @@ namespace Character.Player
         private void DuringSlide(bool isGrounded)
         {
             _queueSlide = false;
-            if (!isGrounded || Mathf.Abs(_rigidbody.velocity.x) < 0.1f)
+            var velocity = _rigidbody.velocity;
+            var maxV = Mathf.Max(Mathf.Abs(velocity.x), Mathf.Abs(velocity.z));
+            if (!isGrounded || maxV < 0.1f)
             {
                 StopSlide();
             }
@@ -191,7 +193,24 @@ namespace Character.Player
                 float deltaV = _slideFriction * Time.fixedDeltaTime;
                 var clamped1 = Mathf.Clamp(x + deltaV, x, 0f);
                 var clamped2 = Mathf.Clamp(x - deltaV, 0f, x);
-                SetRigidbody2DVelocityX(sign ? clamped1 : clamped2);
+                //SetRigidbody2DVelocityX(sign ? clamped1 : clamped2);
+
+                var rbDirection = _rigidbody.velocity;
+                rbDirection.y = 0f;
+                var speed = rbDirection.magnitude;
+                rbDirection.Normalize();
+                speed -= deltaV;
+                rbDirection *= speed;
+                rbDirection.y = _rigidbody.velocity.y;
+                _rigidbody.velocity = rbDirection;
+                /*
+                 * _movementState = MovementState.Slide;
+                    float direction = _spriteRenderer.flipX ? -1 : 1;
+                    var velocity = _rigidbody.velocity;
+                    velocity = transform.right * (_slideBoost * _rigidbody.mass * direction);
+                    velocity.y = _rigidbody.velocity.y;
+                    _rigidbody.velocity = velocity;
+                 */
             }
         }
 
@@ -287,7 +306,7 @@ namespace Character.Player
             targetPosition.y = currentPos.y;
             var direction = (targetPosition - currentPos).normalized;
             var distance = Vector3.Distance(targetPosition, currentPos);
-            
+
             // Perform the movement & rotation
             while (counter < turnTime)
             {
@@ -298,6 +317,7 @@ namespace Character.Player
                 _rigidbody.MoveRotation(Quaternion.Slerp(initialRotation, targetRotation, increment));
                 _rigidbody.MovePosition(currentPos + direction * (distance * increment));
                 counter += Time.deltaTime;
+                
                 yield return 0;
             }
             
@@ -308,18 +328,20 @@ namespace Character.Player
             _rotating = false;
             _rotationRunner = null;
             _movementState = MovementState.Walk;
+
         }
         
         private void XDirection(bool isGrounded)
         {
             // Rotation code, could do this better, but it should work for now
-            if (_rotating && _queueRotate)
+            bool activeCornerCheck = _activeCorner != null;
+            if ((_rotating || !activeCornerCheck) && _queueRotate)
             {
                 _queueRotate = false;
             }
             if (_queueRotate && isGrounded && !_rotating)
             {
-                if (_activeCorner != null && _rotationRunner == null)
+                if (activeCornerCheck && _rotationRunner == null)
                 {
                     //Debug.LogError("Need to rotate");
                     

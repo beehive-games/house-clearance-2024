@@ -28,6 +28,7 @@ namespace Character.NPC
         private float _previousSign;
         private Vector3 _targetPositionV3;
         private bool _waiting;
+        private Vector3 forwardDirection;
         private LineOfSight _lineOfSight;
 
         public enum EnemyState
@@ -125,7 +126,7 @@ namespace Character.NPC
 
             Vector3 playerPosition = _playerColliderTransform.position;
             Vector3 origin = lineOfSightOrigin.position;
-            Vector3 direction = _lineOfSight.GetLookDirection(); //(playerPosition - origin).normalized;
+            Vector3 direction = forwardDirection;//_lineOfSight.GetLookDirection(); //(playerPosition - origin).normalized;
 
             var dbg_offset = Vector3.up * 0.2f;
 
@@ -133,11 +134,11 @@ namespace Character.NPC
 
             
             var facingDirection = _spriteRenderer.flipX ? -1 : 1;
-            float dotProduct = Vector3.Dot(direction, transform.right * facingDirection);
+            float dotProduct = Vector3.Dot(direction, forwardDirection);
             if (dotProduct < 0.9f)
             {
                 Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.magenta);
-                Debug.DrawRay(origin - dbg_offset, transform.right * facingDirection, Color.magenta * 0.5f);
+                Debug.DrawRay(origin - dbg_offset, forwardDirection, Color.magenta * 0.5f);
                 return false;
             }
 
@@ -279,8 +280,8 @@ namespace Character.NPC
             
             Debug.DrawLine(_rigidbody.position, targetPos, Color.magenta);
             movementLine.RotateRigidbodyToMatchNormal(_rigidbody, normal);
+            forwardDirection = normal;
 
-            
         }
         
         private void SetTargetToLocationFromPlayer(Vector3 playerPosition, Vector3 currentPosition)

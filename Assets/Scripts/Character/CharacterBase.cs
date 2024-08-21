@@ -511,7 +511,12 @@ public class CharacterBase : MonoBehaviour
 	{
 		_movementState = MovementState.Slide;
 		float direction = _spriteRenderer.flipX ? -1 : 1;
-		SetRigidbody2DVelocityX(_slideBoost * _rigidbody.mass * direction);
+		var velocity = _rigidbody.velocity;
+		velocity = transform.right * (_slideBoost * _rigidbody.mass * direction);
+		velocity.y = _rigidbody.velocity.y;
+		_rigidbody.velocity = velocity;
+		
+		//SetRigidbody2DVelocityX(_slideBoost * _rigidbody.mass * direction);
 	}
 	
 	protected bool CheckFallDamage()
@@ -999,13 +1004,20 @@ public class CharacterBase : MonoBehaviour
 	protected virtual void UpdateSprite()
 	{
 		var vX = _rigidbody.velocity.x;
-		_spriteRenderer.flipX = vX switch
+		var vz = _rigidbody.velocity.z;
+		/*_spriteRenderer.flipX = vX switch
 		{
 			< 0f => true,
 			> 0f => false,
 			_ => _spriteRenderer.flipX
-		};
+		};*/
+
+		//var rotation = Quaternion.FromToRotation(_spriteObject.right, transform.right);
+		//_spriteObject.rotation = rotation;
+		//_spriteObject.rotation = transform.rotation;
+		_spriteObject.LookAt(_spriteObject.position - transform.forward);
 		
+		Debug.DrawRay(_spriteObject.position, -transform.forward * 10, Color.yellow);
 		switch (_movementState)
 		{
 			case MovementState.Walk            : UpdateSpriteState("Idle");
