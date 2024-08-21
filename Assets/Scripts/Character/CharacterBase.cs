@@ -506,7 +506,7 @@ public class CharacterBase : MonoBehaviour
 	protected void StartSlide()
 	{
 		_movementState = MovementState.Slide;
-		float direction = _spriteRenderer.flipX ? -1 : 1;
+		float direction = _spriteRenderer.flipX ? 1 : -1;
 		var velocity = _rigidbody.velocity;
 		velocity = transform.right * (_slideBoost * _rigidbody.mass * direction);
 		velocity.y = _rigidbody.velocity.y;
@@ -724,7 +724,7 @@ public class CharacterBase : MonoBehaviour
 
 		if (_weaponInstance != null)
 		{
-			_weaponInstance.transform.localScale = _spriteRenderer.flipX ? new Vector2(-1,1) : new Vector2(1,1);
+			//_weaponInstance.transform.localScale = _spriteRenderer.flipX ? new Vector2(-1,1) : new Vector2(1,1);
 		}
 
 		previousPosition = _rigidbody.position;
@@ -786,39 +786,6 @@ public class CharacterBase : MonoBehaviour
 
 	protected void MoveMechanics(bool isGrounded, float input, float slideToJumpMaxVx = -1f)
 	{
-		/*input = input * (_aliveState == AliveState.Wounded ? _woundedSpeed : 1f);
-		
-		var velocity = _rigidbody.velocity;
-		var acceleration = isGrounded ? _maxAcceleration : _maxAirAcceleration;
-		var maxSpeedDelta = acceleration * Time.fixedDeltaTime;
-
-		var isX = DirectionIsX();
-		
-		
-		if (isX)
-		{
-			velocity.x = Mathf.MoveTowards(velocity.x, _moveSpeed * input, maxSpeedDelta);
-		}
-		else
-		{
-			velocity.z = Mathf.MoveTowards(velocity.z, _moveSpeed * input, maxSpeedDelta);
-		}
-		
-		if (slideToJumpMaxVx >= 0f)
-		{
-			var min = Mathf.Min(slideToJumpMaxVx, -slideToJumpMaxVx);
-			var max = Mathf.Max(slideToJumpMaxVx, -slideToJumpMaxVx);
-			if (isX)
-			{
-				velocity.x = Mathf.Clamp(velocity.x, min, max);
-			}
-			else
-			{
-				velocity.z = Mathf.Clamp(velocity.x, min, max);
-			}
-		}
-		
-		_rigidbody.velocity = velocity;*/
 		input = input * (_aliveState == AliveState.Wounded ? _woundedSpeed : 1f);
 		
 		var velocity = _rigidbody.velocity;
@@ -843,7 +810,6 @@ public class CharacterBase : MonoBehaviour
 		}
             
 		_rigidbody.velocity = velocity;
-		
 	}
 	
     
@@ -853,7 +819,6 @@ public class CharacterBase : MonoBehaviour
 		_movementState = MovementState.Dead;
 		if(_weaponInstance != null)
 			_weaponInstance.DisableShooting();
-		//Debug.Log(name + " died, due to "+damageType);
 	}
 	
 	// This should only really be called from HitBox components or AOE objects
@@ -927,7 +892,6 @@ public class CharacterBase : MonoBehaviour
 	protected virtual void Jump()
 	{
 		_rigidbody.AddForce(_jumpForce * Vector3.up);
-		Debug.Log("Jumping with force "+(_jumpForce * Vector3.up) +", yV= "+_rigidbody.velocity.y );
 	}
 	
 

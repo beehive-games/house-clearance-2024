@@ -451,6 +451,23 @@ namespace Character.Player
             
             _rigidbody.MovePosition(newPos);*/
         }
+
+        protected override void UpdateSprite()
+        {
+            base.UpdateSprite();
+
+            var inputDirectionFlipX = _xInput > 0f;
+            var currentlyFlipX = _spriteRenderer.flipX;
+
+            if (!Mathf.Approximately(_xInput, 0) && inputDirectionFlipX != currentlyFlipX)
+            {
+                _spriteRenderer.flipX = !_spriteRenderer.flipX;
+                var weaponTransform = _weaponInstance.transform;
+                
+                weaponTransform.RotateAround(weaponTransform.position, weaponTransform.up, 180f);
+
+            }
+        }
         
         // Called in FixedUpdate in parent class, only if we can move based on states
         protected override void Move()
