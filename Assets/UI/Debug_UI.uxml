@@ -1,13 +1,13 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement style="flex-grow: 1; flex-direction: row; align-items: flex-start; justify-content: flex-end;">
-        <ui:VisualElement style="flex-grow: 1; justify-content: space-between; align-items: stretch; align-self: flex-end; flex-direction: row; width: 33%;">
-            <ui:Label tabindex="-1" text="Health" parse-escape-sequences="true" display-tooltip-when-elided="true" name="healthTitle" style="width: 50%; font-size: 60px;" />
-            <ui:Label tabindex="-1" text="100/100" parse-escape-sequences="true" display-tooltip-when-elided="true" name="healthValue" style="width: 50%; font-size: 60px;" />
+        <ui:VisualElement style="flex-grow: 1; justify-content: space-between; align-items: flex-end; align-self: stretch; flex-direction: row; width: 33%; text-overflow: clip; max-width: 33%;">
+            <ui:Label tabindex="-1" text="Health" parse-escape-sequences="true" display-tooltip-when-elided="true" name="healthTitle" style="width: auto; font-size: 10%; overflow: visible; -unity-text-align: upper-left; text-overflow: clip; min-width: 100%;" />
+            <ui:Label tabindex="-1" text="100/100" parse-escape-sequences="true" display-tooltip-when-elided="true" name="healthValue" style="width: auto; font-size: 10%;" />
         </ui:VisualElement>
-        <ui:VisualElement style="flex-grow: 1; justify-content: space-around; flex-direction: row; width: 40%;" />
-        <ui:VisualElement style="flex-grow: 1; justify-content: space-around; align-items: stretch; align-self: flex-end; flex-direction: row; width: 33%;">
-            <ui:Label tabindex="-1" text="Ammo" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ammoTitle" style="width: 50%; font-size: 60px;" />
-            <ui:Label tabindex="-1" text="8/8" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ammoValue" style="width: 50%; font-size: 60px;" />
+        <ui:VisualElement style="flex-grow: 1; justify-content: space-around; flex-direction: row; width: 40%; max-width: 40%; min-width: 40%;" />
+        <ui:VisualElement style="flex-grow: 1; justify-content: space-around; align-items: stretch; align-self: flex-end; flex-direction: row; width: 33%; max-width: 33%; min-width: 33%;">
+            <ui:Label tabindex="-1" text="Ammo" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ammoTitle" style="width: auto; font-size: 10%;" />
+            <ui:Label tabindex="-1" text="8/8" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ammoValue" style="width: auto; font-size: 10%;" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
