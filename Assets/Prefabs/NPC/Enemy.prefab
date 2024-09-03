@@ -1,5 +1,38 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &213206434302559913
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1345969698992772580}
+  m_Layer: 0
+  m_Name: SpriteParent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1345969698992772580
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 213206434302559913}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4285307279149467411}
+  - {fileID: 2642316756551774778}
+  m_Father: {fileID: 3932837356580115568}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &983775388206250072
 GameObject:
   m_ObjectHideFlags: 0
@@ -120,12 +153,11 @@ Transform:
   m_GameObject: {fileID: 2092809919714584230}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.496, y: -1.357, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 4285307279149467411}
-  m_Father: {fileID: 3932837356580115568}
+  m_Children: []
+  m_Father: {fileID: 1345969698992772580}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &7973596336613661115
 SpriteRenderer:
@@ -255,7 +287,7 @@ Transform:
   m_GameObject: {fileID: 2265853150918459937}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.2999991, y: 0, z: 0}
+  m_LocalPosition: {x: 0.5, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -470,7 +502,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   _groundCheckPivotRadius: 0.5
-  _spriteObject: {fileID: 2642316756551774778}
+  _spriteObject: {fileID: 1345969698992772580}
   _spriteRenderer: {fileID: 7973596336613661115}
   _transitionalColorTint: {r: 0.1981132, g: 0.1981132, b: 0.1981132, a: 1}
   _startingHealth: 100
@@ -485,13 +517,12 @@ MonoBehaviour:
   onLandEvent:
     m_PersistentCalls:
       m_Calls: []
-  previousPosition: {x: 0, y: 0}
-  currentTowerSide: 0
+  previousPosition: {x: 0, y: 0, z: 0}
   worldPosition: {x: 0, y: 0, z: 0}
-  movementLine: {fileID: 0}
+  debugDotProduct: 0
   patrolWaitTimer: 2
   patrolDistance: 4
-  patrolDistanceArrivalThreshold: 1
+  distanceArrivalThreshold: 1
   lineOfSightOrigin: {fileID: 4285307279149467411}
   maxPlayerVisibilityDistance: 10
   playerVisibilityLayerMask:
@@ -499,6 +530,9 @@ MonoBehaviour:
     m_Bits: 8
   playerInCoverDetectionDistance: 0.116
   randomShotChance: 0.52
+  distanceToPlayerToMaintain: 5
+  distanceToPlayerToMaintainThreshold: 1
+  maximumPursueDistance: 20
   _enemyState: 0
 --- !u!1 &3739240638812819166
 GameObject:
@@ -526,11 +560,11 @@ Transform:
   m_GameObject: {fileID: 3739240638812819166}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.25600022, y: 2.8069997, z: 0}
+  m_LocalPosition: {x: -0.23999977, y: 1.4499998, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2642316756551774778}
+  m_Father: {fileID: 1345969698992772580}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3737635171652512400
 MonoBehaviour:
@@ -861,7 +895,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1271674134744570163}
-  - {fileID: 2642316756551774778}
+  - {fileID: 1345969698992772580}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &9102333804637303869

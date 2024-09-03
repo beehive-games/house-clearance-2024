@@ -84,7 +84,7 @@ public class CharacterBase : MonoBehaviour
 	public UnityEvent onLandEvent;
 
 	protected bool _canTeleport;
-	protected Vector2 _teleportLocation;
+	protected Vector3 _teleportLocation;
 
 	protected float _currentHealth;
 	private protected float _lastDamageCounter;
@@ -191,8 +191,11 @@ public class CharacterBase : MonoBehaviour
 		_currentHealth = _startingHealth;
 		
 		_rigidbody = GetComponent<Rigidbody>();
-		_spriteRenderer = _spriteObject.GetComponent<SpriteRenderer>();
-		_spriteAnimCtrl = _spriteObject.GetComponent<Animator>();
+		if (_spriteRenderer == null)
+		{
+			_spriteRenderer = _spriteObject.GetComponent<SpriteRenderer>();
+		}
+		_spriteAnimCtrl = _spriteRenderer.GetComponent<Animator>();
 		_collider = GetComponent<Collider>();
 		
 
@@ -211,7 +214,7 @@ public class CharacterBase : MonoBehaviour
 		}
 		else
 		{
-			_animator = _spriteObject.GetComponent<Animator>();
+			_animator = _spriteRenderer.GetComponent<Animator>();
 			if (_animator != null)
 			{
 				_animationController = _animator.runtimeAnimatorController;
@@ -838,7 +841,7 @@ public class CharacterBase : MonoBehaviour
 
 	private Coroutine _teleportOut, _teleportIn;
 
-	protected void Teleport(Vector2 newLocation)
+	protected void Teleport(Vector3 newLocation)
 	{
 		if (_teleportIn != null || _teleportOut != null)
 		{
@@ -849,7 +852,7 @@ public class CharacterBase : MonoBehaviour
 
 	}
 
-	IEnumerator TeleportOutCo(Vector2 newLocation, float time)
+	IEnumerator TeleportOutCo(Vector3 newLocation, float time)
 	{
 		_movementState = MovementState.Teleporting;
 		float elapsedTime = 0f;
@@ -857,34 +860,41 @@ public class CharacterBase : MonoBehaviour
 		{
 			var alpha = 1f / time * elapsedTime;
 			elapsedTime += Time.deltaTime;
-			_rigidbody.velocity = new Vector2(0f, _rigidbody.VelocityY());
+			_rigidbody.velocity = new Vector3(0f, _rigidbody.VelocityY(), 0f);
 			_spriteRenderer.color = Color.Lerp(Color.white, _transitionalColorTint, alpha);
 			yield return null;
 		}
 
 		_rigidbody.position = newLocation;
+		
 		if (_teleportIn != null)
 		{
 			StopCoroutine(_teleportIn);
 		}
 
 		_teleportOut = null;
-		_teleportIn = StartCoroutine(TeleportInCo(newLocation, time));
+		_teleportIn = StartCoroutine(TeleportInCo(time));
 	}
 	
-	IEnumerator TeleportInCo(Vector2 newLocation, float time)
+	IEnumerator TeleportInCo(float time)
 	{
+		
 		float elapsedTime = 0f;
+		// Wait for player movement to update before we try and snap to new line
+		yield return new WaitForFixedUpdate();
+		_rigidbody.position = movementLine.GetClosestPointOnLine(_rigidbody.position);
 		while (elapsedTime < time)
 		{
 			var alpha = 1f / time * elapsedTime;
 			elapsedTime += Time.deltaTime;
-			_rigidbody.velocity = new Vector2(0f, _rigidbody.VelocityY());
+			_rigidbody.velocity = new Vector3(0f, _rigidbody.VelocityY(), 0f);
 			_spriteRenderer.color = Color.Lerp(_transitionalColorTint, Color.white, alpha);
 			yield return null;
 		}
 		if(_movementState != MovementState.Dead)
 			_movementState = MovementState.Walk;
+		// snap to line
+		
 		_teleportIn = null;
 	}
 	
@@ -941,21 +951,6 @@ public class CharacterBase : MonoBehaviour
 	
 	protected virtual void UpdateSprite()
 	{
-		var vX = _rigidbody.velocity.x;
-		var vz = _rigidbody.velocity.z;
-		/*_spriteRenderer.flipX = vX switch
-		{
-			< 0f => true,
-			> 0f => false,
-			_ => _spriteRenderer.flipX
-		};*/
-
-		//var rotation = Quaternion.FromToRotation(_spriteObject.right, transform.right);
-		//_spriteObject.rotation = rotation;
-		//_spriteObject.rotation = transform.rotation;
-		_spriteObject.LookAt(_spriteObject.position - transform.forward);
-		
-		Debug.DrawRay(_spriteObject.position, -transform.forward * 10, Color.yellow);
 		switch (_movementState)
 		{
 			case MovementState.Walk            : UpdateSpriteState("Idle");

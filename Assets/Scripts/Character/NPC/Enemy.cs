@@ -1,12 +1,12 @@
 using System.Collections;
 using Character.Player;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Character.NPC
 {
     public class Enemy : CharacterBase
     {
+        public float debugDotProduct;
         
         public float patrolWaitTimer = 3f;
         public float patrolDistance = 4f;
@@ -30,6 +30,7 @@ namespace Character.NPC
         private bool _waiting;
         private Vector3 forwardDirection;
         private LineOfSight _lineOfSight;
+        private Transform cameraTransform;
 
         public enum EnemyState
         {
@@ -108,6 +109,15 @@ namespace Character.NPC
             }
 
             _lineOfSight = lineOfSightOrigin.GetComponent<LineOfSight>();
+            if (Camera.main != null)
+            {
+                cameraTransform = Camera.main.transform;
+            }
+            else
+            {
+                Debug.LogError("Camera not found!");
+                enabled = false;
+            }
 
         }
         
@@ -305,6 +315,25 @@ namespace Character.NPC
             }
         }
         
+        
+        protected override void UpdateSprite()
+        {
+            base.UpdateSprite();
+            
+            var camPos = cameraTransform.forward;
+            var camXZ = new Vector2(camPos.x, camPos.z);
+        
+            var npsPos = transform.forward;
+            var npcPosXZ = new Vector2(npsPos.x, npsPos.z);
+        
+            var npcDotCam = Vector3.Dot(npcPosXZ, camXZ);
+            debugDotProduct = npcDotCam;
+            
+            var playerRight = npcDotCam > 0f ? -_playerCharacter.transform.forward : _playerCharacter.transform.forward;
+
+            _spriteRenderer.transform.LookAt(_spriteRenderer.transform.position + playerRight);
+        }
+
         protected override void Move()
         {
             
@@ -364,6 +393,7 @@ namespace Character.NPC
             
             SetMoveDirection();
             EnemyMoveMechanics(true, walk ? -1 : 0f);
+            
         }
     }
 }

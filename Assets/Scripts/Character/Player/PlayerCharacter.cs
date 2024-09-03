@@ -455,7 +455,7 @@ namespace Character.Player
         protected override void UpdateSprite()
         {
             base.UpdateSprite();
-
+            _spriteObject.LookAt(_spriteObject.position - transform.forward);
             var inputDirectionFlipX = _xInput > 0f;
             var currentlyFlipX = _spriteRenderer.flipX;
 
