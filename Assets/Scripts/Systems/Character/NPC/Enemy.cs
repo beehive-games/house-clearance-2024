@@ -1,7 +1,10 @@
+using System;
 using System.Collections;
 using Character.Player;
 using UnityEngine;
 using UnityEngine.Serialization;
+using BeehiveGames.HouseClearance;
+using Random = UnityEngine.Random;
 
 namespace Character.NPC
 {
@@ -78,12 +81,6 @@ namespace Character.NPC
             GetSetNewPatrolTargetPosition();
             _enemyState = EnemyState.Patrolling;
 
-            _playerCharacter = GameRoot.Player;
-            if (_playerCharacter == null)
-            {
-                Debug.LogError("Player character not found! (on "+gameObject.name+")");
-            }
-
             _lineOfSight = lineOfSightOrigin.GetComponent<LineOfSight>();
             if (Camera.main != null)
             {
@@ -96,7 +93,16 @@ namespace Character.NPC
             }
 
         }
-        
+
+        private void Start()
+        {
+            // Put this in Start() to avoid race conditions, as GameRoot.Player is set on Awake()
+            if (_playerCharacter == null)
+            {
+                _playerCharacter = GameRoot.Player;
+            }
+        }
+
         private void GetSetNewPatrolTargetPosition()
         {
             var randomOffset = Random.Range(-patrolDistance / 2, patrolDistance / 2f);
@@ -289,6 +295,26 @@ namespace Character.NPC
                 _targetPositionV3 = targetPosition;
             }
         }
+        
+        
+        protected override void UpdateSprite()
+        {
+            base.UpdateSprite();
+            
+            var camPos = cameraTransform.forward;
+            var camXZ = new Vector2(camPos.x, camPos.z);
+        
+            var npsPos = transform.forward;
+            var npcPosXZ = new Vector2(npsPos.x, npsPos.z);
+        
+            var npcDotCam = Vector3.Dot(npcPosXZ, camXZ);
+            debugDotProduct = npcDotCam;
+            
+            var playerRight = npcDotCam > 0f ? -_playerCharacter.transform.forward : _playerCharacter.transform.forward;
+
+            _spriteRenderer.transform.LookAt(_spriteRenderer.transform.position + playerRight);
+        }
+
         
         protected override void Move()
         {
