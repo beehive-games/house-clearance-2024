@@ -1,6 +1,7 @@
 using System.Collections;
 using Character.Player;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Character.NPC
 {
@@ -40,33 +41,9 @@ namespace Character.NPC
         }
 
         public EnemyState _enemyState;
-        private Transform _playerColliderTransform;
         private PlayerCharacter _playerCharacter;
         
-        private void GrabPlayerCollider()
-        {
-            GameObject playerGameObject = GameObject.FindGameObjectWithTag("Player");
-            Collider playerCollider = null;
-            
-            if (playerGameObject != null)
-            {
-                playerCollider = playerGameObject.GetComponent<Collider>();
-            }
-            else
-            {
-                Debug.LogError("Can't locate player GameObject on "+name);
-
-            }
-
-            if (playerCollider == null)
-            {
-                Debug.LogError("Can't locate player Collider on "+name);
-            }
-            else
-            {
-                _playerColliderTransform = playerCollider.transform;
-            }
-        }
+        
         protected override void Awake()
         {
             base.Awake();
@@ -100,9 +77,8 @@ namespace Character.NPC
             
             GetSetNewPatrolTargetPosition();
             _enemyState = EnemyState.Patrolling;
-            
-            GrabPlayerCollider();
-            _playerCharacter = _playerColliderTransform.GetComponent<PlayerCharacter>();
+
+            _playerCharacter = GameRoot.Player;
             if (_playerCharacter == null)
             {
                 Debug.LogError("Player character not found! (on "+gameObject.name+")");
@@ -133,8 +109,7 @@ namespace Character.NPC
         
         private bool RaycastPlayer()
         {
-
-            Vector3 playerPosition = _playerColliderTransform.position;
+            Vector3 playerPosition = GameRoot.Player.transform.position;
             Vector3 origin = lineOfSightOrigin.position;
             Vector3 direction = forwardDirection;//_lineOfSight.GetLookDirection(); //(playerPosition - origin).normalized;
 
@@ -232,8 +207,8 @@ namespace Character.NPC
             if (!canSeePlayer) return false;
             
             if (weaponPrefab == null) return false;
-            
-            var playerPosition = _playerColliderTransform.position;
+
+            var playerPosition = GameRoot.Player.transform.position;
             var rbPosition = _rigidbody.position;
             var distance = Vector3.Distance(playerPosition, rbPosition);
 
@@ -315,25 +290,6 @@ namespace Character.NPC
             }
         }
         
-        
-        protected override void UpdateSprite()
-        {
-            base.UpdateSprite();
-            
-            var camPos = cameraTransform.forward;
-            var camXZ = new Vector2(camPos.x, camPos.z);
-        
-            var npsPos = transform.forward;
-            var npcPosXZ = new Vector2(npsPos.x, npsPos.z);
-        
-            var npcDotCam = Vector3.Dot(npcPosXZ, camXZ);
-            debugDotProduct = npcDotCam;
-            
-            var playerRight = npcDotCam > 0f ? -_playerCharacter.transform.forward : _playerCharacter.transform.forward;
-
-            _spriteRenderer.transform.LookAt(_spriteRenderer.transform.position + playerRight);
-        }
-
         protected override void Move()
         {
             
@@ -342,7 +298,7 @@ namespace Character.NPC
             
             var isGrounded = IsGrounded();
             var canSeePlayer = RaycastPlayer();
-            var playerBeyondDistance = Vector3.Distance(_playerColliderTransform.position, _rigidbody.position) >
+            var playerBeyondDistance = Vector3.Distance(GameRoot.Player.transform.position, _rigidbody.position) >
                                        maximumPursueDistance;
             var walk = false;
             // temp
@@ -363,7 +319,7 @@ namespace Character.NPC
                 _damageTaken = false;
                 
                 // face player - set new target location
-                SetTargetToLocationFromPlayer(_playerColliderTransform.position, _rigidbody.position);
+                SetTargetToLocationFromPlayer(GameRoot.Player.transform.position, _rigidbody.position);
                 
                 //CombatMovement(isGrounded, canSeePlayer);
 
@@ -393,7 +349,6 @@ namespace Character.NPC
             
             SetMoveDirection();
             EnemyMoveMechanics(true, walk ? -1 : 0f);
-            
         }
     }
 }

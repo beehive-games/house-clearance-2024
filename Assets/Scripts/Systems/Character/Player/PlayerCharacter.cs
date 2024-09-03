@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Numerics;
+using BeehiveGames.HouseClearance;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -30,13 +32,17 @@ namespace Character.Player
         private bool _rotating;
         private float _slideToJumpMaxVX;
         private bool _shooting = false;
-        private Coroutine _rotationRunner;
+        private Coroutine _rotationRunnerCo;
         
+        public Collider Collider { private set; get; }
+        
+
         // -------------------------
         // Unity-based events
         //--------------------------
         private void OnEnable()
         {
+            Collider = GetComponent<Collider>();
             actions.FindActionMap("gameplay").Enable();
         }
         private void OnDisable()
@@ -105,7 +111,7 @@ namespace Character.Player
         protected override void Awake()
         {
             base.Awake();
-            
+            GameRoot.RegisterPlayer(this);
         
             if (!actions)
             {
@@ -148,6 +154,11 @@ namespace Character.Player
             UpdateUI();
         }
     
+        private void OnDestroy()
+        {
+            GameRoot.DeregisterPlayer();
+        }
+
     
         // -------------------------
         // PlayerCharacter-based methods
@@ -323,7 +334,7 @@ namespace Character.Player
             _rigidbody.MovePosition(targetPosition);
             
             _rotating = false;
-            _rotationRunner = null;
+            _rotationRunnerCo = null;
             _movementState = MovementState.Walk;
 
         }
@@ -338,13 +349,13 @@ namespace Character.Player
             }
             if (_queueRotate && isGrounded && !_rotating)
             {
-                if (activeCornerCheck && _rotationRunner == null)
+                if (activeCornerCheck && _rotationRunnerCo == null)
                 {
                     //Debug.LogError("Need to rotate");
                     
                     // Truthy rotation states
                     _rotating = true;
-                    _rotationRunner = StartCoroutine(RotationRunner());
+                    _rotationRunnerCo = StartCoroutine(RotationRunner());
                     //_towerRotationService.Rotate(_activeCorner.towerCorner, _activeCorner.transform.position, _rigidbody.position, _activeCorner.turnTime );
                     
                     // Falsify other states
