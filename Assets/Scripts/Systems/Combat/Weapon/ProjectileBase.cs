@@ -116,6 +116,7 @@ public class ProjectileBase : MonoBehaviour
     
     private IEnumerator DamageTime(HitBox hitBox)
     {
+        hitBox.CoverHitCheck(transform.position);
         // Hit() returns true if the hitbox can be damaged by projectile
         // and will do damage if it does. We exit early as if nothing happened
         // if Hit() returns false

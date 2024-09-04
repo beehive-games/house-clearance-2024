@@ -18,6 +18,7 @@ namespace Character.NPC
         [SerializeField] private Transform lineOfSightOrigin;
         [SerializeField] private float maxPlayerVisibilityDistance = 10f;
         [SerializeField] private LayerMask playerVisibilityLayerMask;
+        [SerializeField] private LayerMask patrolVisibilityLayerMask;
         [SerializeField, Range(0,1)] private float playerInCoverDetectionDistance = 0.5f;
         [SerializeField, Range(0,1)] private float randomShotChance = 0.5f;
         [SerializeField] private float distanceToPlayerToMaintain = 5f;
@@ -28,6 +29,7 @@ namespace Character.NPC
         private Vector3 _startPosV3;
         private float _startPosLs;
         private Coroutine _waitTimer;
+        private Coroutine _newPositionCoroutine;
         private Vector3 _targetPos;
         private float _previousSign;
         private Vector3 _targetPositionV3;
@@ -103,14 +105,66 @@ namespace Character.NPC
             }
         }
 
-        private void GetSetNewPatrolTargetPosition()
+        public bool GotValidNewPosition()
         {
             var randomOffset = Random.Range(-patrolDistance / 2, patrolDistance / 2f);
             var newTargetPositionLineSpace = movementLine.TrasformOffsetWorldSpaceToLineSpace(randomOffset);
-            _targetPositionV3 = movementLine.Interpolate(_startPosLs + newTargetPositionLineSpace);
-            var current = movementLine.GetInterpolatedPointFromAnyPosition(_rigidbody.position);
-            //Debug.Log($"targetPositionV3 {_targetPositionV3}, targetInterpolated {_startPosLs + newTargetPositionLineSpace}, currentIntPos {current}, rb {_rigidbody.position}, randomOffset {randomOffset}");
+            var intendedPosition = movementLine.Interpolate(_startPosLs + newTargetPositionLineSpace);
+            var direction = (intendedPosition - _rigidbody.position);
+            var distance = direction.magnitude;
+            direction.Normalize();
+            _results = new RaycastHit[1];
+            int hits = Physics.RaycastNonAlloc(_rigidbody.position, direction, _results, distance, patrolVisibilityLayerMask);
+            
+            if (hits <= 0)
+            {
+                _targetPositionV3 = intendedPosition;
+                return true;
+            }
+
+            return false;
+        }
+
+        IEnumerator GetNewPatrolPositionCO()
+        {
+            while (!GotValidNewPosition())
+            {
+                yield return 0;
+            }
             Debug.DrawLine(_rigidbody.position, _targetPositionV3, Color.black, 3f);
+        }
+        
+        private void GetSetNewPatrolTargetPosition()
+        {
+            if (_newPositionCoroutine != null)
+            {
+               StopCoroutine(_newPositionCoroutine);
+            }
+            _newPositionCoroutine = StartCoroutine(GetNewPatrolPositionCO());
+        }
+        
+        public bool CoverVisibilityCheck()
+        {
+            var direction = (transform.position - _playerCharacter.transform.position);
+            
+            var playerFwdDir = _playerCharacter.transform.forward;
+            var myFwdDir = transform.forward;
+            
+            // if npc, we use forward direction, if player, we need to use flipX on the sprite
+
+            if (_playerCharacter._spriteRenderer.flipX)
+            {
+                playerFwdDir = -playerFwdDir;
+            }
+
+            var dotProduct = Vector3.Dot(playerFwdDir, myFwdDir);
+            if (dotProduct > 0f)
+            {
+                return true;
+            }
+
+            return false;
+
         }
         
         private bool RaycastPlayer()
@@ -147,8 +201,9 @@ namespace Character.NPC
                 Debug.DrawLine(origin, _results[0].point, Color.yellow);
                 return false;
             }
+            // tweak - check player direction...
             
-            if (_playerCharacter.IsInCover() && _enemyState is not EnemyState.Combat && Vector3.Distance(playerPosition, _rigidbody.position) > playerInCoverDetectionDistance )
+            if (_playerCharacter.IsInCover() && !CoverVisibilityCheck() && _enemyState is not EnemyState.Combat && Vector3.Distance(playerPosition, _rigidbody.position) > playerInCoverDetectionDistance )
             {
                 Debug.DrawLine(origin, _results[0].point, new Color(1,0.5f,0f));
                 return false;

@@ -304,7 +304,7 @@ public class CharacterBase : MonoBehaviour
 		_spriteRenderer.transform.position += new Vector3(transform.forward.x * coverOffset.x,transform.forward.y * coverOffset.y,transform.forward.z * coverOffset.z);
 		foreach (var hitBox in _hitBoxes)
 		{
-			hitBox.gameObject.SetActive(false);
+			hitBox.sleep = true;
 		}
 		
 	}
@@ -619,12 +619,12 @@ public class CharacterBase : MonoBehaviour
 		_shootFromCoverCO = null;
 	}
 
-	protected void LeaveCover()
+	public void LeaveCover()
 	{
 
 		foreach (var hitbox in _hitBoxes)
 		{
-			hitbox.gameObject.SetActive(true);
+			hitbox.sleep = false;
 		}
 		if(_movementState == MovementState.Cover) 
 			_movementState = MovementState.Walk;
