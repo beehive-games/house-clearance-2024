@@ -716,6 +716,8 @@ namespace Character.NPC
         
         protected override void Move()
         {
+
+            if (!CanMove()) return;
             
             base.Move();
         

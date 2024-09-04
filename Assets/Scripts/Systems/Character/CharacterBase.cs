@@ -77,7 +77,8 @@ public class CharacterBase : MonoBehaviour
 	[SerializeField] private protected Transform _weaponPosition;
 	[SerializeField] private protected Transform _weaponSpritePosition;
 	[SerializeField] private Allegiance _allegiance;
-	protected WeaponBase _weaponInstance;
+	public /*protected*/ WeaponBase _weaponInstance;
+	[SerializeField] private protected Vector3 coverOffset = new Vector3(0, 0.1f, 0.2f); 
 	[Space]
 
 	[Header("Events")]
@@ -102,7 +103,7 @@ public class CharacterBase : MonoBehaviour
 	protected NPCMovementLine movementLine;
 
 	
-	internal enum MovementState
+	public enum MovementState
 	{
 		Walk,
 		Slide,
@@ -114,7 +115,7 @@ public class CharacterBase : MonoBehaviour
 		Rotating
 	}
 
-	internal enum AliveState
+	public enum AliveState
 	{
 		Alive,
 		Wounded,
@@ -127,8 +128,10 @@ public class CharacterBase : MonoBehaviour
 		DeadHeadShot
 	}
 	
-	private protected MovementState _movementState;
-	private protected AliveState _aliveState;
+	//private protected MovementState _movementState;
+	public MovementState _movementState;
+	public AliveState _aliveState;
+	//private protected AliveState _aliveState;
 	private protected RuntimeAnimatorController _animationController;
 	private protected Animator _animator;
 	private protected List<NPCCharacter> _meleeTargets;
@@ -298,6 +301,7 @@ public class CharacterBase : MonoBehaviour
 		_movementState = MovementState.Cover;
 		SetRigidbody2DVelocityX(0f);
 		_spriteRenderer.color = _transitionalColorTint;
+		_spriteRenderer.transform.position += new Vector3(transform.forward.x * coverOffset.x,transform.forward.y * coverOffset.y,transform.forward.z * coverOffset.z);
 		foreach (var hitBox in _hitBoxes)
 		{
 			hitBox.gameObject.SetActive(false);
@@ -418,10 +422,14 @@ public class CharacterBase : MonoBehaviour
 	{
 		var player = LayerMask.NameToLayer("PlayerTrigger");
 		var comparisonLayer = other.gameObject.layer;
-		
-		if (comparisonLayer != player) return false;
+
+		if (comparisonLayer != player)
+		{
+			return false;
+		}
 		
 		character = other.transform.parent.GetComponent<CharacterBase>();
+		Debug.Log("hit by player");
 		return true;
 
 	}
@@ -613,18 +621,18 @@ public class CharacterBase : MonoBehaviour
 
 	protected void LeaveCover()
 	{
-		if (_movementState == MovementState.Cover)
+
+		foreach (var hitbox in _hitBoxes)
 		{
-			foreach (var hitbox in _hitBoxes)
-			{
-				hitbox.gameObject.SetActive(true);
-			}
-			_movementState = MovementState.Walk;
-			if (_shootFromCoverCO != null)
-			{
-				StopCoroutine(_shootFromCoverCO);
-			}
+			hitbox.gameObject.SetActive(true);
 		}
+		if(_movementState == MovementState.Cover) 
+			_movementState = MovementState.Walk;
+		if (_shootFromCoverCO != null)
+		{
+			StopCoroutine(_shootFromCoverCO);
+		}
+
 		_coverGameObject = null;
 		_spriteRenderer.color = Color.white;
 	}
@@ -925,6 +933,11 @@ public class CharacterBase : MonoBehaviour
 	protected void UpdateSpriteState(string animationName, bool tint = false)
 	{
 		_animator.Play(animationName);
+	}
+
+	protected void Stun()
+	{
+		
 	}
 	
 	protected void UpdateDeadSprite()

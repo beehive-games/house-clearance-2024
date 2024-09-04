@@ -171,6 +171,11 @@ namespace Combat.Weapon
         {
             var angle = Random.Range(0f, _spreadAngle) - 0.5f * _spreadAngle;
             var rotation = Quaternion.Euler(0, 0, angle); // Rotate around the Y-axis
+            if (_muzzlePosition == null)
+            {
+                Debug.LogError("_muzzlePosition is dead?! wtf?!");
+                return;
+            }
             SpawnThing(_projectile, _muzzlePosition.position, rotation, Vector3.zero);
         }
 

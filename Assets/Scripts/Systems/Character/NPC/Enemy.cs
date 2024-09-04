@@ -321,6 +321,7 @@ namespace Character.NPC
             
             base.Move();
             if(movementLine == null) return;
+            if (!CanMove()) return;
             
             var isGrounded = IsGrounded();
             var canSeePlayer = RaycastPlayer();
