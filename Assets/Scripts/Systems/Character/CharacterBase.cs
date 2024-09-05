@@ -514,16 +514,9 @@ public class CharacterBase : MonoBehaviour
 		return other.gameObject.layer == LayerMask.NameToLayer("MeleeZone");
 	}
 	
-	protected void StartSlide()
+	protected virtual void StartSlide()
 	{
 		_movementState = MovementState.Slide;
-		float direction = _spriteRenderer.flipX ? 1 : -1;
-		var velocity = _rigidbody.velocity;
-		velocity = transform.right * (_slideBoost * _rigidbody.mass * direction);
-		velocity.y = _rigidbody.velocity.y;
-		_rigidbody.velocity = velocity;
-		
-		//SetRigidbody2DVelocityX(_slideBoost * _rigidbody.mass * direction);
 	}
 	
 	protected bool CheckFallDamage()

@@ -19,11 +19,13 @@ namespace Character.NPC
         [SerializeField] private float maxPlayerVisibilityDistance = 10f;
         [SerializeField] private LayerMask playerVisibilityLayerMask;
         [SerializeField] private LayerMask patrolVisibilityLayerMask;
+        [SerializeField] private LayerMask _coverLayerMask;
         [SerializeField, Range(0,1)] private float playerInCoverDetectionDistance = 0.5f;
         [SerializeField, Range(0,1)] private float randomShotChance = 0.5f;
         [SerializeField] private float distanceToPlayerToMaintain = 5f;
         [SerializeField] private float distanceToPlayerToMaintainThreshold = 1f;
         [SerializeField] private float maximumPursueDistance = 20f;
+        [SerializeField] private float _coverSlideDistance = 2f;
 
         
         private Vector3 _startPosV3;
@@ -37,6 +39,8 @@ namespace Character.NPC
         private Vector3 forwardDirection;
         private LineOfSight _lineOfSight;
         private Transform cameraTransform;
+        public bool _queueSlide;
+
 
         public enum EnemyState
         {
@@ -52,6 +56,17 @@ namespace Character.NPC
         protected override void Awake()
         {
             base.Awake();
+            
+
+        }
+
+        private void Start()
+        {
+            // Put this in Start() to avoid race conditions, as GameRoot.Player is set on Awake()
+            if (_playerCharacter == null)
+            {
+                _playerCharacter = GameRoot.Player;
+            }
             if (movementLine == false)
             {
                 var lines = GameObject.FindGameObjectsWithTag("MovementLine");
@@ -92,16 +107,6 @@ namespace Character.NPC
             {
                 Debug.LogError("Camera not found!");
                 enabled = false;
-            }
-
-        }
-
-        private void Start()
-        {
-            // Put this in Start() to avoid race conditions, as GameRoot.Player is set on Awake()
-            if (_playerCharacter == null)
-            {
-                _playerCharacter = GameRoot.Player;
             }
         }
 
@@ -165,6 +170,25 @@ namespace Character.NPC
 
             return false;
 
+        }
+        
+        private bool RaycastCover()
+        {
+            //_coverSlideDistance
+            Vector3 position = _rigidbody.position;
+
+            int hits = Physics.RaycastNonAlloc(position, -transform.right, _results, _coverSlideDistance, _coverLayerMask);
+            
+            if (hits > 0)
+            {
+                var playerDistance= Vector3.Distance(position, GameRoot.Player.transform.position);
+                var hitDistance= Vector3.Distance(position, _results[0].point);
+                Debug.DrawRay(position, transform.right * _coverSlideDistance, new Color(1,0.25f,0.5f));
+
+                return playerDistance > hitDistance;
+            }
+
+            return false;
         }
         
         private bool RaycastPlayer()
@@ -351,6 +375,49 @@ namespace Character.NPC
             }
         }
         
+        private void Slide()
+        {
+            if(_movementState != MovementState.Slide) _queueSlide = true;
+        }
+
+        private void StopSlide()
+        {
+            _movementState = MovementState.Walk;
+        }
+
+        private void DuringSlide(bool isGrounded)
+        {
+            _queueSlide = false;
+            var velocity = _rigidbody.velocity;
+            var maxV = Mathf.Max(Mathf.Abs(velocity.x), Mathf.Abs(velocity.z));
+            if (!isGrounded || maxV < 0.1f)
+            {
+                StopSlide();
+            }
+            else
+            {
+                float deltaV = _slideFriction * Time.fixedDeltaTime;
+
+                var rbDirection = _rigidbody.velocity;
+                rbDirection.y = 0f;
+                var speed = rbDirection.magnitude;
+                rbDirection.Normalize();
+                speed -= deltaV;
+                rbDirection *= speed;
+                rbDirection.y = _rigidbody.velocity.y;
+                _rigidbody.velocity = rbDirection;
+            }
+        }
+        
+        protected override void StartSlide()
+        {
+            base.StartSlide();
+            var velocity = _rigidbody.velocity;
+            velocity = -transform.right * (_slideBoost * _rigidbody.mass);
+            velocity.y = _rigidbody.velocity.y;
+            _rigidbody.velocity = velocity;
+            
+        }
         
         protected override void UpdateSprite()
         {
@@ -378,8 +445,13 @@ namespace Character.NPC
             if(movementLine == null) return;
             if (!CanMove()) return;
             
+            bool sliding = _movementState == MovementState.Slide;
+            bool inCover = _movementState == MovementState.Cover;
+            
             var isGrounded = IsGrounded();
             var canSeePlayer = RaycastPlayer();
+            var canSeeCover = RaycastCover();
+            
             var playerBeyondDistance = Vector3.Distance(GameRoot.Player.transform.position, _rigidbody.position) >
                                        maximumPursueDistance;
             var walk = false;
@@ -399,6 +471,8 @@ namespace Character.NPC
                 }
                 
                 _damageTaken = false;
+                
+                
                 
                 // face player - set new target location
                 SetTargetToLocationFromPlayer(GameRoot.Player.transform.position, _rigidbody.position);
@@ -428,9 +502,49 @@ namespace Character.NPC
                     walk = true;
                 }
             }
-            
+
             SetMoveDirection();
-            EnemyMoveMechanics(true, walk ? -1 : 0f);
+            var vX = Mathf.Abs(_rigidbody.velocity.x);
+            var vZ = Mathf.Abs(_rigidbody.velocity.z);
+            bool stopped = Mathf.Min(vX, vZ) < 0.1f;
+            
+            
+            
+            if (!inCover && sliding && stopped)
+            {
+                StopSlide();
+                sliding = false;
+            }
+            
+            if (inCover || sliding)
+            {
+                return;
+            }
+
+            if (_enemyState is EnemyState.Combat)
+            {
+                Debug.Log($"in combat, {canSeePlayer} && {canSeeCover} && {!sliding}");
+            }
+            
+            if (_enemyState is EnemyState.Combat && canSeePlayer && canSeeCover && !sliding)
+            {
+                Slide();
+            }
+            
+            if (isGrounded && _queueSlide)
+            {
+                StartSlide();
+                Debug.Log("Sliding now....");
+                _queueSlide = false;
+            }
+            else if (_movementState == MovementState.Slide)
+            {
+                DuringSlide(isGrounded);
+            }
+            else
+            {
+                EnemyMoveMechanics(true, walk ? -1 : 0f);
+            }
         }
     }
 }

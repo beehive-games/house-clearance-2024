@@ -169,8 +169,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d258985ce7a19ee4cbd5e79d97fc2477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerCorner: 2
-  turnTime: 0.22
+  towerCorner: 0
+  turnTime: 2
 --- !u!65 &4834178
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -437,8 +437,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d258985ce7a19ee4cbd5e79d97fc2477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerCorner: 2
-  turnTime: 0.22
+  towerCorner: 0
+  turnTime: 2
 --- !u!1 &203844586
 GameObject:
   m_ObjectHideFlags: 0
@@ -1962,8 +1962,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d258985ce7a19ee4cbd5e79d97fc2477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerCorner: 3
-  turnTime: 0.22
+  towerCorner: 0
+  turnTime: 2
 --- !u!65 &956457306
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2082,8 +2082,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d258985ce7a19ee4cbd5e79d97fc2477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerCorner: 1
-  turnTime: 0.22
+  towerCorner: 0
+  turnTime: 2
 --- !u!65 &956811372
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2676,7 +2676,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   towerCorner: 0
-  turnTime: 0.22
+  turnTime: 2
 --- !u!65 &1460183273
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2943,8 +2943,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d258985ce7a19ee4cbd5e79d97fc2477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerCorner: 3
-  turnTime: 0.22
+  towerCorner: 0
+  turnTime: 2
 --- !u!1 &1542794964
 GameObject:
   m_ObjectHideFlags: 0
@@ -3592,7 +3592,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   towerCorner: 0
-  turnTime: 0.22
+  turnTime: 2
 --- !u!65 &1816190833
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3817,8 +3817,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d258985ce7a19ee4cbd5e79d97fc2477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerCorner: 1
-  turnTime: 0.22
+  towerCorner: 0
+  turnTime: 2
 --- !u!1 &1871569240
 GameObject:
   m_ObjectHideFlags: 0
@@ -4427,7 +4427,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   towerCorner: 0
-  turnTime: 0.22
+  turnTime: 2
 --- !u!1 &2108605857
 GameObject:
   m_ObjectHideFlags: 0
@@ -4612,8 +4612,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d258985ce7a19ee4cbd5e79d97fc2477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerCorner: 3
-  turnTime: 0.22
+  towerCorner: 0
+  turnTime: 2
 --- !u!65 &2116243355
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4732,8 +4732,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d258985ce7a19ee4cbd5e79d97fc2477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerCorner: 1
-  turnTime: 0.22
+  towerCorner: 0
+  turnTime: 2
 --- !u!65 &2118898400
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4932,8 +4932,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d258985ce7a19ee4cbd5e79d97fc2477, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  towerCorner: 2
-  turnTime: 0.22
+  towerCorner: 0
+  turnTime: 2
 --- !u!65 &2127330160
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5332,6 +5332,10 @@ PrefabInstance:
     - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: _moveSpeed
       value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
+      propertyPath: _coverLayerMask.m_Bits
+      value: 256
       objectReference: {fileID: 0}
     - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: patrolVisibilityLayerMask.m_Bits
