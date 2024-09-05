@@ -3323,6 +3323,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1118033658926996880, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1552293604221412585, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.123
+      objectReference: {fileID: 0}
+    - target: {fileID: 1552293604221412585, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.564
+      objectReference: {fileID: 0}
     - target: {fileID: 4125241692120992936, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: coverOffset.x
       value: 1
@@ -3335,17 +3347,49 @@ PrefabInstance:
       propertyPath: coverOffset.z
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4364763717403522996, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4597280789073467896, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 4945648732644500144, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: damageMultiplier
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419576046579874572, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_Height
+      value: 2.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419576046579874572, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_Radius
+      value: 0.61
       objectReference: {fileID: 0}
     - target: {fileID: 6419576046579874572, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_IsTrigger
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7143655741433053850, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.082
+      objectReference: {fileID: 0}
+    - target: {fileID: 7143655741433053850, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.592
+      objectReference: {fileID: 0}
     - target: {fileID: 7336994300502199445, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: near clip plane
       value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 8519977585523926395, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_Height
+      value: 1.44
+      objectReference: {fileID: 0}
+    - target: {fileID: 8519977585523926395, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_Radius
+      value: 0.37
       objectReference: {fileID: 0}
     - target: {fileID: 8519977585523926395, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_IsTrigger
@@ -5334,8 +5378,16 @@ PrefabInstance:
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
+      propertyPath: _slideBoost
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: _coverLayerMask.m_Bits
       value: 256
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
+      propertyPath: distanceToPlayerToMaintain
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: patrolVisibilityLayerMask.m_Bits
@@ -5344,6 +5396,10 @@ PrefabInstance:
     - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: playerVisibilityLayerMask.m_Bits
       value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
+      propertyPath: distanceToPlayerToMaintainThreshold
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 3932837356580115568, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: m_LocalPosition.x

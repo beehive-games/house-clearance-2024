@@ -325,32 +325,42 @@ namespace Character.NPC
 
         }
 
-        private void SetMoveDirection()
+        private void SetMoveDirection(bool forceFacePlayer = false)
         {
-            var targetPos = movementLine.GetClosestPointOnLine(_targetPositionV3);
-            var interpolatedTargetPos = movementLine.GetInterpolatedPointFromPosition(targetPos);
-            
-            var transformPos = movementLine.GetClosestPointOnLine(_rigidbody.position);
-            var interpolatedTransformPos = movementLine.GetInterpolatedPointFromPosition(transformPos);
-            
-            var dp = GetShortestDirection(interpolatedTransformPos, interpolatedTargetPos);
-
-            var forwardDirectionForNormalInterpolated = interpolatedTransformPos + 0.01f * dp;
-            var forwardPosition = movementLine.Interpolate(forwardDirectionForNormalInterpolated);
-            var normal = (forwardPosition - transformPos).normalized;
-
-
-            var dotProduct = Mathf.Abs(Vector3.Dot(transform.right, normal));
-            if (dotProduct < 0.95f)
+            if (!forceFacePlayer)
             {
-                var realignPos = movementLine.GetClosestPointOnLine(_rigidbody.position);
-                var newPos = new Vector3(realignPos.x, _rigidbody.position.y, realignPos.z);
-                _rigidbody.MovePosition(newPos);
-            }
+                var targetPos = movementLine.GetClosestPointOnLine(_targetPositionV3);
+                var interpolatedTargetPos = movementLine.GetInterpolatedPointFromPosition(targetPos);
             
-            Debug.DrawLine(_rigidbody.position, targetPos, Color.magenta);
-            movementLine.RotateRigidbodyToMatchNormal(_rigidbody, normal);
-            forwardDirection = normal;
+                var transformPos = movementLine.GetClosestPointOnLine(_rigidbody.position);
+                var interpolatedTransformPos = movementLine.GetInterpolatedPointFromPosition(transformPos);
+            
+                var dp = GetShortestDirection(interpolatedTransformPos, interpolatedTargetPos);
+
+                var forwardDirectionForNormalInterpolated = interpolatedTransformPos + 0.01f * dp;
+                var forwardPosition = movementLine.Interpolate(forwardDirectionForNormalInterpolated);
+                var normal = (forwardPosition - transformPos).normalized;
+
+
+                var dotProduct = Mathf.Abs(Vector3.Dot(transform.right, normal));
+                if (dotProduct < 0.95f)
+                {
+                    var realignPos = movementLine.GetClosestPointOnLine(_rigidbody.position);
+                    var newPos = new Vector3(realignPos.x, _rigidbody.position.y, realignPos.z);
+                    _rigidbody.MovePosition(newPos);
+                }
+            
+                Debug.DrawLine(_rigidbody.position, targetPos, Color.magenta);
+                movementLine.RotateRigidbodyToMatchNormal(_rigidbody, normal);
+                forwardDirection = normal;
+            }
+            else
+            {
+                var rb2D = new Vector3(_rigidbody.position.x,0, _rigidbody.position.z);
+                var player2D = new Vector3(_playerCharacter.transform.position.x,0, _playerCharacter.transform.position.z);
+                forwardDirection = (player2D - rb2D).normalized;
+                movementLine.RotateRigidbodyToMatchNormal(_rigidbody, forwardDirection);
+            }
 
         }
         
@@ -372,6 +382,7 @@ namespace Character.NPC
                 var targetPosition = xzPlayerPosition - offset;
                 targetPosition = movementLine.GetClosestPointOnLine(targetPosition);
                 _targetPositionV3 = targetPosition;
+                Debug.DrawLine(Vector3.zero, _targetPositionV3, new Color(0.75f, 0.25f, 0.5f), 10f);
             }
         }
         
@@ -451,6 +462,19 @@ namespace Character.NPC
             var isGrounded = IsGrounded();
             var canSeePlayer = RaycastPlayer();
             var canSeeCover = RaycastCover();
+
+            if (inCover)
+            {
+                var rb2D = new Vector2(_rigidbody.position.x, _rigidbody.position.z);
+                var player2D = new Vector2(_playerCharacter.transform.position.x, _playerCharacter.transform.position.z);
+                var directionToPlayer = (player2D - rb2D).normalized;
+                var dp = Vector2.Dot(directionToPlayer, -transform.right);
+                if (dp < 0.5f)
+                {
+                    inCover = false;
+                    _movementState = MovementState.Walk;
+                }
+            }
             
             var playerBeyondDistance = Vector3.Distance(GameRoot.Player.transform.position, _rigidbody.position) >
                                        maximumPursueDistance;
@@ -484,10 +508,16 @@ namespace Character.NPC
                 {
                     _weaponInstance.Fire(true);
                 }
+                Debug.Log($"ReachedDestination {ReachedDestination()}");
 
                 if (!ReachedDestination())
                 {
                     walk = true;
+                    SetMoveDirection();
+                }
+                else
+                {
+                    SetMoveDirection(true);
                 }
             }
             else
@@ -501,9 +531,10 @@ namespace Character.NPC
                     }
                     walk = true;
                 }
+                SetMoveDirection();
             }
 
-            SetMoveDirection();
+            
             var vX = Mathf.Abs(_rigidbody.velocity.x);
             var vZ = Mathf.Abs(_rigidbody.velocity.z);
             bool stopped = Mathf.Min(vX, vZ) < 0.1f;
