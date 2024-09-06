@@ -26,7 +26,6 @@ namespace Character.NPC
         [SerializeField] private float distanceToPlayerToMaintainThreshold = 1f;
         [SerializeField] private float maximumPursueDistance = 20f;
         [SerializeField] private float _coverSlideDistance = 2f;
-
         
         private Vector3 _startPosV3;
         private float _startPosLs;
@@ -40,6 +39,7 @@ namespace Character.NPC
         private LineOfSight _lineOfSight;
         private Transform cameraTransform;
         public bool _queueSlide;
+        private bool _damageTaken;
 
 
         public enum EnemyState
@@ -60,6 +60,13 @@ namespace Character.NPC
 
         }
 
+        
+        public override void Damage(float damage, DamageType damageType)
+        {
+            base.Damage(damage, damageType);
+            _damageTaken = true;
+        }
+        
         private void Start()
         {
             // Put this in Start() to avoid race conditions, as GameRoot.Player is set on Awake()
@@ -110,6 +117,13 @@ namespace Character.NPC
             }
         }
 
+
+        protected override void HitCover()
+        {
+            base.HitCover();
+            _targetPositionV3 = _rigidbody.position;
+        }
+        
         public bool GotValidNewPosition()
         {
             var randomOffset = Random.Range(-patrolDistance / 2, patrolDistance / 2f);
@@ -183,9 +197,9 @@ namespace Character.NPC
             {
                 var playerDistance= Vector3.Distance(position, GameRoot.Player.transform.position);
                 var hitDistance= Vector3.Distance(position, _results[0].point);
-                Debug.DrawRay(position, transform.right * _coverSlideDistance, new Color(1,0.25f,0.5f));
+                Debug.DrawRay(position + Vector3.up * 2, -transform.right * _coverSlideDistance, new Color(1,0.25f,0.5f));
 
-                return playerDistance > hitDistance;
+                return playerDistance > hitDistance && hitDistance < distanceToPlayerToMaintain - distanceToPlayerToMaintainThreshold /2f ;
             }
 
             return false;
@@ -211,16 +225,25 @@ namespace Character.NPC
                 return false;
             }
 
-            _results = new RaycastHit[1];
+            _results = new RaycastHit[10];
             int hits = Physics.RaycastNonAlloc(origin, direction, _results, maxPlayerVisibilityDistance, playerVisibilityLayerMask);
-            
             if (hits <= 0)
             {
                 Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.red);
                 return false;
             }
+            var hitPlayerCollider = false;
 
-            if (!_results[0].collider.CompareTag("Player"))
+            for (int i = 0; i < hits; i++)
+            {
+                if (_results[0].collider.CompareTag("Player"))
+                {
+                    hitPlayerCollider = true;
+                    break;
+                }
+            }
+            
+            if (!hitPlayerCollider)
             {
                 Debug.DrawLine(origin, _results[0].point, Color.yellow);
                 return false;
@@ -423,11 +446,13 @@ namespace Character.NPC
         protected override void StartSlide()
         {
             base.StartSlide();
+            SetMoveDirection(true);
+            
             var velocity = _rigidbody.velocity;
             velocity = -transform.right * (_slideBoost * _rigidbody.mass);
             velocity.y = _rigidbody.velocity.y;
             _rigidbody.velocity = velocity;
-            
+
         }
         
         protected override void UpdateSprite()
@@ -448,7 +473,33 @@ namespace Character.NPC
             _spriteRenderer.transform.LookAt(_spriteRenderer.transform.position + playerRight);
         }
 
-        
+
+        private bool KeepCoverStatus()
+        {
+            var distance = Vector3.Distance(_rigidbody.position, _playerCharacter.transform.position);
+            var distanceCheck = distance > maxPlayerVisibilityDistance;
+            if (distanceCheck)
+            {
+                Debug.Log($"{distance} > {maxPlayerVisibilityDistance} = {distanceCheck}");
+                return false;
+            }
+            // TODO: Directional Check
+            return true;
+        }
+
+        private void OnDrawGizmos()
+        {
+            Color newColor = Color.black;
+            if (_movementState == MovementState.Slide)
+                newColor = Color.red;
+            else if (_movementState == MovementState.Cover)
+                newColor = Color.green;
+
+            Gizmos.color = newColor;
+            //Gizmos.DrawCube(_rigidbody.position + Vector3.up * 2, Vector3.one);
+            
+        }
+
         protected override void Move()
         {
             
@@ -458,7 +509,8 @@ namespace Character.NPC
             
             bool sliding = _movementState == MovementState.Slide;
             bool inCover = _movementState == MovementState.Cover;
-            
+
+           
             var isGrounded = IsGrounded();
             var canSeePlayer = RaycastPlayer();
             var canSeeCover = RaycastCover();
@@ -468,25 +520,28 @@ namespace Character.NPC
                 var rb2D = new Vector2(_rigidbody.position.x, _rigidbody.position.z);
                 var player2D = new Vector2(_playerCharacter.transform.position.x, _playerCharacter.transform.position.z);
                 var directionToPlayer = (player2D - rb2D).normalized;
-                var dp = Vector2.Dot(directionToPlayer, -transform.right);
+                var dp = Vector2.Dot(directionToPlayer, transform.right);
                 if (dp < 0.5f)
                 {
                     inCover = false;
                     _movementState = MovementState.Walk;
                 }
+
+                var vXZ = _rigidbody.velocity;
+                vXZ.x = 0;
+                vXZ.z = 0;
+                _rigidbody.velocity = vXZ;
             }
             
             var playerBeyondDistance = Vector3.Distance(GameRoot.Player.transform.position, _rigidbody.position) >
                                        maximumPursueDistance;
             var walk = false;
-            // temp
-            var _damageTaken = false;
 
             if (playerBeyondDistance && _enemyState is EnemyState.Combat)
             {
                 _enemyState = EnemyState.Patrolling;
             }
-            if(canSeePlayer || _enemyState is EnemyState.Combat || _damageTaken)
+            if((canSeePlayer || _enemyState is EnemyState.Combat || _damageTaken) && !sliding)
             {
                 if (_waitTimer != null)
                 {
@@ -494,15 +549,16 @@ namespace Character.NPC
                     _waitTimer = null;
                 }
                 
-                _damageTaken = false;
+                if (inCover && !KeepCoverStatus())
+                {
+                    LeaveCover();
+                    inCover = false;
+                }
+                else
+                {
+                    SetTargetToLocationFromPlayer(GameRoot.Player.transform.position, _rigidbody.position);
+                }
                 
-                
-                
-                // face player - set new target location
-                SetTargetToLocationFromPlayer(GameRoot.Player.transform.position, _rigidbody.position);
-                
-                //CombatMovement(isGrounded, canSeePlayer);
-
                 _enemyState = EnemyState.Combat;
                 if (CanShoot(canSeePlayer))
                 {
@@ -537,27 +593,18 @@ namespace Character.NPC
             
             var vX = Mathf.Abs(_rigidbody.velocity.x);
             var vZ = Mathf.Abs(_rigidbody.velocity.z);
-            bool stopped = Mathf.Min(vX, vZ) < 0.1f;
+            bool stopped = Mathf.Max(vX, vZ) < 0.1f;
             
-            
-            
-            if (!inCover && sliding && stopped)
-            {
-                StopSlide();
-                sliding = false;
-            }
-            
-            if (inCover || sliding)
-            {
-                return;
-            }
-
             if (_enemyState is EnemyState.Combat)
             {
                 Debug.Log($"in combat, {canSeePlayer} && {canSeeCover} && {!sliding}");
             }
             
-            if (_enemyState is EnemyState.Combat && canSeePlayer && canSeeCover && !sliding)
+            if (sliding && stopped)
+            {
+                StopSlide();
+            }
+            else if ((_enemyState is EnemyState.Combat || canSeePlayer) && canSeeCover && !sliding)
             {
                 Slide();
             }
@@ -574,6 +621,11 @@ namespace Character.NPC
             }
             else
             {
+                if (_movementState is MovementState.Cover)
+                {
+                    SetMoveDirection(true);
+                    return;
+                }
                 EnemyMoveMechanics(true, walk ? -1 : 0f);
             }
         }

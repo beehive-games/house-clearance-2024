@@ -1,5 +1,6 @@
 using System.Collections;
 using Combat.Weapon.Projectiles;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Utils;
@@ -37,6 +38,7 @@ namespace Combat.Weapon
         [SerializeField] private Transform _ejectionPosition;
         [SerializeField] private GameObject _ejectionVFX;
 
+        public bool reloading;
     
         private bool _canShootInternal = true;
         private bool _canShootExternal = true;
@@ -109,12 +111,14 @@ namespace Combat.Weapon
     
         IEnumerator ReloadIntervalTimer()
         {
+            reloading = true;
             _canShootInternal = false;
             _currentMagazineCapacity = 0;
             yield return new WaitForSeconds(_reloadTime);
             _currentMagazineCapacity = _magazineCapacity;
             _canShootInternal = true;
             _reloadTimer = null;
+            reloading = false;
         }
 
         private void SpawnThing(GameObject gameObj, Vector3 position, Quaternion rotation, Vector3 spawnVelocity)

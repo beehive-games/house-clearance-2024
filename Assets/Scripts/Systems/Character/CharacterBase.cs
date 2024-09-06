@@ -299,7 +299,7 @@ public class CharacterBase : MonoBehaviour
 	{
 		Debug.Log(gameObject.name + " hit cover");
 		_movementState = MovementState.Cover;
-		SetRigidbody2DVelocityX(0f);
+		_rigidbody.velocity = new Vector3(0, _rigidbody.VelocityY(), 0);
 		_spriteRenderer.color = _transitionalColorTint;
 		_spriteRenderer.transform.position += new Vector3(transform.forward.x * coverOffset.x,transform.forward.y * coverOffset.y,transform.forward.z * coverOffset.z);
 		foreach (var hitBox in _hitBoxes)

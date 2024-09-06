@@ -5379,6 +5379,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: _slideBoost
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
+      propertyPath: _slideFriction
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
+      propertyPath: _coverSlideDistance
       value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
@@ -5399,7 +5407,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: distanceToPlayerToMaintainThreshold
-      value: 2.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3932837356580115568, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: m_LocalPosition.x
