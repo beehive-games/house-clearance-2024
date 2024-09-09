@@ -40,6 +40,7 @@ namespace Character.NPC
         private Transform cameraTransform;
         public bool _queueSlide;
         private bool _damageTaken;
+        private Vector3 _coverPosition;
 
 
         public enum EnemyState
@@ -118,9 +119,10 @@ namespace Character.NPC
         }
 
 
-        protected override void HitCover()
+        protected override void HitCover(Vector3 coverPosition)
         {
-            base.HitCover();
+            base.HitCover(coverPosition);
+            _coverPosition = coverPosition;
             _targetPositionV3 = _rigidbody.position;
         }
         
@@ -190,7 +192,18 @@ namespace Character.NPC
         {
             //_coverSlideDistance
             Vector3 position = _rigidbody.position;
-
+            var playerPos = _playerCharacter.transform.position;
+            var direction = (playerPos - position).normalized;
+            var dotProduct = Vector3.Dot(direction, -transform.right);
+            
+            if (dotProduct < 0.5f)
+            {
+                return false;
+            }
+            
+            
+            
+            
             int hits = Physics.RaycastNonAlloc(position, -transform.right, _results, _coverSlideDistance, _coverLayerMask);
             
             if (hits > 0)
@@ -199,7 +212,11 @@ namespace Character.NPC
                 var hitDistance= Vector3.Distance(position, _results[0].point);
                 Debug.DrawRay(position + Vector3.up * 2, -transform.right * _coverSlideDistance, new Color(1,0.25f,0.5f));
 
-                return playerDistance > hitDistance && hitDistance < distanceToPlayerToMaintain - distanceToPlayerToMaintainThreshold /2f ;
+                var playerFurtherAway = playerDistance > hitDistance;
+                var tooCloseThreshold = distanceToPlayerToMaintain;
+                var tooClose = hitDistance < tooCloseThreshold;
+                
+                return playerFurtherAway && !tooClose ;
             }
 
             return false;
@@ -207,9 +224,9 @@ namespace Character.NPC
         
         private bool RaycastPlayer()
         {
-            Vector3 playerPosition = GameRoot.Player.transform.position;
+            Vector3 playerPosition = _playerCharacter.transform.position;
             Vector3 origin = lineOfSightOrigin.position;
-            Vector3 direction = forwardDirection;//_lineOfSight.GetLookDirection(); //(playerPosition - origin).normalized;
+            Vector3 direction = -transform.right;
 
             var dbg_offset = Vector3.up * 0.2f;
 
@@ -217,11 +234,11 @@ namespace Character.NPC
 
             
             var facingDirection = _spriteRenderer.flipX ? -1 : 1;
-            float dotProduct = Vector3.Dot(direction, forwardDirection);
+            float dotProduct = Vector3.Dot(direction, direction);
             if (dotProduct < 0.9f)
             {
                 Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.magenta);
-                Debug.DrawRay(origin - dbg_offset, forwardDirection, Color.magenta * 0.5f);
+                Debug.DrawRay(origin - dbg_offset, direction, Color.magenta * 0.5f);
                 return false;
             }
 
@@ -229,6 +246,7 @@ namespace Character.NPC
             int hits = Physics.RaycastNonAlloc(origin, direction, _results, maxPlayerVisibilityDistance, playerVisibilityLayerMask);
             if (hits <= 0)
             {
+                Debug.Log("No hits to looking for player");
                 Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.red);
                 return false;
             }
@@ -246,6 +264,8 @@ namespace Character.NPC
             if (!hitPlayerCollider)
             {
                 Debug.DrawLine(origin, _results[0].point, Color.yellow);
+                Debug.Log("hits but no player");
+
                 return false;
             }
             // tweak - check player direction...
@@ -253,6 +273,7 @@ namespace Character.NPC
             if (_playerCharacter.IsInCover() && !CoverVisibilityCheck() && _enemyState is not EnemyState.Combat && Vector3.Distance(playerPosition, _rigidbody.position) > playerInCoverDetectionDistance )
             {
                 Debug.DrawLine(origin, _results[0].point, new Color(1,0.5f,0f));
+                Debug.Log($"{_playerCharacter.IsInCover()} && {CoverVisibilityCheck()} && {_enemyState} && {Vector3.Distance(playerPosition, _rigidbody.position)} > {playerInCoverDetectionDistance}");
                 return false;
             }
             var hitPlayer = _results[0].collider.CompareTag("Player");
@@ -352,6 +373,7 @@ namespace Character.NPC
         {
             if (!forceFacePlayer)
             {
+                
                 var targetPos = movementLine.GetClosestPointOnLine(_targetPositionV3);
                 var interpolatedTargetPos = movementLine.GetInterpolatedPointFromPosition(targetPos);
             
@@ -392,8 +414,20 @@ namespace Character.NPC
             var distance = Vector3.Distance(playerPosition, currentPosition);
             var minDistance = distanceToPlayerToMaintain - distanceToPlayerToMaintainThreshold;
             var maxDistance = distanceToPlayerToMaintain + distanceToPlayerToMaintainThreshold;
-            
-            if (distance < minDistance || distance > maxDistance)
+
+            bool canReachDestination = true;
+            var dirToCheck = _targetPositionV3 - currentPosition;
+            var distanceToCheck = dirToCheck.magnitude - 0.1f;
+            dirToCheck.Normalize();
+            _results = new RaycastHit[1];
+            int hits = Physics.RaycastNonAlloc(currentPosition, dirToCheck, _results, distanceToCheck, _groundCheckLayers);
+            // cant reach!
+            if (hits > 0)
+            {
+                canReachDestination = false;
+            }
+
+            if ((ReachedDestination() && (distance < minDistance || distance > maxDistance)) || !canReachDestination)
             {
                 var xzPlayerPosition = playerPosition;
                 xzPlayerPosition.y = currentPosition.y;
@@ -403,6 +437,19 @@ namespace Character.NPC
 
                 var offset = directionToPlayer * ( distanceToPlayerToMaintain);
                 var targetPosition = xzPlayerPosition - offset;
+                
+                dirToCheck = targetPosition - currentPosition;
+                distanceToCheck = dirToCheck.magnitude - 0.1f;
+                dirToCheck.Normalize();
+
+                hits = Physics.RaycastNonAlloc(currentPosition, dirToCheck, _results, distanceToCheck, _groundCheckLayers);
+                
+                if (hits > 0)
+                {
+                    targetPosition = xzPlayerPosition + offset;
+                }
+                
+                
                 targetPosition = movementLine.GetClosestPointOnLine(targetPosition);
                 _targetPositionV3 = targetPosition;
                 Debug.DrawLine(Vector3.zero, _targetPositionV3, new Color(0.75f, 0.25f, 0.5f), 10f);
@@ -416,17 +463,23 @@ namespace Character.NPC
 
         private void StopSlide()
         {
-            _movementState = MovementState.Walk;
+            //_movementState = MovementState.Walk;
+            var velocity = _rigidbody.velocity;
+            velocity.x = 0f;
+            velocity.z = 0;
+            _rigidbody.velocity = velocity;
         }
 
         private void DuringSlide(bool isGrounded)
         {
             _queueSlide = false;
+            SetMoveDirection(true);
             var velocity = _rigidbody.velocity;
             var maxV = Mathf.Max(Mathf.Abs(velocity.x), Mathf.Abs(velocity.z));
             if (!isGrounded || maxV < 0.1f)
             {
                 StopSlide();
+                _movementState = MovementState.Jump;
             }
             else
             {
@@ -500,47 +553,71 @@ namespace Character.NPC
             
         }
 
+        private bool IsStationary()
+        {
+            var vX = Mathf.Abs(_rigidbody.velocity.x);
+            var vZ = Mathf.Abs(_rigidbody.velocity.z);
+            return Mathf.Max(vX, vZ) < 0.1f;
+        }
+
         protected override void Move()
         {
             
+            // Initial checks and code
             base.Move();
             if(movementLine == null) return;
             if (!CanMove()) return;
             
-            bool sliding = _movementState == MovementState.Slide;
-            bool inCover = _movementState == MovementState.Cover;
-
+            // useful states to know about
+            var sliding = _movementState == MovementState.Slide;
+            var inCover = _movementState == MovementState.Cover;
            
             var isGrounded = IsGrounded();
             var canSeePlayer = RaycastPlayer();
             var canSeeCover = RaycastCover();
 
+            var playerPosition = _playerCharacter.transform.position;
+
+            // check if player is in a different direction to current cover to us - we dont want to be in cover if that cover is _behind us_
             if (inCover)
             {
-                var rb2D = new Vector2(_rigidbody.position.x, _rigidbody.position.z);
-                var player2D = new Vector2(_playerCharacter.transform.position.x, _playerCharacter.transform.position.z);
-                var directionToPlayer = (player2D - rb2D).normalized;
-                var dp = Vector2.Dot(directionToPlayer, transform.right);
-                if (dp < 0.5f)
+                var pDirection = playerPosition - _rigidbody.position;
+                pDirection.Normalize();
+                
+                var cDirection = _coverPosition - _rigidbody.position;
+                cDirection.Normalize();
+
+                var cDotP = Vector3.Dot(cDirection, pDirection);
+                
+                if (canSeeCover)
                 {
+                    canSeeCover = false; 
+                }
+                else if(cDotP < 0.5f)
+                {
+                    LeaveCover();
                     inCover = false;
                     _movementState = MovementState.Walk;
                 }
-
-                var vXZ = _rigidbody.velocity;
-                vXZ.x = 0;
-                vXZ.z = 0;
-                _rigidbody.velocity = vXZ;
             }
             
-            var playerBeyondDistance = Vector3.Distance(GameRoot.Player.transform.position, _rigidbody.position) >
-                                       maximumPursueDistance;
+            Debug.Log($"{_movementState} and {(canSeePlayer ? "can" : "can't")} see player, and {(canSeeCover ? "can" : "can't")} see cover");
+
+            // check if player is too far away
+            var playerBeyondDistance = Vector3.Distance(playerPosition, _rigidbody.position) > maximumPursueDistance;
             var walk = false;
 
             if (playerBeyondDistance && _enemyState is EnemyState.Combat)
             {
                 _enemyState = EnemyState.Patrolling;
+                Debug.Log("player too far, patrolling");
+                canSeePlayer = false;
+                canSeeCover = false;
+                _movementState = MovementState.Walk;
             }
+            
+            
+            // COMBAT MODE
             if((canSeePlayer || _enemyState is EnemyState.Combat || _damageTaken) && !sliding)
             {
                 if (_waitTimer != null)
@@ -549,35 +626,36 @@ namespace Character.NPC
                     _waitTimer = null;
                 }
                 
-                if (inCover && !KeepCoverStatus())
-                {
-                    LeaveCover();
-                    inCover = false;
-                }
-                else
-                {
-                    SetTargetToLocationFromPlayer(GameRoot.Player.transform.position, _rigidbody.position);
-                }
-                
+                SetTargetToLocationFromPlayer(_playerCharacter.transform.position, _rigidbody.position);
+ 
                 _enemyState = EnemyState.Combat;
                 if (CanShoot(canSeePlayer))
                 {
                     _weaponInstance.Fire(true);
                 }
-                Debug.Log($"ReachedDestination {ReachedDestination()}");
 
-                if (!ReachedDestination())
+                if (!inCover)
                 {
-                    walk = true;
-                    SetMoveDirection();
-                }
-                else
-                {
-                    SetMoveDirection(true);
+                    if (!ReachedDestination())
+                    {
+                        walk = true;
+                        SetMoveDirection();
+                    }
+                    else
+                    {
+                        SetMoveDirection(true);
+                    }
                 }
             }
-            else
+            
+            // PATROL MODE
+            else if(!sliding)
             {
+                if (inCover)
+                {
+                    LeaveCover();
+                    inCover = false;
+                }
                 var reachedDestination = ReachedDestination();
                 if (_enemyState is EnemyState.Patrolling)
                 {
@@ -590,25 +668,23 @@ namespace Character.NPC
                 SetMoveDirection();
             }
 
-            
-            var vX = Mathf.Abs(_rigidbody.velocity.x);
-            var vZ = Mathf.Abs(_rigidbody.velocity.z);
-            bool stopped = Mathf.Max(vX, vZ) < 0.1f;
-            
-            if (_enemyState is EnemyState.Combat)
-            {
-                Debug.Log($"in combat, {canSeePlayer} && {canSeeCover} && {!sliding}");
-            }
-            
-            if (sliding && stopped)
+
+            //Debug.Log($"{_enemyState}, {canSeePlayer} && {canSeeCover} && {sliding} && {inCover} && {ReachedDestination()}");
+
+            // Have we stopped sliding from interia of have entered cover?
+            if ((sliding && IsStationary()) || inCover)
             {
                 StopSlide();
+                if(!inCover)
+                    _movementState = MovementState.Walk;
             }
+            // No? Make us slide
             else if ((_enemyState is EnemyState.Combat || canSeePlayer) && canSeeCover && !sliding)
             {
                 Slide();
             }
             
+            // Final movement mechanics based on whether we're starting a slide, continuing a slide, walking or in cover
             if (isGrounded && _queueSlide)
             {
                 StartSlide();
@@ -623,6 +699,7 @@ namespace Character.NPC
             {
                 if (_movementState is MovementState.Cover)
                 {
+                    //Debug.Log("not sliding, in cover.. setting move direction?");
                     SetMoveDirection(true);
                     return;
                 }

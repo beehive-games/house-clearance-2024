@@ -295,7 +295,7 @@ public class CharacterBase : MonoBehaviour
 		_rigidbody.velocity = new Vector3(_rigidbody.VelocityX(), _rigidbody.VelocityY(), z);
 	}
 
-	protected virtual void HitCover()
+	protected virtual void HitCover(Vector3 coverPosition)
 	{
 		Debug.Log(gameObject.name + " hit cover");
 		_movementState = MovementState.Cover;
@@ -656,7 +656,7 @@ public class CharacterBase : MonoBehaviour
 	
 	private void OnTriggerEnter(Collider other)
 	{
-		if (CheckHitCover(other)) HitCover();
+		if (CheckHitCover(other)) HitCover(other.transform.position);
 		if (CheckHitTeleporter(other)) HitTeleporter(other);
 		CharacterBase characterHit = null;
 		if (CheckHitCharacter(other, ref characterHit)) HitCharacter(characterHit);
@@ -677,7 +677,7 @@ public class CharacterBase : MonoBehaviour
 	
 	private void OnTriggerEnter2D(Collider2D other)
 	{
-		if (CheckHitCover(other)) HitCover();
+		if (CheckHitCover(other)) HitCover(other.transform.position);
 		if (CheckHitTeleporter(other)) HitTeleporter(other);
 		CharacterBase characterHit = null;
 		if (CheckHitCharacter(other, ref characterHit)) HitCharacter(characterHit);
