@@ -588,12 +588,12 @@ namespace Character.NPC
                 cDirection.Normalize();
 
                 var cDotP = Vector3.Dot(cDirection, pDirection);
-                
+                var playerBeyondSimpleDistance = Vector3.Distance(playerPosition, _rigidbody.position) > distanceToPlayerToMaintain + distanceToPlayerToMaintain;
                 if (canSeeCover)
                 {
                     canSeeCover = false; 
                 }
-                else if(cDotP < 0.5f)
+                else if(cDotP < 0.5f || playerBeyondSimpleDistance)
                 {
                     LeaveCover();
                     inCover = false;
