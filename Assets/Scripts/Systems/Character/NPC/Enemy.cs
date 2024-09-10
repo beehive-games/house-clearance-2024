@@ -337,9 +337,18 @@ namespace Character.NPC
             
             if (weaponPrefab == null) return false;
 
-            var playerPosition = GameRoot.Player.transform.position;
+            var playerPosition = _playerCharacter.transform.position;
             var rbPosition = _rigidbody.position;
             var distance = Vector3.Distance(playerPosition, rbPosition);
+
+            var fwd = _spriteRenderer.transform.right;
+            var directionToPayer = (playerPosition - rbPosition).normalized;
+            var dotProduct = Vector3.Dot(fwd, directionToPayer);
+
+            if (dotProduct < 0.95f && dotProduct > -0.95f)
+            {
+                return false;
+            }
 
             if (distance < maxPlayerVisibilityDistance)
             {
@@ -601,7 +610,7 @@ namespace Character.NPC
                 }
             }
             
-            Debug.Log($"{_movementState} and {(canSeePlayer ? "can" : "can't")} see player, and {(canSeeCover ? "can" : "can't")} see cover");
+            //Debug.Log($"{_movementState} and {(canSeePlayer ? "can" : "can't")} see player, and {(canSeeCover ? "can" : "can't")} see cover");
 
             // check if player is too far away
             var playerBeyondDistance = Vector3.Distance(playerPosition, _rigidbody.position) > maximumPursueDistance;
