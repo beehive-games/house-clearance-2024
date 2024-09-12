@@ -45,8 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba4c3f61ac3ae144d9d3c2dacd4038b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _damageLow: 0.001
-  _damageHigh: 0.002
+  _damageLow: 10
+  _damageHigh: 20
   _damageRepeatTime: 0
   _damageRepeats: 0
   _lifeTime: 1
@@ -64,7 +64,7 @@ MonoBehaviour:
     m_Bits: 4096
   vfxlayerMask:
     serializedVersion: 2
-    m_Bits: 192
+    m_Bits: 193
 --- !u!212 &2255504888647508019
 SpriteRenderer:
   m_ObjectHideFlags: 0

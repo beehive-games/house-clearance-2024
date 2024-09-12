@@ -230,15 +230,15 @@ namespace Character.NPC
 
             var dbg_offset = Vector3.up * 0.2f;
 
-            Debug.DrawLine(origin  + dbg_offset, playerPosition + dbg_offset, new Color(0.5f,0.75f,0.25f));
+            //Debug.DrawLine(origin  + dbg_offset, playerPosition + dbg_offset, new Color(0.5f,0.75f,0.25f));
 
             
             var facingDirection = _spriteRenderer.flipX ? -1 : 1;
             float dotProduct = Vector3.Dot(direction, direction);
             if (dotProduct < 0.9f)
             {
-                Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.magenta);
-                Debug.DrawRay(origin - dbg_offset, direction, Color.magenta * 0.5f);
+                //Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.magenta);
+                //Debug.DrawRay(origin - dbg_offset, direction, Color.magenta * 0.5f);
                 return false;
             }
 
@@ -246,8 +246,8 @@ namespace Character.NPC
             int hits = Physics.RaycastNonAlloc(origin, direction, _results, maxPlayerVisibilityDistance, playerVisibilityLayerMask);
             if (hits <= 0)
             {
-                Debug.Log("No hits to looking for player");
-                Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.red);
+                //Debug.Log("No hits to looking for player");
+                //Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.red);
                 return false;
             }
             var hitPlayerCollider = false;
@@ -264,7 +264,7 @@ namespace Character.NPC
             if (!hitPlayerCollider)
             {
                 Debug.DrawLine(origin, _results[0].point, Color.yellow);
-                Debug.Log("hits but no player");
+                //Debug.Log("hits but no player");
 
                 return false;
             }
@@ -272,8 +272,8 @@ namespace Character.NPC
             
             if (_playerCharacter.IsInCover() && !CoverVisibilityCheck() && _enemyState is not EnemyState.Combat && Vector3.Distance(playerPosition, _rigidbody.position) > playerInCoverDetectionDistance )
             {
-                Debug.DrawLine(origin, _results[0].point, new Color(1,0.5f,0f));
-                Debug.Log($"{_playerCharacter.IsInCover()} && {CoverVisibilityCheck()} && {_enemyState} && {Vector3.Distance(playerPosition, _rigidbody.position)} > {playerInCoverDetectionDistance}");
+                //Debug.DrawLine(origin, _results[0].point, new Color(1,0.5f,0f));
+                //Debug.Log($"{_playerCharacter.IsInCover()} && {CoverVisibilityCheck()} && {_enemyState} && {Vector3.Distance(playerPosition, _rigidbody.position)} > {playerInCoverDetectionDistance}");
                 return false;
             }
             var hitPlayer = _results[0].collider.CompareTag("Player");

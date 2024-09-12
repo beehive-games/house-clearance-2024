@@ -27,29 +27,31 @@ namespace Combat.Weapon.Projectiles
             if (hasHit)
             {
                 hitpoint = hit.point;
-            }
-
-            if (hasHit && impactVFX != null)
-            {
-                Instantiate(impactVFX, hitpoint, Quaternion.identity);
-            }
-            
-            
-            hasHit = Physics.Raycast(transform.position, transform.right, out hit, range, hitBoxlayerMask);
-            if (hasHit)
-            {
-                hitpoint = hit.point;
-                var hitBox = hit.collider.gameObject.GetComponent<HitBox>();
-                if (hitBox != null)
+                if (impactVFX != null)
                 {
-                    DoDamage(hitBox);
+                    Instantiate(impactVFX, hitpoint, Quaternion.identity);
+
                 }
-                Debug.DrawLine(transform.position, hitpoint, Color.cyan, 3f);
             }
             else
             {
-                Debug.DrawLine(transform.position, hitpoint, Color.red, 3f);
+                hasHit = Physics.Raycast(transform.position, transform.right, out hit, range, hitBoxlayerMask);
+                if (hasHit)
+                {
+                    hitpoint = hit.point;
+                    var hitBox = hit.collider.gameObject.GetComponent<HitBox>();
+                    if (hitBox != null)
+                    {
+                        DoDamage(hitBox);
+                    }
+                    Debug.DrawLine(transform.position, hitpoint, Color.cyan, 3f);
+                }
+                else
+                {
+                    Debug.DrawLine(transform.position, hitpoint, Color.red, 3f);
+                }
             }
+
             
             if (trailVFX != null)
             {
