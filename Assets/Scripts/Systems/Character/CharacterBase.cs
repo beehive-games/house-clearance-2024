@@ -101,6 +101,9 @@ public class CharacterBase : MonoBehaviour
 	protected TowerCorner _activeCorner;
 	public Vector3 worldPosition;
 	protected NPCMovementLine movementLine;
+	private Transform _temporaryCameraTransform;
+	private Camera _camera;
+	private bool _coverOffsetApplied;// I hate this, but the proper logic is soooo complicated.
 
 	
 	public enum MovementState
@@ -156,7 +159,9 @@ public class CharacterBase : MonoBehaviour
 	protected virtual void Awake()
 	{
 		StartUpChecks();
+		_camera = Camera.main;
 		_results2D = new RaycastHit2D[1];
+		_temporaryCameraTransform = new GameObject("tempTfForCamera").transform;
 	}
 
 	protected void SetRigidbodyX(float xValue)
@@ -297,11 +302,20 @@ public class CharacterBase : MonoBehaviour
 
 	protected virtual void HitCover(Vector3 coverPosition)
 	{
+		if(_movementState != MovementState.Slide) return;
+		if(_movementState == MovementState.Cover) return;
+		
 		Debug.Log(gameObject.name + " hit cover");
 		_movementState = MovementState.Cover;
 		_rigidbody.velocity = new Vector3(0, _rigidbody.VelocityY(), 0);
 		_spriteRenderer.color = _transitionalColorTint;
-		_spriteRenderer.transform.position += new Vector3(transform.forward.x * coverOffset.x,transform.forward.y * coverOffset.y,transform.forward.z * coverOffset.z);
+
+		_temporaryCameraTransform.position = _camera.transform.position;
+		_temporaryCameraTransform.rotation = _camera.transform.rotation;
+		
+		Vector3 offsetInCameraSpace = _temporaryCameraTransform.TransformDirection(coverOffset);
+		_coverOffsetApplied = true;
+		_spriteRenderer.transform.position += offsetInCameraSpace;
 		var newPos = new Vector3(coverPosition.x, _rigidbody.position.y, coverPosition.z);
 		_rigidbody.MovePosition(newPos);
 		foreach (var hitBox in _hitBoxes)
@@ -630,6 +644,12 @@ public class CharacterBase : MonoBehaviour
 
 		_coverGameObject = null;
 		_spriteRenderer.color = Color.white;
+		if (_coverOffsetApplied)
+		{
+			_coverOffsetApplied = false;
+			Vector3 offsetInCameraSpace = _temporaryCameraTransform.TransformDirection(coverOffset);
+			_spriteRenderer.transform.position -= offsetInCameraSpace;
+		}
 	}
 
 	private void HitNPCMovementLine(Collider other)
