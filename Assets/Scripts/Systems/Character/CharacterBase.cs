@@ -302,6 +302,8 @@ public class CharacterBase : MonoBehaviour
 		_rigidbody.velocity = new Vector3(0, _rigidbody.VelocityY(), 0);
 		_spriteRenderer.color = _transitionalColorTint;
 		_spriteRenderer.transform.position += new Vector3(transform.forward.x * coverOffset.x,transform.forward.y * coverOffset.y,transform.forward.z * coverOffset.z);
+		var newPos = new Vector3(coverPosition.x, _rigidbody.position.y, coverPosition.z);
+		_rigidbody.MovePosition(newPos);
 		foreach (var hitBox in _hitBoxes)
 		{
 			hitBox.sleep = true;
@@ -656,7 +658,8 @@ public class CharacterBase : MonoBehaviour
 	
 	private void OnTriggerEnter(Collider other)
 	{
-		if (CheckHitCover(other)) HitCover(other.transform.position);
+		
+		if (CheckHitCover(other)) HitCover(other.ClosestPointOnBounds(_rigidbody.position));
 		if (CheckHitTeleporter(other)) HitTeleporter(other);
 		CharacterBase characterHit = null;
 		if (CheckHitCharacter(other, ref characterHit)) HitCharacter(characterHit);

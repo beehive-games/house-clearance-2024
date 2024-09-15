@@ -1473,7 +1473,6 @@ GameObject:
   - component: {fileID: 646109580}
   - component: {fileID: 646109579}
   - component: {fileID: 646109578}
-  - component: {fileID: 646109577}
   m_Layer: 8
   m_Name: Cube (3)
   m_TagString: Cover
@@ -1481,19 +1480,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &646109577
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 646109576}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85138c80b59f57344960d8d856aa0b0e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  teleportLocation: {fileID: 1980409729}
 --- !u!65 &646109578
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2598,7 +2584,6 @@ GameObject:
   - component: {fileID: 1409265217}
   - component: {fileID: 1409265216}
   - component: {fileID: 1409265215}
-  - component: {fileID: 1409265214}
   m_Layer: 8
   m_Name: Cube (4)
   m_TagString: Cover
@@ -2606,19 +2591,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1409265214
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1409265213}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85138c80b59f57344960d8d856aa0b0e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  teleportLocation: {fileID: 1980409729}
 --- !u!65 &1409265215
 BoxCollider:
   m_ObjectHideFlags: 0
