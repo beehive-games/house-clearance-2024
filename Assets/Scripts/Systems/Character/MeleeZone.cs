@@ -6,13 +6,13 @@ namespace Character
     public class MeleeZone : MonoBehaviour
     {
 
-        public NPCCharacter npcCharacter;
+        public Enemy npcCharacter;
     
         void Start()
         {
             if (npcCharacter == null)
             {
-                npcCharacter = transform.parent.gameObject.GetComponent<NPCCharacter>();
+                npcCharacter = transform.parent.gameObject.GetComponent<Enemy>();
             }
         }
 

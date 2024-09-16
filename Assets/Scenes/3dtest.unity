@@ -5338,10 +5338,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
-      propertyPath: _moveSpeed
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: _slideBoost
       value: 24
       objectReference: {fileID: 0}
@@ -5376,10 +5372,6 @@ PrefabInstance:
     - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: playerVisibilityLayerMask.m_Bits
       value: 9
-      objectReference: {fileID: 0}
-    - target: {fileID: 2531043095947710751, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
-      propertyPath: distanceToPlayerToMaintainThreshold
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3932837356580115568, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5424,10 +5416,6 @@ PrefabInstance:
     - target: {fileID: 6304425761909789324, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
       propertyPath: m_Name
       value: Enemy
-      objectReference: {fileID: 0}
-    - target: {fileID: 8463162598744985897, guid: a882c045cda6dfa4bb8a3a9d0933462f, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 1.4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

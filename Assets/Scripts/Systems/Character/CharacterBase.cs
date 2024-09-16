@@ -137,7 +137,7 @@ public class CharacterBase : MonoBehaviour
 	//private protected AliveState _aliveState;
 	private protected RuntimeAnimatorController _animationController;
 	private protected Animator _animator;
-	private protected List<NPCCharacter> _meleeTargets;
+	private protected List<Enemy> _meleeTargets;
 
 	protected internal virtual bool IsInCover()
 	{
@@ -183,6 +183,7 @@ public class CharacterBase : MonoBehaviour
 		// if we're inside an NPC's melee attack trigger volume
 		// do damage
 		// TODO: play animation
+		Debug.Log("Melee!");
 	}
 	
 	private void StartUpChecks()
@@ -278,7 +279,7 @@ public class CharacterBase : MonoBehaviour
 			_weaponInstance.Setup(_weaponSpritePosition);
 		}
 
-		_meleeTargets = new List<NPCCharacter>();
+		_meleeTargets = new List<Enemy>();
 
 	}
 	
@@ -347,7 +348,7 @@ public class CharacterBase : MonoBehaviour
 	
 	protected void TryMelee()
 	{
-		NPCCharacter nearestValidTargetComponent = null;
+		Enemy nearestValidTargetComponent = null;
 		GameObject nearestValidTargetGameObject = null;
 		
 		foreach (var meleeTarget in _meleeTargets)
@@ -385,12 +386,13 @@ public class CharacterBase : MonoBehaviour
 	protected virtual void HitMeleeZone(Collider2D other)
 	{
 		var meleeZone = other.GetComponent<MeleeZone>();
+		Debug.Log(other.name);
 		if (meleeZone == null || meleeZone.npcCharacter == null)
 		{
 			return;
 		}
 
-		NPCCharacter npcCharacter = meleeZone.npcCharacter;
+		Enemy npcCharacter = meleeZone.npcCharacter;
 
 		if (!_meleeTargets.Contains(npcCharacter))
 		{
@@ -406,7 +408,7 @@ public class CharacterBase : MonoBehaviour
 			return;
 		}
 
-		NPCCharacter npcCharacter = meleeZone.npcCharacter;
+		Enemy npcCharacter = meleeZone.npcCharacter;
 
 		if (!_meleeTargets.Contains(npcCharacter))
 		{
@@ -445,7 +447,7 @@ public class CharacterBase : MonoBehaviour
 		}
 		
 		character = other.transform.parent.GetComponent<CharacterBase>();
-		Debug.Log("hit by player");
+		//Debug.Log("hit by player");
 		return true;
 
 	}
@@ -466,7 +468,7 @@ public class CharacterBase : MonoBehaviour
 	protected virtual void HitCharacter(CharacterBase character)
 	{
 		// stun!
-		Debug.Log("Character = "+character);
+		//Debug.Log("Character = "+character);
 		if(character == null || character._movementState != MovementState.Slide)
 			return;
 		_movementState = MovementState.Immobile;
@@ -574,7 +576,7 @@ public class CharacterBase : MonoBehaviour
 	protected void LeaveMeleeZone(Collider2D other)
 	{
 		var meleeZone = other.GetComponent<MeleeZone>();
-		NPCCharacter npcCharacter = meleeZone.npcCharacter;
+		Enemy npcCharacter = meleeZone.npcCharacter;
 
 		if (_meleeTargets.Contains(npcCharacter))
 		{
@@ -585,7 +587,7 @@ public class CharacterBase : MonoBehaviour
 	protected void LeaveMeleeZone(Collider other)
 	{
 		var meleeZone = other.GetComponent<MeleeZone>();
-		NPCCharacter npcCharacter = meleeZone.npcCharacter;
+		Enemy npcCharacter = meleeZone.npcCharacter;
 
 		if (_meleeTargets.Contains(npcCharacter))
 		{

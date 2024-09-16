@@ -42,8 +42,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5436702009972342894}
-  - component: {fileID: 7173085479987708908}
   - component: {fileID: 1824889608440509082}
+  - component: {fileID: 2990660239032146623}
   m_Layer: 15
   m_Name: MeleeZone
   m_TagString: MeleeZone
@@ -66,51 +66,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1271674134744570163}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!61 &7173085479987708908
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 983775388206250072}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0, y: 0}
-    oldSize: {x: 0, y: 0}
-    newSize: {x: 0, y: 0}
-    adaptiveTilingThreshold: 0
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  serializedVersion: 2
-  m_Size: {x: 4.35, y: 3.55}
-  m_EdgeRadius: 0
 --- !u!114 &1824889608440509082
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -124,6 +79,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   npcCharacter: {fileID: 0}
+--- !u!65 &2990660239032146623
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 983775388206250072}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4, y: 4, z: 2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &2092809919714584230
 GameObject:
   m_ObjectHideFlags: 0
@@ -489,8 +465,8 @@ MonoBehaviour:
   _stunnedTime: 3
   _jumpForce: 1250
   _gravityMultiplier: 1
-  _slideFriction: 15
-  _slideBoost: 300
+  _slideFriction: 16
+  _slideBoost: 24
   _fallAutoSlideVelocity: 20
   _fallDeathVelocity: 30
   _groundCheckDistance: 0.25
@@ -515,7 +491,7 @@ MonoBehaviour:
   _weaponSpritePosition: {fileID: 2642316756551774778}
   _allegiance: 2
   _weaponInstance: {fileID: 0}
-  coverOffset: {x: 0, y: 0.1, z: 0.2}
+  coverOffset: {x: 0, y: 0.2, z: 0}
   onLandEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -531,12 +507,20 @@ MonoBehaviour:
   maxPlayerVisibilityDistance: 10
   playerVisibilityLayerMask:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 9
+  patrolVisibilityLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  _coverLayerMask:
+    serializedVersion: 2
+    m_Bits: 256
   playerInCoverDetectionDistance: 0.116
   randomShotChance: 0.52
-  distanceToPlayerToMaintain: 5
+  distanceToPlayerToMaintain: 7
   distanceToPlayerToMaintainThreshold: 1
   maximumPursueDistance: 20
+  _coverSlideDistance: 8
+  _queueSlide: 0
   _enemyState: 0
 --- !u!1 &3739240638812819166
 GameObject:
@@ -627,6 +611,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c18aff897fd95154eb05f708da01c7c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sleep: 0
   _allegiance: 2
   _hitBoxType: 0
   damageMultiplier: 1
@@ -760,6 +745,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c18aff897fd95154eb05f708da01c7c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sleep: 0
   _allegiance: 2
   _hitBoxType: 1
   damageMultiplier: 3
@@ -831,6 +817,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c18aff897fd95154eb05f708da01c7c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sleep: 0
   _allegiance: 2
   _hitBoxType: 0
   damageMultiplier: 1
@@ -1002,6 +989,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c18aff897fd95154eb05f708da01c7c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sleep: 0
   _allegiance: 2
   _hitBoxType: 1
   damageMultiplier: 3
