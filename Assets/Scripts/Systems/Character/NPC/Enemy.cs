@@ -105,6 +105,7 @@ namespace Character.NPC
 
         protected override void OnTriggerEnter(Collider other)
         {
+            base.OnTriggerEnter(other);
             if (CheckSpottedPlayer(other)) SpottedPlayer();
         }
         
@@ -245,26 +246,29 @@ namespace Character.NPC
             
             if (dotProduct < 0.5f)
             {
+                Debug.DrawLine(_rigidbody.position, Vector3.up * 10f, Color.blue);
                 return false;
             }
-            
-            
-            
-            
+
+
+
+            _results = new RaycastHit[1];
             int hits = Physics.RaycastNonAlloc(position, -transform.right, _results, _coverSlideDistance, _coverLayerMask);
             
             if (hits > 0)
             {
-                var playerDistance= Vector3.Distance(position, GameRoot.Player.transform.position);
+                var playerDistance= Vector3.Distance(position, playerPos);
                 var hitDistance= Vector3.Distance(position, _results[0].point);
                 //Debug.DrawRay(position + Vector3.up * 2, -transform.right * _coverSlideDistance, new Color(1,0.25f,0.5f));
 
                 var playerFurtherAway = playerDistance > hitDistance;
                 var tooCloseThreshold = distanceToPlayerToMaintain;
-                var tooClose = hitDistance < tooCloseThreshold;
-                
+                var tooClose = hitDistance < playerDistance - tooCloseThreshold;
+                Debug.DrawLine(_rigidbody.position, Vector3.up* 10f, Color.green);
+
                 return playerFurtherAway && !tooClose ;
             }
+            Debug.DrawLine(_rigidbody.position, Vector3.up* 10f, Color.red);
 
             return false;
         }
@@ -297,16 +301,26 @@ namespace Character.NPC
             {
                 return false;
             }
+            
+            RaycastHit closest = _results[0];
+            var closestDistance = Vector3.Distance(closest.point, origin);
             var hitPlayerCollider = false;
 
             for (int i = 0; i < hits; i++)
             {
-                if (_results[i].collider.CompareTag("Player"))
+                var point = _results[i].point;
+                var distance = Vector3.Distance(origin, point);
+                if (distance < closestDistance)
                 {
-                    hitPlayerCollider = true;
-                    break;
+                    closest = _results[i];
+                    closestDistance = distance;
                 }
             }
+            if (closest.collider.CompareTag("Player"))
+            {
+                hitPlayerCollider = true;
+            }
+            
             
             if (!hitPlayerCollider)
             {
@@ -621,16 +635,16 @@ namespace Character.NPC
             return true;
         }
 
+        private bool _canSeeCover;
         private void OnDrawGizmos()
         {
             Color newColor = Color.black;
-            if (_movementState == MovementState.Slide)
-                newColor = Color.red;
-            else if (_movementState == MovementState.Cover)
+            if (_canSeeCover)
                 newColor = Color.green;
 
             Gizmos.color = newColor;
-            //Gizmos.DrawCube(_rigidbody.position + Vector3.up * 2, Vector3.one);
+            if(_rigidbody != null)
+                Gizmos.DrawCube(_rigidbody.position + Vector3.up * 2, Vector3.one);
             
         }
 
@@ -656,6 +670,8 @@ namespace Character.NPC
             var isGrounded = IsGrounded();
             var canSeePlayer = RaycastPlayer();
             var canSeeCover = RaycastCover();
+
+            _canSeeCover = canSeeCover;
 
             var playerPosition = _playerCharacter.transform.position;
 
