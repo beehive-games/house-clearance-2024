@@ -26,6 +26,7 @@ namespace Character.NPC
         [SerializeField] private float distanceToPlayerToMaintainThreshold = 1f;
         [SerializeField] private float maximumPursueDistance = 20f;
         [SerializeField] private float _coverSlideDistance = 2f;
+        [SerializeField] private float _threshold = 0.2f;
         
         private Vector3 _startPosV3;
         private float _startPosLs;
@@ -41,6 +42,7 @@ namespace Character.NPC
         public bool _queueSlide;
         private bool _damageTaken;
         private Vector3 _coverPosition;
+        private Transform _coverTransform;
 
 
         public enum EnemyState
@@ -119,9 +121,10 @@ namespace Character.NPC
         }
 
 
-        protected override void HitCover(Vector3 coverPosition)
+        protected override void HitCover(Vector3 coverPosition, Transform coverTransform)
         {
-            base.HitCover(coverPosition);
+            base.HitCover(coverPosition, coverTransform);
+            _coverTransform = coverTransform;
             _coverPosition = coverPosition;
             _targetPositionV3 = _rigidbody.position;
         }
@@ -152,7 +155,7 @@ namespace Character.NPC
             {
                 yield return 0;
             }
-            Debug.DrawLine(_rigidbody.position, _targetPositionV3, Color.black, 3f);
+            //Debug.DrawLine(_rigidbody.position, _targetPositionV3, Color.black, 3f);
         }
         
         private void GetSetNewPatrolTargetPosition()
@@ -210,7 +213,7 @@ namespace Character.NPC
             {
                 var playerDistance= Vector3.Distance(position, GameRoot.Player.transform.position);
                 var hitDistance= Vector3.Distance(position, _results[0].point);
-                Debug.DrawRay(position + Vector3.up * 2, -transform.right * _coverSlideDistance, new Color(1,0.25f,0.5f));
+                //Debug.DrawRay(position + Vector3.up * 2, -transform.right * _coverSlideDistance, new Color(1,0.25f,0.5f));
 
                 var playerFurtherAway = playerDistance > hitDistance;
                 var tooCloseThreshold = distanceToPlayerToMaintain;
@@ -242,10 +245,13 @@ namespace Character.NPC
                 return false;
             }
 
+            
+            
             _results = new RaycastHit[10];
             int hits = Physics.RaycastNonAlloc(origin, direction, _results, maxPlayerVisibilityDistance, playerVisibilityLayerMask);
             if (hits <= 0)
             {
+                if (Vector3.Distance(playerPosition, origin) < 1f) return true;
                 //Debug.Log("No hits to looking for player");
                 //Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.red);
                 return false;
@@ -263,7 +269,7 @@ namespace Character.NPC
             
             if (!hitPlayerCollider)
             {
-                Debug.DrawLine(origin, _results[0].point, Color.yellow);
+                //Debug.DrawLine(origin, _results[0].point, Color.yellow);
                 //Debug.Log("hits but no player");
 
                 return false;
@@ -278,7 +284,7 @@ namespace Character.NPC
             }
             var hitPlayer = _results[0].collider.CompareTag("Player");
             
-            Debug.DrawLine(origin, _results[0].point, hitPlayer ? Color.green : Color.blue);
+            //Debug.DrawLine(origin, _results[0].point, hitPlayer ? Color.green : Color.blue);
 
             return hitPlayer;
         }
@@ -300,6 +306,9 @@ namespace Character.NPC
             var rigidbodyPosition = _rigidbody.position;
             var rigidbodyPositionV2 = new Vector2(rigidbodyPosition.x, rigidbodyPosition.z);
             var distance = Vector3.Distance(targetPositionV2, rigidbodyPositionV2);
+            
+            Debug.DrawLine(_rigidbody.position + Vector3.up, _targetPositionV3, distance < distanceArrivalThreshold ? Color.black: Color.white);
+            
             return distance < distanceArrivalThreshold;
         }
 
@@ -404,7 +413,7 @@ namespace Character.NPC
                     _rigidbody.MovePosition(newPos);
                 }
             
-                Debug.DrawLine(_rigidbody.position, targetPos, Color.magenta);
+                //Debug.DrawLine(_rigidbody.position, targetPos, Color.magenta);
                 movementLine.RotateRigidbodyToMatchNormal(_rigidbody, normal);
                 forwardDirection = normal;
             }
@@ -420,48 +429,74 @@ namespace Character.NPC
         
         private void SetTargetToLocationFromPlayer(Vector3 playerPosition, Vector3 currentPosition)
         {
+
+            var threshold = _threshold;
             var distance = Vector3.Distance(playerPosition, currentPosition);
             var minDistance = distanceToPlayerToMaintain - distanceToPlayerToMaintainThreshold;
             var maxDistance = distanceToPlayerToMaintain + distanceToPlayerToMaintainThreshold;
 
             bool canReachDestination = true;
             var dirToCheck = _targetPositionV3 - currentPosition;
-            var distanceToCheck = dirToCheck.magnitude - 0.1f;
+            var distanceToCheck = dirToCheck.magnitude - threshold;
             dirToCheck.Normalize();
             _results = new RaycastHit[1];
             int hits = Physics.RaycastNonAlloc(currentPosition, dirToCheck, _results, distanceToCheck, _groundCheckLayers);
             // cant reach!
             if (hits > 0)
             {
+                Debug.DrawLine(currentPosition + Vector3.up * 0.5f, _results[0].point, Color.gray);
+                Debug.DrawRay(currentPosition + Vector3.up * 0.33f, dirToCheck * distanceToCheck, Color.yellow * 0.5f);
                 canReachDestination = false;
             }
+            else
+            {
+                Debug.DrawRay(currentPosition, dirToCheck * distanceToCheck, Color.yellow);
+            }
 
-            if ((ReachedDestination() && (distance < minDistance || distance > maxDistance)) || !canReachDestination)
+            var reachedDest = ReachedDestination();
+            if ((reachedDest && (distance < minDistance || distance > maxDistance)) || !canReachDestination)
             {
                 var xzPlayerPosition = playerPosition;
                 xzPlayerPosition.y = currentPosition.y;
                 
                 var directionToPlayer = xzPlayerPosition - currentPosition;
                 directionToPlayer.Normalize();
+                
 
                 var offset = directionToPlayer * ( distanceToPlayerToMaintain);
                 var targetPosition = xzPlayerPosition - offset;
                 
+                Debug.DrawLine(currentPosition, targetPosition, new Color(1f, 0.25f, 0.25f));
+
+                
+                targetPosition = movementLine.GetClosestPointOnLine(targetPosition);
+                Debug.DrawLine(currentPosition, targetPosition, new Color(0.25f, 1f, 0.25f));
+
+                
+                
                 dirToCheck = targetPosition - currentPosition;
-                distanceToCheck = dirToCheck.magnitude - 0.1f;
+                distanceToCheck = dirToCheck.magnitude - threshold;
                 dirToCheck.Normalize();
 
                 hits = Physics.RaycastNonAlloc(currentPosition, dirToCheck, _results, distanceToCheck, _groundCheckLayers);
+ 
                 
                 if (hits > 0)
                 {
                     targetPosition = xzPlayerPosition + offset;
+                    targetPosition = movementLine.GetClosestPointOnLine(targetPosition);
+                    Debug.DrawLine(currentPosition, targetPosition, new Color(0.25f, 0.25f, 1f) );
+                    Debug.DrawLine(currentPosition, _results[0].collider.transform.position, new Color(0.0f, 0.75f, 1f) );
+
+                }
+                else
+                {
+                    Debug.DrawRay(currentPosition, dirToCheck * distanceToCheck, new Color(1f, 0.25f, 1f));
+
                 }
                 
-                
-                targetPosition = movementLine.GetClosestPointOnLine(targetPosition);
                 _targetPositionV3 = targetPosition;
-                Debug.DrawLine(Vector3.zero, _targetPositionV3, new Color(0.75f, 0.25f, 0.5f), 10f);
+                Debug.DrawLine(Vector3.zero, _targetPositionV3, new Color(0.75f, 0.25f, 0.5f), 1f);
             }
         }
         
@@ -590,12 +625,25 @@ namespace Character.NPC
             // check if player is in a different direction to current cover to us - we dont want to be in cover if that cover is _behind us_
             if (inCover)
             {
-                var pDirection = playerPosition - _rigidbody.position;
+                var rigidbodyPositionXZ = _rigidbody.position;
+                rigidbodyPositionXZ.y = 0;
+                
+                var playerPositionXZ = playerPosition;
+                playerPosition.y = 0f;
+                
+                var pDirection = playerPosition - rigidbodyPositionXZ;
                 pDirection.Normalize();
                 
-                var cDirection = _coverPosition - _rigidbody.position;
+                var coverPositionXZ = _coverTransform.position;
+                coverPositionXZ.y = 0f;
+                
+                var cDirection = coverPositionXZ - rigidbodyPositionXZ;
                 cDirection.Normalize();
 
+                Debug.DrawRay(_rigidbody.position + Vector3.up * 3f, pDirection * 10f, Color.blue, 3f);
+                Debug.DrawRay(_rigidbody.position + Vector3.up * 2.5f, cDirection * 10f, new Color(1f, 0.6f,0.2f), 3f);
+                Debug.DrawLine(_rigidbody.position + Vector3.up * 2.75f, _coverPosition, new Color(0.1f, 0.6f,0.4f), 3f);
+                
                 var cDotP = Vector3.Dot(cDirection, pDirection);
                 var playerBeyondSimpleDistance = Vector3.Distance(playerPosition, _rigidbody.position) > distanceToPlayerToMaintain + distanceToPlayerToMaintain;
                 if (canSeeCover)
@@ -604,6 +652,7 @@ namespace Character.NPC
                 }
                 else if(cDotP < 0.5f || playerBeyondSimpleDistance)
                 {
+                    Debug.Log("Simple check - " +cDotP +" d: "+Vector3.Distance(playerPosition, _rigidbody.position)+ " > "+distanceToPlayerToMaintain+" * 2");
                     LeaveCover();
                     inCover = false;
                     _movementState = MovementState.Walk;
@@ -713,6 +762,7 @@ namespace Character.NPC
                     return;
                 }
                 EnemyMoveMechanics(true, walk ? -1 : 0f);
+                Debug.DrawLine(_targetPositionV3, _targetPositionV3 + Vector3.up * 3, Color.red);
             }
         }
     }

@@ -232,9 +232,9 @@ namespace Character.Player
             }
         }
 
-        protected override void HitCover(Vector3 coverPosition)
+        protected override void HitCover(Vector3 coverPosition, Transform coverTransform)
         {
-            base.HitCover(coverPosition);
+            base.HitCover(coverPosition, coverTransform);
             _waitForMoveActionDepress = true;
         }
         

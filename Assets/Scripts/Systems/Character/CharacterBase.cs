@@ -301,7 +301,7 @@ public class CharacterBase : MonoBehaviour
 		_rigidbody.velocity = new Vector3(_rigidbody.VelocityX(), _rigidbody.VelocityY(), z);
 	}
 
-	protected virtual void HitCover(Vector3 coverPosition)
+	protected virtual void HitCover(Vector3 coverPosition, Transform coverTransform)
 	{
 		if(_movementState != MovementState.Slide) return;
 		if(_movementState == MovementState.Cover) return;
@@ -632,7 +632,6 @@ public class CharacterBase : MonoBehaviour
 
 	public void LeaveCover()
 	{
-
 		foreach (var hitbox in _hitBoxes)
 		{
 			hitbox.sleep = false;
@@ -681,7 +680,7 @@ public class CharacterBase : MonoBehaviour
 	private void OnTriggerEnter(Collider other)
 	{
 		
-		if (CheckHitCover(other)) HitCover(other.ClosestPointOnBounds(_rigidbody.position));
+		if (CheckHitCover(other)) HitCover(other.ClosestPointOnBounds(_rigidbody.position), other.transform);
 		if (CheckHitTeleporter(other)) HitTeleporter(other);
 		CharacterBase characterHit = null;
 		if (CheckHitCharacter(other, ref characterHit)) HitCharacter(characterHit);
@@ -702,7 +701,7 @@ public class CharacterBase : MonoBehaviour
 	
 	private void OnTriggerEnter2D(Collider2D other)
 	{
-		if (CheckHitCover(other)) HitCover(other.transform.position);
+		if (CheckHitCover(other)) HitCover(other.transform.position, other.transform);
 		if (CheckHitTeleporter(other)) HitTeleporter(other);
 		CharacterBase characterHit = null;
 		if (CheckHitCharacter(other, ref characterHit)) HitCharacter(characterHit);
@@ -791,9 +790,9 @@ public class CharacterBase : MonoBehaviour
 		bool center = GroundCheckNonAlloc(position3D, Vector3.down, _groundCheckDistance, _groundCheckLayers);
 		bool right = GroundCheckNonAlloc(positionRight, Vector3.down, _groundCheckDistance, _groundCheckLayers);
 		
-		Debug.DrawRay(positionLeft, Vector3.down * _groundCheckDistance, left ? Color.red : Color.magenta);
-		Debug.DrawRay(position3D, Vector3.down * _groundCheckDistance, center ? Color.green : Color.yellow);
-		Debug.DrawRay(positionRight, Vector3.down * _groundCheckDistance, right? Color.blue : Color.cyan);
+		//Debug.DrawRay(positionLeft, Vector3.down * _groundCheckDistance, left ? Color.red : Color.magenta);
+		//Debug.DrawRay(position3D, Vector3.down * _groundCheckDistance, center ? Color.green : Color.yellow);
+		//Debug.DrawRay(positionRight, Vector3.down * _groundCheckDistance, right? Color.blue : Color.cyan);
 
 		return left || right || center;
 	}
@@ -874,6 +873,7 @@ public class CharacterBase : MonoBehaviour
 			return;
 		}
 
+		_currentHealth = _startingHealth;
 		_teleportOut = StartCoroutine(TeleportOutCo(newLocation, _teleportSpeed / 2f));
 
 	}
