@@ -676,8 +676,8 @@ public class CharacterBase : MonoBehaviour
 		if (CheckHitMeleeZone(other)) HitMeleeZone(other);
 		if (CheckHitNPCMovementLine(other)) HitNPCMovementLine(other);
 	}
-	
-	private void OnTriggerEnter(Collider other)
+
+	protected virtual void OnTriggerEnter(Collider other)
 	{
 		
 		if (CheckHitCover(other)) HitCover(other.ClosestPointOnBounds(_rigidbody.position), other.transform);

@@ -3282,6 +3282,10 @@ PrefabInstance:
       propertyPath: near clip plane
       value: 15
       objectReference: {fileID: 0}
+    - target: {fileID: 7688075282194223441, guid: 02ce8522a13666944947276d900cc471, type: 3}
+      propertyPath: m_TagString
+      value: AlertZone
+      objectReference: {fileID: 0}
     - target: {fileID: 7814704973883612777, guid: 02ce8522a13666944947276d900cc471, type: 3}
       propertyPath: m_Layer
       value: 3

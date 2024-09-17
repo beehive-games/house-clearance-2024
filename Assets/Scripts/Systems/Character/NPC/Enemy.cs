@@ -63,6 +63,50 @@ namespace Character.NPC
 
         }
 
+        private bool CheckSpottedPlayer(Collider other)
+        {
+            return other.CompareTag("AlertZone");
+        }
+
+        private void SpottedPlayer()
+        {
+            _results = new RaycastHit[3];
+            var playerPos = _playerCharacter.transform.position;
+            var myPos = _rigidbody.position;
+            var playerToMeVector = playerPos - myPos;
+            var direction = playerToMeVector.normalized;
+            int hits = Physics.RaycastNonAlloc(_rigidbody.position, direction, _results, playerToMeVector.magnitude, playerVisibilityLayerMask);
+            if (hits <= 0)
+            {
+                // hit nothing
+                return;
+            }
+
+            RaycastHit closest = _results[0];
+            var closestDistance = Vector3.Distance(closest.point, myPos);
+            var hitPlayerCollider = false;
+
+            for (int i = 0; i < hits; i++)
+            {
+                var point = _results[i].point;
+                var distance = Vector3.Distance(myPos, point);
+                if (distance < closestDistance)
+                {
+                    closest = _results[i];
+                    closestDistance = distance;
+                }
+            }
+            if (closest.collider.CompareTag("Player"))
+            {
+                // can see player
+                _enemyState = EnemyState.Combat;
+            }
+        }
+
+        protected override void OnTriggerEnter(Collider other)
+        {
+            if (CheckSpottedPlayer(other)) SpottedPlayer();
+        }
         
         public override void Damage(float damage, DamageType damageType)
         {
@@ -251,16 +295,13 @@ namespace Character.NPC
             int hits = Physics.RaycastNonAlloc(origin, direction, _results, maxPlayerVisibilityDistance, playerVisibilityLayerMask);
             if (hits <= 0)
             {
-                if (Vector3.Distance(playerPosition, origin) < 1f) return true;
-                //Debug.Log("No hits to looking for player");
-                //Debug.DrawRay(origin, direction * maxPlayerVisibilityDistance, Color.red);
                 return false;
             }
             var hitPlayerCollider = false;
 
             for (int i = 0; i < hits; i++)
             {
-                if (_results[0].collider.CompareTag("Player"))
+                if (_results[i].collider.CompareTag("Player"))
                 {
                     hitPlayerCollider = true;
                     break;
@@ -282,11 +323,7 @@ namespace Character.NPC
                 //Debug.Log($"{_playerCharacter.IsInCover()} && {CoverVisibilityCheck()} && {_enemyState} && {Vector3.Distance(playerPosition, _rigidbody.position)} > {playerInCoverDetectionDistance}");
                 return false;
             }
-            var hitPlayer = _results[0].collider.CompareTag("Player");
-            
-            //Debug.DrawLine(origin, _results[0].point, hitPlayer ? Color.green : Color.blue);
-
-            return hitPlayer;
+            return hitPlayerCollider;
         }
         
         private IEnumerator PatrolWait()

@@ -10,6 +10,7 @@ TagManager:
   - TowerManager
   - RotationZone
   - MovementLine
+  - AlertZone
   layers:
   - Default
   - TransparentFX
@@ -30,7 +31,7 @@ TagManager:
   - Rotation
   - Weapon
   - MovementLine
-  - 
+  - AlertZone
   - 
   - 
   - 
